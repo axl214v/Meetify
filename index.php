@@ -1,3 +1,6 @@
+<?php 
+?>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -12,7 +15,7 @@
   </header>
   <main> Вперед к онлайн конференциям</main>
   <main>Лучшие бесплатные онлайн конференции</main>
-  <button><a href="auth/auth_Reg.html" target="_blank">Создать конференцию</a></button>
+  <button><a href="auth/auth_Reg.php" target="blank">Создать конференцию</a></button>
   <footer>
     <p>&copy; 2024 Meetify. Все права защищены.</p>
   </footer>
