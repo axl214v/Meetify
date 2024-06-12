@@ -1,5 +1,7 @@
 <?php 
-?>
+  define("ROOT_LOCATION", "xampp\htdocs\Meetify");
+  $directory = ROOT_LOCATION; 
+  ?>
 
 <!DOCTYPE html>
 <html>
@@ -22,3 +24,4 @@
 </body>
  <script src="index.js"></script>
  </html>
+ 

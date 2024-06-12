@@ -1,3 +1,8 @@
+<?php
+define("ROOT_LOCATION", "xampp\htdocs\Meetify")
+$directory = ROOT_LOCATION
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
