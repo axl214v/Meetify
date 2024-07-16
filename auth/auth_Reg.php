@@ -1,6 +1,18 @@
 <?php
-define("ROOT_LOCATION", "xampp\htdocs\Meetify")
-$directory = ROOT_LOCATION
+  define("ROOT_LOCATION", "xampp\htdocs\Meetify");
+  $directory = ROOT_LOCATION;
+  
+  $object = new User;
+  
+  
+  class User{ 
+    public $name, $email, $password;
+  
+    function save_user(){  // функция сохранения пользователя  
+ 
+    }
+  }
+
 ?>
 
 <!DOCTYPE html>
