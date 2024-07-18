@@ -75,3 +75,10 @@ footer {
   text-align: left;
   font-size: 14px;
 }
+
+.auth {
+  text-align: left;
+  text-decoration: none;
+  display: inline-block;
+  border-radius: 15px;
+}

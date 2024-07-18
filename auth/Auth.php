@@ -31,9 +31,11 @@
     <input id="email" required>
     <p>Пароль:</p>
     <input id="password" required>
-    <input id="submit">
-    <button>Войти</button>
+    <button id="submit">Авторизироваться</button>
   </footer>
+  <div>
+    <button id = "reg">Зарегестрироваться</button>
+  </div>
   <script src = auth_reg.js></script>
 </body>
 </html>
