@@ -82,3 +82,10 @@ footer {
   display: inline-block;
   border-radius: 15px;
 }
+
+.reset {
+  text-align: left;
+  text-decoration: none;
+  display: inline-block;
+  border-radius: 15px;
+}

@@ -33,8 +33,13 @@
     <input id="password" required>
     <button id="submit">Авторизироваться</button>
   </footer>
+  <div id = "auth">
+    <a>Не зарегестрованны?</a>
+    <button id = "authb"><a href = 'Reg.php'>Зарегестрируйтесь!</a></button>
+  </div>
   <div>
-    <button id = "reg">Зарегестрироваться</button>
+    <a>Забыли пароль?</a>
+    <button id = "reset"><a href = 'resetpass.php'>Сбросьте его!</a></button>
   </div>
   <script src = auth_reg.js></script>
 </body>
