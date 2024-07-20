@@ -1,15 +1,30 @@
 <?php
+  require_once 'login.php';\
   define("ROOT_LOCATION", "xampp\htdocs\Meetify");
   $directory = ROOT_LOCATION;
   
-  
+  try {
+    $pdo = new PDO($attr, $user, $pass, $opts);
+  }
 
+  catch (PDOExcption $e){
+    throw new PDOException($e->getMessage(), (int)$e->getCode());
+}
   
   class User{ 
     public $name, $email, $password;
   
     function check_user(){  // функция сохранения пользователя  
- 
+      $checkeml = _<<< END SELECT email FROM users
+      WHERE email = "$email" _>>>END
+      $checkpass = _<<<END SELECT password FROM users
+      WHERE password = "$password" _>>>END
+       $CheckEmail = $pdo->query($checkeml);
+       $CheckPassword = $pdo->query($checkpass);
+       if ($CheckEmail, $CheckPassword = false){
+          echo ("Извините, что-то пошло не так.");
+          echo ("Попробуйте еще раз или напишите нам в поддержку!");
+       }
     }
   }
 
