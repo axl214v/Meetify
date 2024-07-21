@@ -15,10 +15,10 @@
     public $name, $email, $password;
   
     function check_user(){  // функция сохранения пользователя  
-      $checkeml = _<<< END SELECT email FROM users
-      WHERE email = "$email" _>>>END
-      $checkpass = _<<<END SELECT password FROM users
-      WHERE password = "$password" _>>>END
+      $checkeml =  ("END SELECT email FROM users
+      WHERE email = "$email"")
+      $checkpass = ( "SELECT password FROM users
+      WHERE password = "$password"")
        $CheckEmail = $pdo->query($checkeml);
        $CheckPassword = $pdo->query($checkpass);
        if ($CheckEmail, $CheckPassword = false){
