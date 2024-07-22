@@ -2,9 +2,15 @@
   define("ROOT_LOCATION", "xampp\htdocs\Meetify");
   $directory = ROOT_LOCATION;
   
-  
+  try {
+    $pdo = new PDO($attr, $user, $pass, $opts);
+  }
 
-  
+  catch (PDOExcption $e){
+    throw new PDOException($e->getMessage(), (int)$e->getCode());
+}
+
+
   class User{ 
     public $name, $email, $password;
   
