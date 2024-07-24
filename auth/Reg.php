@@ -8,14 +8,16 @@
   }
 
   if(array_key_exists('subm',$_POST)){
-    new User(save_user($name, $email, $password));
+    $current_user = new User($server);
+    $current_user -> save_user();
  }
   
   
   class User{ 
     public $name, $email, $password;
-  
-    function save_user(){    
+    
+    public function save_user(){    
+      $server = mysqli_connect('localhost', 'root', '', 'meetify');
       $name = $_POST["name"];
       $email = $_POST["email"];
       $password = $_POST["password"]; 
@@ -24,6 +26,10 @@
        if ($result = false){
           echo ("Извините, что-то пошло не так.");
           echo ("Попробуйте еще раз или напишите нам в поддержку!");
+        if ($result != false){
+          $new_url = 'https://localhost/meetify/conf/conf.php';
+          header('Location: '.$new_url);
+        }
         return;
        }
     }
@@ -44,12 +50,12 @@
 <body>
   <form action='Reg.php' method = 'post'>
     <p>Имя:</p>
-    <input placeholder='Иван' id="name" required >
+    <input placeholder='Иван' name="name" required >
     <p>Почта:</p>
-    <input placeholder='example@email.com' id="email" required>
+    <input placeholder='example@email.com' name="email" required>
     <p>Пароль:</p>
-    <input id="password" required>
-    <button name = "subm" id="submit">Зарегестрироваться</button>
+    <input name="password" required>
+    <button name = "subm" name="submit">Зарегестрироваться</button>
   </form>
   <div id = "auth">
     <a>Уже зарегестрированы?</a>
