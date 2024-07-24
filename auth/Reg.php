@@ -6,16 +6,25 @@
   if ($server = false){
     echo("Подключение к серверу не удалось.");
   }
+
+  if(array_key_exists('subm',$_POST)){
+    new User(save_user($name, $email, $password));
+ }
+  
   
   class User{ 
     public $name, $email, $password;
   
     function save_user(){    
-       $saveusr = "INSERT INTO `users` (`name`, `email`, `password`, `ID`) VALUES ('$name', '$email', '$password', NULL)";
+      $name = $_POST["name"];
+      $email = $_POST["email"];
+      $password = $_POST["password"]; 
+      $saveusr = "INSERT INTO `users` (`name`, `email`, `password`, `ID`) VALUES ('$name', '$email', '$password', NULL)";
        $result = mysqli_query($server, $saveusr);
        if ($result = false){
           echo ("Извините, что-то пошло не так.");
           echo ("Попробуйте еще раз или напишите нам в поддержку!");
+        return;
        }
     }
   }
@@ -40,7 +49,7 @@
     <input placeholder='example@email.com' id="email" required>
     <p>Пароль:</p>
     <input id="password" required>
-    <button id="submit">Зарегестрироваться</button>
+    <button name = "subm" id="submit">Зарегестрироваться</button>
   </form>
   <div id = "auth">
     <a>Уже зарегестрированы?</a>
