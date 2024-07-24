@@ -1,26 +1,22 @@
 <?php
-  require_once 'login.php';\
   define("ROOT_LOCATION", "xampp\htdocs\Meetify");
   $directory = ROOT_LOCATION;
   
-  try {
-    $pdo = new PDO($attr, $user, $pass, $opts);
+  $server = mysqli_connect('localhost', 'root', '', 'meetify');
+  if ($server = false){
+    echo("Подключение к серверу не удалось.");
   }
-
-  catch (PDOExcption $e){
-    throw new PDOException($e->getMessage(), (int)$e->getCode());
-}
   
   class User{ 
     public $name, $email, $password;
   
     function check_user(){  // функция сохранения пользователя  
-      $checkeml =  ("END SELECT email FROM users
-      WHERE email = "$email"")
+      $checkeml =  ("END SELECT email FROM users").
+      ("WHERE email = "$email"");
       $checkpass = ( "SELECT password FROM users
-      WHERE password = "$password"")
-       $CheckEmail = $pdo->query($checkeml);
-       $CheckPassword = $pdo->query($checkpass);
+      WHERE password = "$password"");
+       $CheckEmail = mysqli_query($checkeml);
+       $CheckPassword = mysqli_query($checkpass);
        if ($CheckEmail, $CheckPassword = false){
           echo ("Извините, что-то пошло не так.");
           echo ("Попробуйте еще раз или напишите нам в поддержку!");
