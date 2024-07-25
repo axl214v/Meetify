@@ -7,6 +7,8 @@
     echo("Подключение к серверу не удалось.");
   }
 
+  
+  
   if(array_key_exists('subm',$_POST)){
     $current_user = new User($server);
     $current_user -> save_user();
@@ -17,10 +19,14 @@
     public $name, $email, $password;
     
     public function save_user(){    
+      function mysql_fix_string($server, $string){
+        if (get_magic_quotes_gpc()) $string = stripcslashes($string);
+        return;
+      }
       $server = mysqli_connect('localhost', 'root', '', 'meetify');
-      $name = $_POST["name"];
-      $email = $_POST["email"];
-      $password = $_POST["password"]; 
+      $name = mysql_fix_string($_POST["name"]);
+      $email = mysql_fix_string($_POST["email"]);
+      $password = mysql_fix_string($_POST["password"]); 
       $saveusr = "INSERT INTO `users` (`name`, `email`, `password`, `ID`) VALUES ('$name', '$email', '$password', NULL)";
        $result = mysqli_query($server, $saveusr);
        if ($result = false){
