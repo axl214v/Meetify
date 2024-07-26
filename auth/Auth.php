@@ -11,8 +11,8 @@
     public $name, $email, $password;
     
     function mysql_fix_string($server, $string){
-      if (get_magic_quotes_gpc()) $string = stripcslashes($string)
-      return $server->mysqli_qury($string)
+      if (get_magic_quotes_gpc()) $string = stripcslashes($string);
+      return $server->mysqli_qury($string);
     }
 
     function check_user(){  // функция сохранения пользователя  
