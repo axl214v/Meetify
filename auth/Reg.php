@@ -21,7 +21,7 @@
     public function save_user(){    
       function mysql_fix_string($server, $string){
         if (get_magic_quotes_gpc()) $string = stripcslashes($string);
-        return;
+        return $server->mysqli_qury($string);
       }
       $server = mysqli_connect('localhost', 'root', '', 'meetify');
       $name = mysql_fix_string($_POST["name"]);

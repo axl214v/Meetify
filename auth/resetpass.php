@@ -2,20 +2,24 @@
   define("ROOT_LOCATION", "xampp\htdocs\Meetify");
   $directory = ROOT_LOCATION;
   
-  try {
-    $pdo = new PDO($attr, $user, $pass, $opts);
+  $server = mysqli_connect('localhost', 'root', '', 'meetify');
+  if ($server = false){
+    echo("Подключение к серверу не удалось.");
   }
 
-  catch (PDOExcption $e){
-    throw new PDOException($e->getMessage(), (int)$e->getCode());
-}
-
+  if(array_key_exists('subm',$_POST)){
+    $current_user = new User($server);
+    $current_user -> save_user();
+ }
 
   class User{ 
     public $name, $email, $password;
-  
+    
     function reset_user(){    
- 
+      function mysql_fix_string($server, $string){
+        if (get_magic_quotes_gpc()) $string = stripcslashes($string);
+        return $server->mysqli_qury($string);
+      }
     }
   }
 
