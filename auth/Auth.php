@@ -6,16 +6,22 @@
   if ($server = false){
     echo("Подключение к серверу не удалось.");
   }
+
+  if(array_key_exists('subm',$_POST)){
+    $current_user = new User($server);
+    $current_user -> check_user();
+ }
   
   class User{ 
     public $name, $email, $password;
-    
-    function mysql_fix_string($server, $string){
-      if (get_magic_quotes_gpc()) $string = stripcslashes($string);
-      return $server->mysqli_qury($string);
-    }
 
     function check_user(){  // функция сохранения пользователя  
+      $email = mysql_fix_string($_POST["email"]);
+      function mysql_fix_string($server, $string){
+        if (get_magic_quotes_gpc()) $string = stripcslashes($string);
+        return $server->mysqli_qury($string);
+      }
+      $password = mysql_fix_string($_POST["password"]);
       $checkeml =  ("END SELECT email FROM users").
       ("WHERE email = "$email"");
       $checkpass = ( "SELECT password FROM users
@@ -44,10 +50,10 @@
 <body>
   <footer>
     <p>Почта:</p>
-    <input id="email" required>
+    <input name="email" required>
     <p>Пароль:</p>
-    <input id="password" required>
-    <button id="submit">Авторизироваться</button>
+    <input name="password" required>
+    <button name="submit">Авторизироваться</button>
   </footer>
   <div id = "auth">
     <a>Не зарегестрованны?</a>
