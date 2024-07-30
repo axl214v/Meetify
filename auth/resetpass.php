@@ -9,17 +9,14 @@
 
   if(array_key_exists('subm',$_POST)){
     $current_user = new User($server);
-    $current_user -> save_user();
+    $current_user -> reset_user();
  }
 
   class User{ 
     public $name, $email, $password;
     
     function reset_user(){    
-      function mysql_fix_string($server, $string){
-        if (get_magic_quotes_gpc()) $string = stripcslashes($string);
-        return $server->mysqli_qury($string);
-      }
+      $server = mysqli_connect('localhost', 'root', '', 'meetify');
     }
   }
 
@@ -38,9 +35,9 @@
 <body>
   <footer>
     <p>Имя:</p>
-    <input id="name" required>
+    <input maxleght="36" id="name" required>
     <p>Почта:</p>
-    <input id="email" required>
+    <input maxleght="36" id="email" required>
     <p>Пароль:</p>
     <input id="password" required>
     <button id="submit">Сбросить пароль</button>

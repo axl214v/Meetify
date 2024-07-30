@@ -44,9 +44,9 @@ label {
   font-weight: bold;
 }
 
-input[id="name"],
-input[id="email"],
-input[id="password"] {
+input[name="name"],
+input[name="email"],
+input[name="password"] {
   padding: 2px;
   border: 1px solid #000000;
   border-radius: 1px;
@@ -57,7 +57,7 @@ input[id="password"] {
   margin: 2px;
 }
 
-input[type="submit"] {
+input[name="submit"] {
   padding: 5px 10px;
   background-color: #c9d6ff;
   background: linear-gradient(to right, #e2e2e2, #c9d6ff);

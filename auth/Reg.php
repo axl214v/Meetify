@@ -52,11 +52,11 @@
 <body>
   <form action='Reg.php' method = 'post'>
     <p>Имя:</p>
-    <input placeholder='Иван' name="name" required>
+    <input maxleght="36" placeholder='Иван' name="name" required = 'Пожалуйста заполните это поле.'>
     <p>Почта:</p>
-    <input placeholder='example@email.com' name="email" required>
+    <input maxleght="36" placeholder='example@email.com' name="email" required>
     <p>Пароль:</p>
-    <input name="password" required>
+    <input maxleght="36" name="password" required>
     <button name = "subm" name="submit">Зарегестрироваться</button>
   </form>
   <div id = "auth">

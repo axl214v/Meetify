@@ -19,10 +19,10 @@
       $server = mysqli_connect('localhost', 'root', '', 'meetify');
       $email = $_POST["email"];
       $password = $_POST["password"];
-      $checkeml =  ("END SELECT email FROM users").
+      $checkeml =  ("SELECT email FROM users").
       ("WHERE email = "$email"");
-      $checkpass = ( "SELECT password FROM users
-      WHERE password = "$password"");
+      $checkpass = ( "SELECT password FROM users").
+      ("WHERE password = "$password"");
        $CheckEmail = mysqli_query($checkeml);
        $CheckPassword = mysqli_query($checkpass);
        if ($CheckEmail, $CheckPassword = false){
@@ -47,9 +47,9 @@
 <body>
   <footer>
     <p>Почта:</p>
-    <input name="email" required>
+    <input maxleght="36" name="email" required>
     <p>Пароль:</p>
-    <input name="password" required>
+    <input maxleght="36" name="password" required>
     <button name="submit">Авторизироваться</button>
   </footer>
   <div id = "auth">
