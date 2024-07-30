@@ -16,12 +16,9 @@
     public $name, $email, $password;
 
     function check_user(){  // функция сохранения пользователя  
-      $email = mysql_fix_string($_POST["email"]);
-      function mysql_fix_string($server, $string){
-        if (get_magic_quotes_gpc()) $string = stripcslashes($string);
-        return $server->mysqli_qury($string);
-      }
-      $password = mysql_fix_string($_POST["password"]);
+      $server = mysqli_connect('localhost', 'root', '', 'meetify');
+      $email = $_POST["email"];
+      $password = $_POST["password"];
       $checkeml =  ("END SELECT email FROM users").
       ("WHERE email = "$email"");
       $checkpass = ( "SELECT password FROM users
