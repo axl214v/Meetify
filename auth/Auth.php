@@ -61,5 +61,6 @@
     <button id = "reset"><a href = 'resetpass.php'>Сбросьте его!</a></button>
   </div>
   <script src = auth_reg.js></script>
+  <noscript>Извините, ваш браузер не поддерживает JavaScript.</noscript>
 </body>
 </html>

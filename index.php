@@ -22,5 +22,6 @@
   </footer>
 </body>
  <script src="index.js"></script>
+ <noscript>Извините, ваш браузер не поддерживает JavaScript.</noscript>
  </html>
  
