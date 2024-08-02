@@ -28,11 +28,8 @@
        if ($result = false){
           echo ("Извините, что-то пошло не так.");
           echo ("Попробуйте еще раз или напишите нам в поддержку!");
-        if ($result != false){
-          $new_url = 'https://localhost/meetify/conf/conf.php';
-          header('Location: '.$new_url);
-        }
-        return;
+        $new_url = 'https://localhost/meetify/conf/conf.php';
+        return header('Location: '.$new_url);
        }
     }
   }

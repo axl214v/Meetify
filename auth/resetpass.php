@@ -7,7 +7,7 @@
     echo("Подключение к серверу не удалось.");
   }
 
-  if(array_key_exists('subm',$_POST)){
+  if(array_key_exists('submit',$_POST)){
     $current_user = new User($server);
     $current_user -> reset_user();
  }
@@ -17,7 +17,15 @@
     
     function reset_user(){    
       $server = mysqli_connect('localhost', 'root', '', 'meetify');
+      $name = $_POST["name"];
+      $email = $_POST["email"];
+      $CheckUser = ("SELECT email FROM users").
+      ("WHERE email = "$email"");
+      if ($CheckEmail, $CheckPassword = false){
+        echo ("Извините, что-то пошло не так.");
+        echo ("Попробуйте еще раз или напишите нам в поддержку!");
     }
+    return echo("Выслали вам на почту код подтверждения");
   }
 
 ?>
@@ -35,11 +43,9 @@
 <body>
   <footer>
     <p>Имя:</p>
-    <input maxleght="36" id="name" required>
+    <input maxleght="36" name="name" required>
     <p>Почта:</p>
-    <input maxleght="36" id="email" required>
-    <p>Пароль:</p>
-    <input id="password" required>
+    <input maxleght="36" name="email" required>
     <button id="submit">Сбросить пароль</button>
   </footer>
   <div id = "auth">
