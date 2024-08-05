@@ -1,0 +1,49 @@
+h1 {
+    color: rgb(0, 0, 0);
+    font-family: Arial;
+    font-size: 200%;
+    text-align: center
+  }
+  p {
+    color: rgb(0, 0, 0);
+    font-family: Arial;
+    font-size: 100%;
+    text-align: left
+  }
+  main {
+    color: rgb(0, 0, 0);
+    font-family: Arial;
+    font-size: 150%;
+    text-align: center
+  }
+  body {
+    background-color: rgb(0, 47, 255);
+    background: linear-gradient(to right, #e2e2e2, #c9d6ff);
+    color: rgb(0, 0, 0);
+    font-family: Arial;
+    font-size: 150%;
+    text-align: center
+  }
+  button {
+    border-radius: 15px;
+    background-color: #c9d6ff;
+    background: linear-gradient(to right, #e2e2e2, #c9d6ff);
+    box-shadow: #c9d6ff;
+    color: rgb(255, 251, 0);
+    padding: 30px 62px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 24px;
+    margin: 8px 4px;
+    cursor: pointer;
+  }
+  a {
+    color: rgb(0, 0, 0);
+    font-family: Arial;
+    font-size: 120%;
+    text-align: center
+  }
+.timestep{
+  text-align: right;
+}
