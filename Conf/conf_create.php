@@ -14,8 +14,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="conf.css">
     <title>Meetify</title>
+    <h1>Создайте конференцию</h1>
 </head>
 <body>
+    <button id=createconf>Создать конференцию</button>
     <script src="conf.js"></script>
     <noscript>Извините, ваш браузер не поддерживает JavaScript.</noscript>
 </body>
