@@ -28,8 +28,13 @@
        if ($CheckEmail, $CheckPassword = false){
           echo ("Извините, что-то пошло не так.");
           echo ("Попробуйте еще раз или напишите нам в поддержку!");
-        $new_url = 'https://localhost/meetify/conf/conf.php';
-        return header('Location: '.$new_url);
+        if ($CheckEmail = $checkeml, $CheckPassword = $checkpass){
+          $new_url = 'https://localhost/meetify/conf/conf.php';
+          return header('Location: '.$new_url);
+          }
+        elseif ($CheckEmail != $checkeml, $CheckPassword != $checkpass) {
+          echo ("Неверный логин или пароль.")
+        }
        }
     }
   }
