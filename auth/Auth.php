@@ -9,7 +9,7 @@
 
   if(array_key_exists('subm',$_POST)){
     $current_user = new User($server);
-    $current_user -> check_user();
+    $current_user -> check_user($email,$password);
  }
   
   class User{ 

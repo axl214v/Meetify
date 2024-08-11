@@ -9,7 +9,7 @@
 
   if(array_key_exists('submit',$_POST)){
     $current_user = new User($server);
-    $current_user -> reset_user();
+    $current_user -> reset_user($email);
  }
 
   class User{ 
