@@ -47,7 +47,7 @@
   <meta charset="UTF-8">
   <title>Meetify - Авторизация</title>
   <link rel="stylesheet" href="auth_reg.css">
-  <link rel="icon" href="logo.png">
+  <link rel="icon" href="./asseets/logo.png">
   <h1>Авторизация</h1>
   <h2>Форма Авторизации</h2>
 </head>

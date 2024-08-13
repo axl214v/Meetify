@@ -16,7 +16,7 @@
   </header>
   <main> Вперед к онлайн конференциям</main>
   <main>Лучшие бесплатные онлайн конференции</main>
-  <button><a href="auth/Reg.php" target="blank">Создать конференцию</a></button>
+  <button><a href="./asseets/logo.png" target="blank">Создать конференцию</a></button>
   <footer>
     <p>&copy; 2024 Meetify. Все права защищены.</p>
   </footer>

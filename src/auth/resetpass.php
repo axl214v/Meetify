@@ -41,7 +41,7 @@
   <meta charset="UTF-8">
   <title>Meetify - Сброс пароля</title>
   <link rel="stylesheet" href="auth_reg.css">
-  <link rel="icon" href="logo.png">
+  <link rel="icon" href="./asseets/logo.png">
   <h1>Сброс пароля</h1>
   <h2>Форма</h2>
 </head>
