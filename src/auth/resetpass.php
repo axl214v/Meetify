@@ -21,6 +21,7 @@
       $email = $_POST["email"];
       $CheckUser = ("SELECT email FROM users").
       ("WHERE email = "$email"");
+      $result = mysqli_query($server, $CheckUser);
       if ($CheckEmail, $CheckPassword = false){
         echo ("Извините, что-то пошло не так.");
         echo ("Попробуйте еще раз или напишите нам в поддержку!");

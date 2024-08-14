@@ -1,6 +1,6 @@
 <?php 
   define("ROOT_LOCATION", "xampp\htdocs\Meetify"); // константа сохраняет директорию проекта
-  $directory = ROOT_LOCATION; // сохранение директории в переменную
+  $directory = ROOT_LOCATION; // сохранение директории в переменную 
 ?>
 <!DOCTYPE html>
 <html>
