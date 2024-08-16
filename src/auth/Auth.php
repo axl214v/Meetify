@@ -33,7 +33,7 @@
           return header('Location: '.$new_url);
           }
         elseif ($CheckEmail != $checkeml, $CheckPassword != $checkpass) {
-          echo ("Неверный логин или пароль.")
+          echo ("Неверный логин или пароль.");
         }
        }
     }
