@@ -13,3 +13,7 @@ connection.connect((err) => {
 
   console.log('Connected to the MySQL server.');
 });
+
+if (connection.end = true) {
+  console.log("Something went wrong.")
+}
