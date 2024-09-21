@@ -17,3 +17,9 @@ connection.connect((err) => {
 if (connection.end = true) {
   console.log("Something went wrong.")
 }
+
+var sql = "SELECT * FROM `users`";
+connection.query(sql, function (err, result, fields) {
+  if (err) throw err;
+  console.log("Database request", result);
+});
