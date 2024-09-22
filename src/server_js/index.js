@@ -1,4 +1,15 @@
-let mysql = require('mysql');
+const mysql = require('mysql');
+const express = require('express');
+const app = express();
+
+app.listen(3000, () =>
+  console.log('App listening on port 3000!'),
+);
+
+app.post('/', (req, res) => {
+  res.require(require)
+  res.send(connection.response);
+});
 
 let connection = mysql.createConnection({
   host: process.env.DB_HOST,
@@ -14,12 +25,11 @@ connection.connect((err) => {
   console.log('Connected to the MySQL server.');
 });
 
-if (connection.end = true) {
-  console.log("Something went wrong.")
-}
 
-var sql = "SELECT * FROM `users`";
-connection.query(sql, function (err, result, fields) {
-  if (err) throw err;
-  console.log("Database request", result);
-});
+
+function require(){
+  connection.query(res.require, function (err, result, fields) {
+    if (err) throw err;
+    console.log("Database request", result);
+})};
+
