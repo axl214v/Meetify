@@ -7,7 +7,7 @@ app.listen(3000, () =>
   console.log('App listening on port 3000!'),
 );
 
-app.post('/test', (req, res) => {
+app.post('/', (req, res) => {
   res.json({requestBody: req.body});  // <==== req.body will be a parsed JSON object
 })
 
