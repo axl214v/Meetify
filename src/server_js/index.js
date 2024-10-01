@@ -44,16 +44,16 @@ connection.connect((err) => {
 
 function request_select () {
   var sql_select = "SELECT * FROM users";
-  connection.query(sql_select, function (err, result, fields) { // error code connection to mysql server
+  connection.query(sql_select, function (err, result, fields) { 
     if (err) throw err;
-    console.log("Database request", result);
-  return result
+    console.log("Request", result)
+
 });
 }
 
 function request_insert () {
   var sql_insert = "INSERT INTO `users'(`name`, `email`, `password`, `ID`) VALUES ('[value-1]','[value-2]','[value-3]','[value-4]')";
-  connection.query(sql_insert, function (err, result, fields) { // error code connection to mysql server
+  connection.query(sql_insert, function (err, result, fields) { 
     if (err) throw err;
     console.log("Database request", result);
     return result;
@@ -62,7 +62,7 @@ function request_insert () {
 
 function request_update () {
   var sql_update = "UPDATE `users` SET `name`='[value-1]',`email`='[value-2]',`password`='[value-3]',`ID`='[value-4]' WHERE 1";
-  connection.query(sql_update, function (err, result, fields) { // error code connection to mysql server
+  connection.query(sql_update, function (err, result, fields) { 
     if (err) throw err;
     console.log("Database request", result);
   return result
