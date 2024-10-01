@@ -11,7 +11,21 @@ app.post('/', (req, res) => {
   res.json({requestBody: req.body}); // <==== req.body will be a parsed JSON object
 })
 
+app.post('/select', (req, res) => {
+  res.json({request: request_select()}); 
+})
 
+app.post('/insert', (req, res) => {
+  res.json({requestBody: request_insert()}); 
+})
+
+app.post('/update', (req, res) => {
+  res.json({requestBody: request_udpate()}); 
+})
+
+app.get('/', (req, res) => {
+  res.json({requestBody: req.body}); // <==== req.body will be a parsed JSON object
+})
 
 let connection = mysql.createConnection({
   host: process.env.DB_HOST,
@@ -28,13 +42,29 @@ connection.connect((err) => {
 });
 
 
-/* function sql () {
+function request_select () {
   var sql_select = "SELECT * FROM users";
-  var sql_insert = "INSERT INTO `users'(`name`, `email`, `password`, `ID`) VALUES ('[value-1]','[value-2]','[value-3]','[value-4]')";
-  var sql_update = "UPDATE `users` SET `name`='[value-1]',`email`='[value-2]',`password`='[value-3]',`ID`='[value-4]' WHERE 1";
-}
-
-connection.query(sql, function (err, result, fields) { // error code connection to mysql server
+  connection.query(sql_select, function (err, result, fields) { // error code connection to mysql server
     if (err) throw err;
     console.log("Database request", result);
-}); */
+  return result
+});
+}
+
+function request_insert () {
+  var sql_insert = "INSERT INTO `users'(`name`, `email`, `password`, `ID`) VALUES ('[value-1]','[value-2]','[value-3]','[value-4]')";
+  connection.query(sql_insert, function (err, result, fields) { // error code connection to mysql server
+    if (err) throw err;
+    console.log("Database request", result);
+    return result;
+});
+}
+
+function request_update () {
+  var sql_update = "UPDATE `users` SET `name`='[value-1]',`email`='[value-2]',`password`='[value-3]',`ID`='[value-4]' WHERE 1";
+  connection.query(sql_update, function (err, result, fields) { // error code connection to mysql server
+    if (err) throw err;
+    console.log("Database request", result);
+  return result
+});
+}
