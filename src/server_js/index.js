@@ -11,8 +11,8 @@ app.post('/', (req, res) => {
   res.json({requestBody: req.body}); // <==== req.body will be a parsed JSON object
 })
 
-app.post('/select', (req, res) => {
-  res.json({request: request_select()}); 
+app.post('/select', (req, res) => { 
+  res.json({request: request_select()});
 })
 
 app.post('/insert', (req, res) => {
@@ -46,8 +46,8 @@ function request_select () {
   var sql_select = "SELECT * FROM users";
   connection.query(sql_select, function (err, result, fields) { 
     if (err) throw err;
-    console.log("Request", result)
-
+    console.log("Request", result);
+    return result;
 });
 }
 
@@ -65,6 +65,6 @@ function request_update () {
   connection.query(sql_update, function (err, result, fields) { 
     if (err) throw err;
     console.log("Database request", result);
-  return result
+  return result;
 });
 }
