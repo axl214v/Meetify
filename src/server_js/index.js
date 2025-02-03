@@ -71,6 +71,7 @@ function request_select(id , email, password, name) {
       params.push(name);
     }
 
+
     connection.query(sql_select, params, (err, result) => { 
       if (err) return reject(err);
       console.log("Request", result);
