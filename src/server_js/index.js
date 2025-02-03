@@ -23,8 +23,8 @@ connection.connect((err) => {
 
 
 app.post('/select', (req, res) => {
-  const { id } = req.body; 
-  request_select(id)
+  const { id , email, password, name } = req.body; 
+  request_select(id , email , password, name)
     .then(result => res.json({ request: result }))
     .catch(err => res.status(500).json({ error: err.message }));
 });
@@ -46,7 +46,7 @@ app.post('/update', (req, res) => {
 });
 
 
-function request_select(id) {
+function request_select(id , email, password, name) {
   return new Promise((resolve, reject) => {
     let sql_select = "SELECT * FROM users";
     const params = [];
@@ -54,6 +54,21 @@ function request_select(id) {
     if (id) {
       sql_select += " WHERE ID = ?";
       params.push(id);
+    }
+
+    if (email) {
+      sql_select += " WHERE email = ?";
+      params.push(email);
+    }
+
+    if (password) {
+      sql_select += " WHERE password = ?";
+      params.push(password);
+    }
+
+    if (name) {
+      sql_select += " WHERE name = ?";
+      params.push(name);
     }
 
     connection.query(sql_select, params, (err, result) => { 
