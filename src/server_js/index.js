@@ -1,6 +1,11 @@
 const mysql = require('mysql');
 const express = require('express');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const nodemailer = require('nodemailer');
+
 const app = express();
+const SECRET_KEY = "012001"; // Используй process.env.SECRET_KEY на проде
 
 app.use(express.json());
 
@@ -17,74 +22,103 @@ let connection = mysql.createConnection({
 });
 
 connection.connect((err) => {
-  if (err) return console.error(err.message);
+  if (err) {
+    console.error('Database connection failed:', err.message);
+    process.exit(1);
+  }
   console.log('Connected to the MySQL server.');
 });
 
+// 🔹 Мидлвар для проверки токена
+function authenticateToken(req, res, next) {
+  const token = req.headers['authorization'];
+  if (!token) return res.status(401).json({ error: 'Unauthorized' });
 
-app.post('/select', (req, res) => {
-  const { id , email, password, name } = req.body; 
-  request_select(id , email , password, name)
-    .then(result => res.json({ request: result }))
-    .catch(err => res.status(500).json({ error: err.message }));
+  jwt.verify(token, SECRET_KEY, (err, user) => {
+    if (err) return res.status(403).json({ error: 'Forbidden' });
+    req.user = user;
+    next();
+  });
+}
+
+// 🔹 Регистрация пользователей
+app.post('/register', async (req, res) => {
+  const { name, email, password } = req.body; // Убираем `role` из запроса
+
+  // Проверяем, есть ли уже такой email в базе
+  connection.query('SELECT * FROM users WHERE email = ?', [email], async (err, users) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (users.length > 0) return res.status(400).json({ error: "Email already registered" });
+
+    // Хешируем пароль перед сохранением
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Вставляем нового пользователя с role='user'
+    const sql = "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, 'user')";
+    connection.query(sql, [name, email, hashedPassword], (err, result) => {
+      if (err) return res.status(500).json({ error: err.message });
+
+      res.json({ message: "User registered successfully", userId: result.insertId });
+    });
+  });
 });
 
+// 🔹 Логин (возвращает JWT)
+app.post('/login', (req, res) => {
+  const { email, password } = req.body;
+  request_select(email)
+    .then(async (user) => {
+      if (!user || user.length === 0) return res.status(401).json({ error: 'User not found' });
 
-app.post('/insert', (req, res) => {
-  const { name, email, password } = req.body; 
-  request_insert(name, email, password)
-    .then(result => res.json({ request: result }))
-    .catch(err => res.status(500).json({ error: err.message }));
+      const match = await bcrypt.compare(password, user[0].password);
+      if (!match) return res.status(401).json({ error: 'Invalid credentials' });
+
+      const token = jwt.sign({ id: user[0].id, email: user[0].email, role: user[0].role }, SECRET_KEY, { expiresIn: '1h' });
+      res.json({ token });
+    })
+    .catch((err) => res.status(500).json({ error: err.message }));
 });
 
-
-app.post('/update', (req, res) => {
-  const { id, name, email, password } = req.body; 
-  request_update(id, name, email, password)
-    .then(result => res.json({ request: result }))
-    .catch(err => res.status(500).json({ error: err.message }));
+// 🔹 Получение данных о пользователе
+app.get('/user', authenticateToken, (req, res) => {
+  if (req.user.role === 'admin') {
+    request_select_all()
+      .then((result) => res.json({ request: result }))
+      .catch((err) => res.status(500).json({ error: err.message }));
+  } else {
+    request_select(req.user.email)
+      .then((result) => res.json({ request: result }))
+      .catch((err) => res.status(500).json({ error: err.message }));
+  }
 });
 
-
-function request_select(id , email, password, name) {
+// 🔹 Функция запроса данных пользователя
+function request_select(email) {
   return new Promise((resolve, reject) => {
-    let sql_select = "SELECT * FROM users";
-    const params = [];
-
-    if (id) {
-      sql_select += " WHERE ID = ?";
-      params.push(id);
-    }
-
-    if (email) {
-      sql_select += " WHERE email = ?";
-      params.push(email);
-    }
-
-    if (password) {
-      sql_select += " WHERE password = ?";
-      params.push(password);
-    }
-
-    if (name) {
-      sql_select += " WHERE name = ?";
-      params.push(name);
-    }
-
-
-    connection.query(sql_select, params, (err, result) => { 
+    const sql = "SELECT id, name, email, role, password FROM users WHERE email = ?";
+    connection.query(sql, [email], (err, result) => {
       if (err) return reject(err);
-      console.log("Request", result);
       resolve(result);
     });
   });
 }
 
-
-function request_insert(name, email, password) {
+// 🔹 Функция запроса всех пользователей (только для админа)
+function request_select_all() {
   return new Promise((resolve, reject) => {
-    const sql_insert = "INSERT INTO users (name, email, password) VALUES (?, ?, ?)";
-    const params = [name, email, password];
+    const sql = "SELECT id, name, email, role FROM users";
+    connection.query(sql, [], (err, result) => {
+      if (err) return reject(err);
+      resolve(result);
+    });
+  });
+}
+
+// 🔹 Функция регистрации пользователя
+function request_insert(name, email, password, role = 'user') {
+  return new Promise((resolve, reject) => {
+    const sql_insert = "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)";
+    const params = [name, email, password, role];
 
     connection.query(sql_insert, params, (err, result) => { 
       if (err) return reject(err);
@@ -94,15 +128,45 @@ function request_insert(name, email, password) {
   });
 }
 
+// 🔹 Генерация ссылки для сброса пароля
+app.post('/reset-password', (req, res) => {
+  const { email } = req.body;
+  
+  request_select(email).then(user => {
+    if (!user || user.length === 0) return res.status(404).json({ error: 'User not found' });
 
-function request_update(id, name, email, password) {
+    const resetToken = jwt.sign({ email }, SECRET_KEY, { expiresIn: '15m' }); // Токен на 15 минут
+    const resetLink = `http://localhost/reset-password?token=${resetToken}`;
+    
+    // 🔹 Отправляем ссылку на email (здесь можно заменить на реальный SMTP)
+    console.log(`Reset link: ${resetLink}`);
+
+    res.json({ message: 'Reset link sent to email' });
+  }).catch(err => res.status(500).json({ error: err.message }));
+});
+
+// 🔹 Установка нового пароля
+app.post('/new-password', async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  try {
+    const decoded = jwt.verify(token, SECRET_KEY);
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    request_update_password(decoded.email, hashedPassword)
+      .then(() => res.json({ message: 'Password updated' }))
+      .catch(err => res.status(500).json({ error: err.message }));
+  } catch (err) {
+    res.status(400).json({ error: 'Invalid or expired token' });
+  }
+});
+
+// 🔹 Функция для обновления пароля в базе
+function request_update_password(email, password) {
   return new Promise((resolve, reject) => {
-    const sql_update = "UPDATE users SET name = ?, email = ?, password = ? WHERE ID = ?";
-    const params = [name, email, password, id];
-
-    connection.query(sql_update, params, (err, result) => { 
+    const sql = "UPDATE users SET password = ? WHERE email = ?";
+    connection.query(sql, [password, email], (err, result) => {
       if (err) return reject(err);
-      console.log("Database request", result);
       resolve(result);
     });
   });
