@@ -1,5 +1,5 @@
 <?php
-  define("ROOT_LOCATION", "xampp\htdocs\Meetify");
+  /*define("ROOT_LOCATION", "xampp\htdocs\Meetify");
   $directory = ROOT_LOCATION;
 
   $server = mysqli_connect('localhost', 'root', '', 'meetify');
@@ -33,7 +33,7 @@
        }
     }
   }
-
+*/
 ?>
 
 <!DOCTYPE html>

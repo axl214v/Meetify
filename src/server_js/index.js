@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 
 const app = express();
-const SECRET_KEY = "012001"; // Используй process.env.SECRET_KEY на проде
+const SECRET_KEY = "012001"; 
 
 app.use(express.json());
 
@@ -29,7 +29,6 @@ connection.connect((err) => {
   console.log('Connected to the MySQL server.');
 });
 
-// 🔹 Мидлвар для проверки токена
 function authenticateToken(req, res, next) {
   const token = req.headers['authorization'];
   if (!token) return res.status(401).json({ error: 'Unauthorized' });
@@ -41,19 +40,15 @@ function authenticateToken(req, res, next) {
   });
 }
 
-// 🔹 Регистрация пользователей
 app.post('/register', async (req, res) => {
-  const { name, email, password } = req.body; // Убираем `role` из запроса
+  const { name, email, password } = req.body; 
 
-  // Проверяем, есть ли уже такой email в базе
   connection.query('SELECT * FROM users WHERE email = ?', [email], async (err, users) => {
     if (err) return res.status(500).json({ error: err.message });
     if (users.length > 0) return res.status(400).json({ error: "Email already registered" });
 
-    // Хешируем пароль перед сохранением
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Вставляем нового пользователя с role='user'
     const sql = "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, 'user')";
     connection.query(sql, [name, email, hashedPassword], (err, result) => {
       if (err) return res.status(500).json({ error: err.message });
@@ -63,7 +58,6 @@ app.post('/register', async (req, res) => {
   });
 });
 
-// 🔹 Логин (возвращает JWT)
 app.post('/login', (req, res) => {
   const { email, password } = req.body;
   request_select(email)
@@ -79,7 +73,6 @@ app.post('/login', (req, res) => {
     .catch((err) => res.status(500).json({ error: err.message }));
 });
 
-// 🔹 Получение данных о пользователе
 app.get('/user', authenticateToken, (req, res) => {
   if (req.user.role === 'admin') {
     request_select_all()
@@ -92,7 +85,6 @@ app.get('/user', authenticateToken, (req, res) => {
   }
 });
 
-// 🔹 Функция запроса данных пользователя
 function request_select(email) {
   return new Promise((resolve, reject) => {
     const sql = "SELECT id, name, email, role, password FROM users WHERE email = ?";
@@ -103,7 +95,6 @@ function request_select(email) {
   });
 }
 
-// 🔹 Функция запроса всех пользователей (только для админа)
 function request_select_all() {
   return new Promise((resolve, reject) => {
     const sql = "SELECT id, name, email, role FROM users";
@@ -114,7 +105,6 @@ function request_select_all() {
   });
 }
 
-// 🔹 Функция регистрации пользователя
 function request_insert(name, email, password, role = 'user') {
   return new Promise((resolve, reject) => {
     const sql_insert = "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)";
@@ -128,24 +118,21 @@ function request_insert(name, email, password, role = 'user') {
   });
 }
 
-// 🔹 Генерация ссылки для сброса пароля
 app.post('/reset-password', (req, res) => {
   const { email } = req.body;
   
   request_select(email).then(user => {
     if (!user || user.length === 0) return res.status(404).json({ error: 'User not found' });
 
-    const resetToken = jwt.sign({ email }, SECRET_KEY, { expiresIn: '15m' }); // Токен на 15 минут
+    const resetToken = jwt.sign({ email }, SECRET_KEY, { expiresIn: '15m' }); 
     const resetLink = `http://localhost/reset-password?token=${resetToken}`;
     
-    // 🔹 Отправляем ссылку на email (здесь можно заменить на реальный SMTP)
     console.log(`Reset link: ${resetLink}`);
 
     res.json({ message: 'Reset link sent to email' });
   }).catch(err => res.status(500).json({ error: err.message }));
 });
 
-// 🔹 Установка нового пароля
 app.post('/new-password', async (req, res) => {
   const { token, newPassword } = req.body;
 
@@ -161,7 +148,6 @@ app.post('/new-password', async (req, res) => {
   }
 });
 
-// 🔹 Функция для обновления пароля в базе
 function request_update_password(email, password) {
   return new Promise((resolve, reject) => {
     const sql = "UPDATE users SET password = ? WHERE email = ?";

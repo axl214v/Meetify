@@ -1,5 +1,5 @@
 <?php
-  define("ROOT_LOCATION", "xampp\htdocs\Meetify");
+  /*define("ROOT_LOCATION", "xampp\htdocs\Meetify");
   $directory = ROOT_LOCATION;
   
   $server = mysqli_connect('localhost', 'root', '', 'meetify');
@@ -20,25 +20,25 @@
       $email = $_POST["email"];
       $password = $_POST["password"];
       $checkeml =  ("SELECT email FROM users").
-      ("WHERE email = "$email"");
+      ("WHERE email = $email");
       $checkpass = ( "SELECT password FROM users").
-      ("WHERE password = "$password"");
+      ("WHERE password = $password");
        $CheckEmail = mysqli_query($checkeml);
        $CheckPassword = mysqli_query($checkpass);
-       if ($CheckEmail, $CheckPassword = false){
+       if ($CheckEmail AND $CheckPassword = false){
           echo ("Извините, что-то пошло не так.");
           echo ("Попробуйте еще раз или напишите нам в поддержку!");
-        if ($CheckEmail = $checkeml, $CheckPassword = $checkpass){
+        if ($CheckEmail = $checkeml AND $CheckPassword = $checkpass){
           $new_url = 'https://localhost/meetify/conf/conf.php';
           return header('Location: '.$new_url);
           }
-        elseif ($CheckEmail != $checkeml, $CheckPassword != $checkpass) {
+        elseif ($CheckEmail != $checkeml OR $CheckPassword != $checkpass) {
           echo ("Неверный логин или пароль.");
         }
        }
     }
   }
-
+*/
 ?>
 
 <!DOCTYPE html>

@@ -1,5 +1,5 @@
 <?php
-  define("ROOT_LOCATION", "xampp\htdocs\Meetify");
+  /*define("ROOT_LOCATION", "xampp\htdocs\Meetify");
   $directory = ROOT_LOCATION;
   
   $server = mysqli_connect('localhost', 'root', '', 'meetify');
@@ -20,19 +20,19 @@
       $name = $_POST["name"];
       $email = $_POST["email"];
       $CheckUser = ("SELECT email FROM users").
-      ("WHERE email = "$email"");
+      ("WHERE email = $email");
       $result = mysqli_query($server, $CheckUser);
-      if ($CheckEmail, $CheckPassword = false){
+      if ($CheckEmail AND $CheckPassword = false){
         echo ("Извините, что-то пошло не так.");
         echo ("Попробуйте еще раз или напишите нам в поддержку!");
-      elseif ($email != $CheckUser){
+      if ($email != $CheckUser){
         echo("Неправильная почта.");
       }
-      return echo("Выслали вам на почту код подтверждения");
+      return {echo("Выслали вам на почту код подтверждения")}
     }
     
   }
-  }
+  }*/
 
 ?>
 
