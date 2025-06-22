@@ -1,8 +1,6 @@
-const fetch = require('fetch');
 
 fetch("http://localhost:3000/login", {
   method: "POST",
-  mode: 'no-cors',
   body: JSON.stringify({
     email: "axl214v@gmail.com",
     password: ""

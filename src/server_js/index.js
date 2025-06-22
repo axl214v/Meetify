@@ -2,11 +2,13 @@ const mysql = require('mysql');
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const cors = require('cors');
 const nodemailer = require('nodemailer');
 
 const app = express();
 const SECRET_KEY = "012001"; 
 
+app.use(cors());
 app.use(express.json());
 
 app.listen(3000, () => {
@@ -42,17 +44,16 @@ function authenticateToken(req, res, next) {
 
 app.post('/register', async (req, res) => {
   const { name, email, password } = req.body; 
+  if (!name || !email || !password) return res.status(400).json({ error: 'Missing required fields' });
 
   connection.query('SELECT * FROM users WHERE email = ?', [email], async (err, users) => {
     if (err) return res.status(500).json({ error: err.message });
     if (users.length > 0) return res.status(400).json({ error: "Email already registered" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const sql = "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, 'user')";
     connection.query(sql, [name, email, hashedPassword], (err, result) => {
       if (err) return res.status(500).json({ error: err.message });
-
       res.json({ message: "User registered successfully", userId: result.insertId });
     });
   });
@@ -60,10 +61,11 @@ app.post('/register', async (req, res) => {
 
 app.post('/login', (req, res) => {
   const { email, password } = req.body;
+  if (!email || !password) return res.status(400).json({ error: 'Missing required fields' });
+
   request_select(email)
     .then(async (user) => {
       if (!user || user.length === 0) return res.status(401).json({ error: 'User not found' });
-
       const match = await bcrypt.compare(password, user[0].password);
       if (!match) return res.status(401).json({ error: 'Invalid credentials' });
 
@@ -83,6 +85,7 @@ app.get('/user', authenticateToken, (req, res) => {
       .then((result) => res.json({ request: result }))
       .catch((err) => res.status(500).json({ error: err.message }));
   }
+  console.log('Authenticated user:', req.user);
 });
 
 function request_select(email) {
@@ -109,10 +112,8 @@ function request_insert(name, email, password, role = 'user') {
   return new Promise((resolve, reject) => {
     const sql_insert = "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)";
     const params = [name, email, password, role];
-
     connection.query(sql_insert, params, (err, result) => { 
       if (err) return reject(err);
-      console.log("Database request", result);
       resolve(result);
     });
   });
@@ -120,13 +121,13 @@ function request_insert(name, email, password, role = 'user') {
 
 app.post('/reset-password', (req, res) => {
   const { email } = req.body;
-  
+  if (!email) return res.status(400).json({ error: 'Missing email' });
+
   request_select(email).then(user => {
     if (!user || user.length === 0) return res.status(404).json({ error: 'User not found' });
 
     const resetToken = jwt.sign({ email }, SECRET_KEY, { expiresIn: '15m' }); 
     const resetLink = `http://localhost/reset-password?token=${resetToken}`;
-    
     console.log(`Reset link: ${resetLink}`);
 
     res.json({ message: 'Reset link sent to email' });
@@ -135,6 +136,7 @@ app.post('/reset-password', (req, res) => {
 
 app.post('/new-password', async (req, res) => {
   const { token, newPassword } = req.body;
+  if (!token || !newPassword) return res.status(400).json({ error: 'Missing token or new password' });
 
   try {
     const decoded = jwt.verify(token, SECRET_KEY);
@@ -157,3 +159,10 @@ function request_update_password(email, password) {
     });
   });
 }
+app.get('/users', authenticateToken, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+
+  request_select_all()
+    .then((users) => res.json({ users }))
+    .catch((err) => res.status(500).json({ error: err.message }));
+});
