@@ -1,13 +1,12 @@
-
-fetch("http://localhost:3000/login", {
-  method: "POST",
-  body: JSON.stringify({
-    email: "axl214v@gmail.com",
-    password: ""
-  }),
+fetch('localhost/login', {
+  method: 'POST',
   headers: {
-    "Content-type": "application/json; charset=UTF-8"
-  }
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    name: 'Hubot',
+    login: 'hubot',
+  })
 })
   .then((response) => response.json())
   .then((json) => console.log(json));
