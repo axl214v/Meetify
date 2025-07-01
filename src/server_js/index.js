@@ -4,16 +4,21 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
+const cookieParser = require('cookie-parser');
 
 const app = express();
 const SECRET_KEY = "012001"; 
 
-app.use(cors());
 app.use(express.json());
-
+app.use(cookieParser());
+app.use(express.urlencoded({ extended: true }));
 app.listen(3000, () => {
   console.log('App listening on port 3000!');
 });
+app.use(cors({
+  origin: 'http://localhost',
+  credentials: true
+}));
 
 let connection = mysql.createConnection({
   host: process.env.DB_HOST,
@@ -32,15 +37,17 @@ connection.connect((err) => {
 });
 
 function authenticateToken(req, res, next) {
-  const token = req.headers['authorization'];
+  const token = req.cookies.token;
+
   if (!token) return res.status(401).json({ error: 'Unauthorized' });
 
   jwt.verify(token, SECRET_KEY, (err, user) => {
-    if (err) return res.status(403).json({ error: 'Forbidden' });
+    if (err) return res.status(403).json({ error: 'Invalid token' });
     req.user = user;
     next();
   });
 }
+
 
 app.post('/register', async (req, res) => {
   const { name, email, password } = req.body; 
@@ -70,10 +77,22 @@ app.post('/login', (req, res) => {
       if (!match) return res.status(401).json({ error: 'Invalid credentials' });
 
       const token = jwt.sign({ id: user[0].id, email: user[0].email, role: user[0].role }, SECRET_KEY, { expiresIn: '1h' });
-      res.json({ token });
+
+      res.cookie('token', token, {
+        httpOnly: true,
+        secure: false, 
+        sameSite: 'Lax',
+        maxAge: 60 * 60 * 1000 
+      }) ;
+
+res.json({ message: 'Authorizated' });
+
+});
+res.sendStatus(200);
+
     })
     .catch((err) => res.status(500).json({ error: err.message }));
-});
+;
 
 app.get('/user', authenticateToken, (req, res) => {
   if (req.user.role === 'admin') {
