@@ -88,11 +88,7 @@ app.post('/login', (req, res) => {
 res.json({ message: 'Authorizated' });
 
 });
-res.sendStatus(200);
-
     })
-    .catch((err) => res.status(500).json({ error: err.message }));
-;
 
 app.get('/user', authenticateToken, (req, res) => {
   if (req.user.role === 'admin') {
@@ -105,6 +101,15 @@ app.get('/user', authenticateToken, (req, res) => {
       .catch((err) => res.status(500).json({ error: err.message }));
   }
   console.log('Authenticated user:', req.user);
+});
+
+app.get('/check-auth', authenticateToken, (req, res) => {
+  res.json({ authenticated: true, user: req.user });
+});
+
+app.post('/logout', (req, res) => {
+  res.clearCookie('token');
+  res.json({ message: 'Logged out' });
 });
 
 function request_select(email) {

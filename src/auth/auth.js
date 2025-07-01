@@ -1,3 +1,20 @@
+fetch('http://localhost:3000/check-auth', {
+  method: 'GET',
+  credentials: 'include'
+})
+.then(res => {
+  if (res.ok) return res.json();
+  throw new Error('Not authenticated');
+})
+.then(data => {
+  if (data.authenticated) {
+    window.location.href = '../Conf/conf.html';
+  }
+})
+.catch(err => {
+  console.log('Пользователь не авторизован:', err.message);
+});
+
 document.getElementById('submit').onclick = function () {
   const emailInput = document.getElementById('email');
   const passwordInput = document.getElementById('password');
