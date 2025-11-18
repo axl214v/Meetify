@@ -1,3 +1,4 @@
+// Checking if user is authenticated
 fetch('http://localhost:3000/check-auth', {
   method: 'GET',
   credentials: 'include'
@@ -15,6 +16,7 @@ fetch('http://localhost:3000/check-auth', {
   console.log('Пользователь не авторизован:', err.message);
 });
 
+// Checking login form submission
 document.getElementById('submit').onclick = function () {
   const emailInput = document.getElementById('email');
   const passwordInput = document.getElementById('password');
@@ -37,7 +39,7 @@ document.getElementById('submit').onclick = function () {
     return;
   };
 
-
+  // Sending login request
   fetch('http://localhost:3000/login', {
     method: 'POST',
     headers: {

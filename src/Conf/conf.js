@@ -1,3 +1,4 @@
+// Check authentication status for next step
 fetch('http://localhost:3000/check-auth', {
   method: 'GET',
   credentials: 'include'

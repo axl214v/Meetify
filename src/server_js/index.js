@@ -5,21 +5,23 @@ const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
 const cookieParser = require('cookie-parser');
+// Load neeeded libraries
 
-const app = express();
-const SECRET_KEY = "012001"; 
+const app = express(); // Create an Express application
+const SECRET_KEY = "012001"; // Secret key for JWT
 
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.listen(3000, () => {
   console.log('App listening on port 3000!');
-});
+}); // Start the server on port 3000
 app.use(cors({
   origin: 'http://localhost',
   credentials: true
-}));
+})); // Enable CORS for requests from localhost
 
+// Create a MySQL connection
 let connection = mysql.createConnection({
   host: process.env.DB_HOST,
   port: process.env.DB_PORT,
@@ -36,6 +38,7 @@ connection.connect((err) => {
   console.log('Connected to the MySQL server.');
 });
 
+// Middleware to authenticate JWT token
 function authenticateToken(req, res, next) {
   const token = req.cookies.token;
 
@@ -49,6 +52,7 @@ function authenticateToken(req, res, next) {
 }
 
 
+// User regisrtation app
 app.post('/register', async (req, res) => {
   const { name, email, password } = req.body; 
   if (!name || !email || !password) return res.status(400).json({ error: 'Missing required fields' });
@@ -66,6 +70,7 @@ app.post('/register', async (req, res) => {
   });
 });
 
+// User login app
 app.post('/login', (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Missing required fields' });
@@ -90,6 +95,7 @@ res.json({ message: 'Authorizated' });
 });
     })
 
+// Fetch user data based on role
 app.get('/user', authenticateToken, (req, res) => {
   if (req.user.role === 'admin') {
     request_select_all()
@@ -103,15 +109,18 @@ app.get('/user', authenticateToken, (req, res) => {
   console.log('Authenticated user:', req.user);
 });
 
+// Check authentication status
 app.get('/check-auth', authenticateToken, (req, res) => {
   res.json({ authenticated: true, user: req.user });
 });
 
+// User logout app
 app.post('/logout', (req, res) => {
   res.clearCookie('token');
   res.json({ message: 'Logged out' });
 });
 
+// Function to get user by email from mysql
 function request_select(email) {
   return new Promise((resolve, reject) => {
     const sql = "SELECT id, name, email, role, password FROM users WHERE email = ?";
@@ -122,6 +131,7 @@ function request_select(email) {
   });
 }
 
+// Function to get all users from mysql
 function request_select_all() {
   return new Promise((resolve, reject) => {
     const sql = "SELECT id, name, email, role FROM users";
@@ -132,6 +142,7 @@ function request_select_all() {
   });
 }
 
+// Function to insert a new user into mysql
 function request_insert(name, email, password, role = 'user') {
   return new Promise((resolve, reject) => {
     const sql_insert = "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)";
@@ -143,6 +154,7 @@ function request_insert(name, email, password, role = 'user') {
   });
 }
 
+// Password reset functionality(not working email part)
 app.post('/reset-password', (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: 'Missing email' });
@@ -158,6 +170,7 @@ app.post('/reset-password', (req, res) => {
   }).catch(err => res.status(500).json({ error: err.message }));
 });
 
+// New password setting app
 app.post('/new-password', async (req, res) => {
   const { token, newPassword } = req.body;
   if (!token || !newPassword) return res.status(400).json({ error: 'Missing token or new password' });
@@ -174,6 +187,7 @@ app.post('/new-password', async (req, res) => {
   }
 });
 
+// Function to update user password in mysql
 function request_update_password(email, password) {
   return new Promise((resolve, reject) => {
     const sql = "UPDATE users SET password = ? WHERE email = ?";
@@ -183,6 +197,8 @@ function request_update_password(email, password) {
     });
   });
 }
+
+// Admin route to get all users
 app.get('/users', authenticateToken, (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
 
