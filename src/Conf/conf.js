@@ -14,13 +14,24 @@ fetch('http://localhost:3000/check-auth', {
 })
 .catch(err => {
   console.log('Пользователь не авторизован:', err.message);
+  alert('Пожалуйста авторизуйтесь!');
   window.location.href = '../auth/auth.html';
 });
 
-fetch('http://localhost:3000/user', {
-  method: 'GET',
-  credentials: 'include'
-})
-.then(data => {
-    console.log('Data fetched successfully');
-  })
+
+// Function that joins the conferention
+function connect_conferention(){
+  var id_conf = document.getElementById('id_conf');
+  fetch('http://localhost:3000/joinconf',{
+    method: 'POST',
+    credentials: 'include',
+    body:{
+      id: id_conf,}
+  .catch(err => {
+    console.log(err.message);
+    alert('Пожалуйста проверьте что конференция доступна и код конференции правильный.');
+  })  
+})}
+
+// Checking if button pressed and call a function
+document.getElementById('conf_connect').onclick = await connect_conferention();

@@ -81,7 +81,7 @@ app.post('/login', (req, res) => {
       const match = await bcrypt.compare(password, user[0].password);
       if (!match) return res.status(401).json({ error: 'Invalid credentials' });
 
-      const token = jwt.sign({ id: user[0].id, email: user[0].email, role: user[0].role }, SECRET_KEY, { expiresIn: '1h' });
+      const token = jwt.sign({ id: user[0].id, email: user[0].email, role: user[0].role }, SECRET_KEY, { expiresIn: '24h' });
 
       res.cookie('token', token, {
         httpOnly: true,
@@ -91,9 +91,7 @@ app.post('/login', (req, res) => {
       }) ;
 
 res.json({ message: 'Authorizated' });
-
-});
-    })
+});})
 
 // Fetch user data based on role
 app.get('/user', authenticateToken, (req, res) => {
@@ -154,6 +152,11 @@ function request_insert(name, email, password, role = 'user') {
   });
 }
 
+// Function to join a conferention(in progress)
+function join_conferention(id) {
+
+}
+
 // Password reset functionality(not working email part)
 app.post('/reset-password', (req, res) => {
   const { email } = req.body;
@@ -205,4 +208,14 @@ app.get('/users', authenticateToken, (req, res) => {
   request_select_all()
     .then((users) => res.json({ users }))
     .catch((err) => res.status(500).json({ error: err.message }));
+});
+
+// User login app
+app.post('/joinconf', (req, res) => {
+  const { id } = req.body;
+  if (!id) return res.status(400).json({ error: 'Missing required fields' });
+
+  join_conferention();
+
+res.json({ message: 'Authorizated' });
 });
