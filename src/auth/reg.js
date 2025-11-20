@@ -1,3 +1,11 @@
+// Check service status
+fetch('localhost:3000/check-status', {
+  method: 'GET'
+  .then(res => {
+        if (res.ok) return res.json();}),
+        else: alert('Сервис временно не доступен. Попробуйте позже.')
+}); 
+
 document.getElementById('submit').onclick = function () {
   const nameInput = document.getElementById('name');
   const emailInput = document.getElementById('email');

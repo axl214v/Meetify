@@ -219,3 +219,8 @@ app.post('/joinconf', (req, res) => {
 
 res.json({ message: 'Authorizated' });
 });
+
+// Simple checking status of server
+app.get('/check-status', (req, res) => {
+  res.json({ status: 'Server is running' });
+});

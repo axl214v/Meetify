@@ -3,3 +3,6 @@ Meetify
 Project created by github.com/axl214v
 
 This project is a new method for conducting team calls.
+
+Before starting project you need to install mysql
+Settings of connection is in .env file directory => /src/server_js/.env

@@ -1,3 +1,11 @@
+// Check service status
+fetch('localhost:3000/check-status', {
+  method: 'GET'
+  .then(res => {
+        if (res.ok) return res.json();}),
+        else: alert('Сервис временно не доступен. Попробуйте позже.')
+}); 
+
 // Check authentication status for next step
 fetch('http://localhost:3000/check-auth', {
   method: 'GET',
