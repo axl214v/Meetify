@@ -26,6 +26,9 @@ fetch('http://localhost:3000/check-auth', {
 
 // Checking login form submission
 document.getElementById('submit').onclick = function () {
+  const submitButton = document.getElementById('submit');
+  submitButton.disabled = true;
+  submitButton.textContent = 'Вход...';
   const emailInput = document.getElementById('email');
   const passwordInput = document.getElementById('password');
   const email = emailInput.value.trim();
@@ -58,13 +61,19 @@ document.getElementById('submit').onclick = function () {
   })
   .then(async response => {
     if (response.status === 200) {
+      submitButton.disabled = false;
+      submitButton.textContent = 'Войти';
       window.location.href = '../Conf/conf.html';
     } else if (response.status === 401) {     
       alert('Неверный логин или пароль');
+      submitButton.disabled = false;
+      submitButton.textContent = 'Войти';
     } else {
       const errorText = await response.text();
       console.error('Ошибка входа:', errorText);
       alert('Ошибка сервера или сети');
+      submitButton.disabled = false;
+      submitButton.textContent = 'Войти';
     }
   })
   .catch(err => {

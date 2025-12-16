@@ -7,6 +7,8 @@ fetch('localhost:3000/check-status', {
 }); 
 
 document.getElementById('submit').onclick = function () {
+  submitButton.disabled = true;
+  submitButton.textContent = 'Вход...';
   const nameInput = document.getElementById('name');
   const emailInput = document.getElementById('email');
   const passwordInput = document.getElementById('password');
@@ -40,9 +42,13 @@ document.getElementById('submit').onclick = function () {
 
     if (response.status === 200) {
       window.location.href = 'auth.html';
+      submitButton.disabled = false;
+      submitButton.textContent = 'Войти';
     } else {
       console.error('Ошибка регистрации:', result.error || result);
       alert(result.error || 'Ошибка сервера');
+      submitButton.disabled = false;
+      submitButton.textContent = 'Войти';
     }
   })
   .catch(err => {
