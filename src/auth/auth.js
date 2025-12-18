@@ -1,10 +1,18 @@
 // Check service status
-fetch('localhost:3000/check-status', {
+fetch('http://localhost:3000/check-status', {
   method: 'GET'
-  .then(res => {
-        if (res.ok) return res.json();}),
-        else: alert('Сервис временно не доступен. Попробуйте позже.')
-}); 
+})
+.then(res => {
+  if (res.ok) {
+    return res.json();
+  } else {
+    alert('Service temporarily unavailable. Please try again later.');
+  }
+})
+.catch(err => {
+  console.error('Service status check failed:', err);
+  alert('Service temporarily unavailable. Please try again later.');
+});
 
 // Checking if user is authenticated
 fetch('http://localhost:3000/check-auth', {
@@ -12,7 +20,9 @@ fetch('http://localhost:3000/check-auth', {
   credentials: 'include'
 })
 .then(res => {
-  if (res.ok) return res.json();
+  if (res.ok) {
+    return res.json();
+  }
   throw new Error('Not authenticated');
 })
 .then(data => {
@@ -21,34 +31,39 @@ fetch('http://localhost:3000/check-auth', {
   }
 })
 .catch(err => {
-  console.log('Пользователь не авторизован:', err.message);
+  console.log('User not authenticated:', err.message);
 });
 
 // Checking login form submission
-document.getElementById('submit').onclick = function () {
+document.getElementById('submit').addEventListener('click', function (e) {
+  e.preventDefault();
+  
   const submitButton = document.getElementById('submit');
-  submitButton.disabled = true;
-  submitButton.textContent = 'Вход...';
   const emailInput = document.getElementById('email');
   const passwordInput = document.getElementById('password');
   const email = emailInput.value.trim();
   const password = passwordInput.value.trim();
 
-  emailInput.style.border = '';
-  passwordInput.style.border = '';
+  // Reset previous error states
+  emailInput.classList.remove('error', 'success');
+  passwordInput.classList.remove('error', 'success');
 
   if (!email || !password) {
-    alert('Пожалуйста, заполните все поля.');
-
+    alert('Please fill in all required fields.');
+    
     if (!email) {
-      emailInput.style.border = '2px solid red';
+      emailInput.classList.add('error');
     }
     if (!password) {
-      passwordInput.style.border = '2px solid red';
+      passwordInput.classList.add('error');
     }
-
+    
     return;
-  };
+  }
+
+  // Disable button and show loading state
+  submitButton.disabled = true;
+  submitButton.textContent = 'Logging in...';
 
   // Sending login request
   fetch('http://localhost:3000/login', {
@@ -62,22 +77,34 @@ document.getElementById('submit').onclick = function () {
   .then(async response => {
     if (response.status === 200) {
       submitButton.disabled = false;
-      submitButton.textContent = 'Войти';
+      submitButton.textContent = 'Login';
       window.location.href = '../Conf/conf.html';
     } else if (response.status === 401) {     
-      alert('Неверный логин или пароль');
+      alert('Invalid email or password');
       submitButton.disabled = false;
-      submitButton.textContent = 'Войти';
+      submitButton.textContent = 'Login';
+      passwordInput.classList.add('error');
     } else {
       const errorText = await response.text();
-      console.error('Ошибка входа:', errorText);
-      alert('Ошибка сервера или сети');
+      console.error('Login error:', errorText);
+      alert('Server error. Please try again later.');
       submitButton.disabled = false;
-      submitButton.textContent = 'Войти';
+      submitButton.textContent = 'Login';
     }
   })
   .catch(err => {
-    console.error('Ошибка запроса:', err);
-    alert('Ошибка запроса: сервер недоступен?');
+    console.error('Login request failed:', err);
+    alert('Network error. Please check your connection and try again.');
+    submitButton.disabled = false;
+    submitButton.textContent = 'Login';
   });
-};
+});
+
+// Handle navigation buttons
+document.getElementById('authb').addEventListener('click', function() {
+  window.location.href = 'Reg.html';
+});
+
+document.getElementById('reset').addEventListener('click', function() {
+  window.location.href = 'resetpass.html';
+});

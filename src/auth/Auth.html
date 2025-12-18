@@ -2,29 +2,51 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Meetify - Авторизация</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meetify - Authorization</title>
   <link rel="stylesheet" href="auth_reg.css">
   <link rel="icon" href="/meetify/assets/logo.png">
-  <h1>Авторизация</h1>
-  <h2>Форма Авторизации</h2>
 </head>
 <body>
+  <header>
+    <h1>Authorization</h1>
+  </header>
+  
+  <main>
+    <section>
+      <h2>Authorization Form</h2>
+      <form id="auth-form">
+        <div>
+          <label for="email">Email:</label>
+          <input type="email" maxlength="36" name="email" id="email" required>
+        </div>
+        <div>
+          <label for="password">Password:</label>
+          <input type="password" maxlength="36" name="password" id="password" required>
+        </div>
+        <div>
+          <button type="submit" id="submit">Authorize</button>
+        </div>
+      </form>
+    </section>
+    
+    <section class="auth-links">
+      <div>
+        <a href="Reg.html">Not registered?</a>
+        <button id="authb">Register!</button>
+      </div>
+      <div>
+        <a href="resetpass.html">Forgot password?</a>
+        <button id="reset">Reset it!</button>
+      </div>
+    </section>
+  </main>
+  
   <footer>
-    <p>Почта:</p>
-    <input maxleght="36" name="email" id="email" required = 'Пожалуйста заполните это поле.'>
-    <p>Пароль:</p>
-    <input maxleght="36" name="password" id="password" required>
-    <button id="submit">Авторизироваться</button>
+    <p>&copy; 2024 Meetify. All rights reserved.</p>
   </footer>
-  <div id = "auth">
-    <a>Не зарегестрованны?</a>
-    <button id = "authb"><a href = 'Reg.html'>Зарегестрируйтесь!</a></button>
-  </div>
-  <div>
-    <a>Забыли пароль?</a>
-    <button id = "reset"><a href = 'resetpass.html'>Сбросьте его!</a></button>
-  </div>
-  <script src = auth.js></script>
-  <noscript>Извините, ваш браузер не поддерживает JavaScript.</noscript>
+  
+  <script src="auth.js"></script>
+  <noscript>Sorry, your browser does not support JavaScript.</noscript>
 </body>
 </html>
