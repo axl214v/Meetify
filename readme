@@ -1,8 +1,119 @@
-Meetify
+# Meetify
 
-Project created by github.com/axl214v
+**Meetify** - web application for video conferencing, developed using modern web technologies. Currently, only the authentication and registration system has been implemented.
 
-This project is a new method for conducting team calls.
+## Features
 
-Before starting project you need to install mysql
-Settings of connection is in .env file directory => /src/server_js/.env
+- **Web application for video conferencing** - creating a platform for online meetings and conferences
+- **Authentication and registration system** - current implementation includes all basic authentication features
+- **Scalable architecture** - preparation for expanding functionality
+
+## Technologies
+
+### Frontend
+- HTML5
+- CSS3
+- JavaScript (ES6+)
+
+### Backend
+- Node.js
+- Express.js
+
+### Database
+- MySQL
+
+### Additional Dependencies
+- `mysql` - database operations
+- `express` - web framework
+- `bcrypt` - password encryption
+- `jsonwebtoken` - JWT token handling
+- `cors` - CORS configuration
+- `nodemailer` - email notifications
+- `cookie-parser` - cookie handling
+
+## Project Architecture
+
+```
+meetify/
+├── src/
+│   ├── server_js/          # Server-side code
+│   │   ├── .env            # Database connection configuration
+│   │   └── index.js        # Main server file
+│   └── client/             # Frontend
+│       ├── index.html      # Main page
+│       ├── auth/           # Authentication pages
+│       └── conf/           # Conferation pages
+└── README.md               # Documentation
+```
+
+## Installation and Setup
+
+### Requirements
+- Node.js (version 14+ recommended)
+- MySQL (or XAMPP for local development)
+- Apache Web Server
+
+### Installation Steps
+
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+2. **Database setup:**
+   - Start MySQL (through XAMPP or separately)
+   - Create database for the project
+
+3. **Configure environment variables:**
+   - Copy `.env.example` to `.env`
+   - Fill in database connection parameters
+
+4. **Start the server:**
+   ```bash
+   cd src/server_js/
+   node --env .env index.js
+   ```
+
+5. **Start web server:**
+   - Start Apache server
+   - Place frontend in Apache directory
+
+## Security
+
+- Password encryption using bcrypt
+- JWT token handling for authentication
+- Protection against malicious code on frontend
+- CORS configuration for secure interaction
+
+## Planned Features
+
+- Creating and managing video conferences
+- Chat and message exchange
+- Screen sharing and meeting recording
+- User and room management
+- Docker support for easy deployment
+
+## Roadmap
+
+- [x] Authentication and registration
+- [ ] Video conference creation
+- [ ] Chat and messaging
+- [ ] Screen sharing and recording
+- [ ] Docker support
+- [ ] Improved visual interface
+
+## Project Structure
+
+- `/src/server_js/` - Node.js server-side code
+- `/src/client/` - Client-side code (HTML, CSS, JS)
+- `/src/client/auth/` - Authentication and registration pages
+
+## License
+
+[Specify project license]
+
+## Developer
+
+Created by [github.com/axl214v](https://github.com/axl214v)
+
+> **Note**: The project is under development. Only authentication and registration system is implemented. Main functionality will be added in future versions.
