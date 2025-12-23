@@ -1,5 +1,5 @@
 const mysql = require('mysql');
-const config = require('./config');
+const config = require('../config/config');
 
 // Создаем пул соединений для лучшей производительности
 const pool = mysql.createPool({

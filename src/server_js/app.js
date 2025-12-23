@@ -4,14 +4,12 @@ const cookieParser = require('cookie-parser');
 const path = require('path');
 const config = require('./config/config');
 
-const connectDB = require('./config/database');
+const db = require('./config/database');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
+const conferenceRoutes = require('./routes/conferenceRoutes');
 
 const app = express();
-
-// Подключение к базе данных
-connectDB();
 
 // Middleware
 app.use(cors(config.client.allowedOrigins));
@@ -22,6 +20,7 @@ app.use(cookieParser());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/conferences', conferenceRoutes);
 
 // Serve static files from client directory
 app.use(express.static(path.join(__dirname, '../client')));
