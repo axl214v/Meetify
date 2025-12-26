@@ -1,19 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="conf.css">
-    <title>Meetify</title>
-    <h1>Присоединиться к конференции</h1>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Meetify – Присоединиться к конференции</title>
+  <link rel="stylesheet" href="conf.css">
 </head>
 <body>
-    <div>
-        <p>Код конференции:</p>
-        <input maxleght="10" id="id_conf" required = 'Пожалуйста заполните это поле.' type="number">
-        <button id = "conf_connect">Присоединиться!</button>
-    </div>
-    <script src="conf.js"></script>
-    <noscript>Извините, ваш браузер не поддерживает JavaScript.</noscript>
+  <h1>Присоединиться к конференции</h1>
+
+  <main>
+    <p>Код конференции:</p>
+    <input id="id_conf" type="number" maxlength="10" placeholder="Введите код" required>
+    <button id="conf_connect">Присоединиться!</button>
+  </main>
+
+  <script src="conf.js" defer></script>
+  <noscript>Извините, ваш браузер не поддерживает JavaScript.</noscript>
 </body>
 </html>

@@ -1,48 +1,78 @@
-// import react
-import React, { useState } from 'react';
+const API_BASE = 'http://localhost:3000';
 
-// Check service status
-fetch('localhost:3000/check-status', {
-  method: 'GET'
-  .then(res => {
-        if (res.ok) return res.json();}),
-        else: alert('Сервис временно не доступен. Попробуйте позже.')
-}); 
-
-// Check authentication status for next step
-fetch('http://localhost:3000/check-auth', {
-  method: 'GET',
-  credentials: 'include'
-})
-.then(res => {
-  if (res.ok) return res.json();
-  throw new Error('Not authenticated');
-})
-.then(data => {
-  if (data.authenticated) {
-   return;
+async function checkServiceStatus() {
+  try {
+    const res = await fetch(`${API_BASE}/check-status`, { method: 'GET' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    console.log('Service status:', data);
+  } catch (err) {
+    console.error('Service unavailable:', err);
+    alert('Сервис временно недоступен. Попробуйте позже.');
   }
-})
-.catch(err => {
-  console.log('Пользователь не авторизован:', err.message);
-  alert('Пожалуйста авторизуйтесь!');
-  window.location.href = '../auth/auth.html';
+}
+
+
+async function checkAuthStatus() {
+  try {
+    const res = await fetch(`${API_BASE}/check-auth`, {
+      method: 'GET',
+      credentials: 'include',
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (!data.authenticated) {
+      alert('Пожалуйста, авторизуйтесь!');
+      window.location.href = '../auth/auth.html';
+    }
+  } catch (err) {
+    console.error('Auth error:', err);
+    alert('Пожалуйста, авторизуйтесь!');
+    window.location.href = '../auth/auth.html';
+  }
+}
+
+
+async function connectConference() {
+  const idInput = document.getElementById('id_conf');
+  if (!idInput) return;
+
+  const conferenceId = idInput.value.trim();
+  if (!conferenceId) {
+    alert('Введите код конференции.');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/joinconf`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: conferenceId }),
+    });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    window.location.href = `/conference/${data.conferenceId}`;
+  } catch (err) {
+    console.error(err);
+    alert('Проверьте, что конференция доступна и код правильный.');
+  }
+}
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  checkServiceStatus();
+  checkAuthStatus();
+
+  const connectBtn = document.getElementById('conf_connect');
+  if (connectBtn) connectBtn.addEventListener('click', connectConference);
+
+  const createBtn = document.getElementById('createconf');
+  if (createBtn) {
+    // TODO: Реализовать логику создания конференции
+    createBtn.addEventListener('click', () => {
+      alert('Создание конференции пока не реализовано.');
+    });
+  }
 });
-
-
-// Function that joins the conferention
-function connect_conferention(){
-  var id_conf = document.getElementById('id_conf');
-  fetch('http://localhost:3000/joinconf',{
-    method: 'POST',
-    credentials: 'include',
-    body:{
-      id: id_conf,}
-  .catch(err => {
-    console.log(err.message);
-    alert('Пожалуйста проверьте что конференция доступна и код конференции правильный.');
-  })  
-})}
-
-// Checking if button pressed and call a function
-document.getElementById('conf_connect').onclick = await connect_conferention();
