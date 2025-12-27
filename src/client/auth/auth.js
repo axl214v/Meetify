@@ -1,6 +1,3 @@
-// import react
-import React, { useState } from 'react';
-
 // Check service status
 fetch('http://localhost:3000/check-status', {
   method: 'GET'
