@@ -12,7 +12,7 @@ const generateToken = (userData) => {
 };
 
 const verifyToken = (token) => {
-  return jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+  return jwt.verify(token, process.env.JWT_SECRET || 'axl2145kjsdfh!@#$');
 };
 
 module.exports = {

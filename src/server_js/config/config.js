@@ -15,7 +15,7 @@ const config = {
 
   // JWT настройки
   jwt: {
-    secret: process.env.JWT_SECRET || 'your-super-secret-jwt-key-here',
+    secret: process.env.JWT_SECRET || 'axl2145kjsdfh!@#$',
     expiresIn: '24h',
     issuer: 'meetify-app',
     audience: 'meetify-users'
