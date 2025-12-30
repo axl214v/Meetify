@@ -1,5 +1,7 @@
+const API_BASE = 'http://localhost:3000';
+
 // Check service status
-fetch('http://localhost:3000/check-status', {
+fetch(`${API_BASE}/check-status`, {
   method: 'GET'
 })
 .then(res => {
@@ -47,7 +49,7 @@ document.getElementById('submit').addEventListener('click', function (e) {
   submitButton.textContent = 'Registering...';
 
   // Sending registration request
-  fetch('http://localhost:3000/register', {
+  fetch(`${API_BASE}/register`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'

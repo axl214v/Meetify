@@ -1,5 +1,7 @@
+const API_BASE = 'http://localhost:3000';
+
 // Check service status
-fetch('http://localhost:3000/check-status', {
+fetch(`${API_BASE}/check-status`, {
   method: 'GET'
 })
 .then(res => {
@@ -15,7 +17,7 @@ fetch('http://localhost:3000/check-status', {
 });
 
 // Checking if user is authenticated
-fetch('http://localhost:3000/check-auth', {
+fetch(`${API_BASE}/check-auth`, {
   method: 'GET',
   credentials: 'include'
 })
@@ -66,7 +68,7 @@ document.getElementById('submit').addEventListener('click', function (e) {
   submitButton.textContent = 'Logging in...';
 
   // Sending login request
-  fetch('http://localhost:3000/login', {
+  fetch(`${API_BASE}/login`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
