@@ -1,5 +1,7 @@
+// Const of api
 const API_BASE = 'http://localhost:3000';
 
+// Function that checks status of api
 async function checkServiceStatus() {
   try {
     const res = await fetch(`${API_BASE}/check-status`, { method: 'GET' });
@@ -13,6 +15,7 @@ async function checkServiceStatus() {
 }
 
 
+// function that checks if user is logged in
 async function checkAuthStatus() {
   try {
     const res = await fetch(`${API_BASE}/check-auth`, {
@@ -33,6 +36,7 @@ async function checkAuthStatus() {
 }
 
 
+// Function that connects to the conference
 async function connectConference() {
   const idInput = document.getElementById('id_conf');
   if (!idInput) return;
@@ -61,13 +65,14 @@ async function connectConference() {
 }
 
 
+// Checks status of service and checks if user is logged in
 document.addEventListener('DOMContentLoaded', () => {
   checkServiceStatus();
   checkAuthStatus();
-
+// On click connects to the conferention
   const connectBtn = document.getElementById('conf_connect');
   if (connectBtn) connectBtn.addEventListener('click', connectConference);
-
+// On click creates conferention(currently not working)
   const createBtn = document.getElementById('createconf');
   if (createBtn) {
     // TODO: Реализовать логику создания конференции
