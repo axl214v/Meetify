@@ -1,46 +1,378 @@
 /* ------------------------------------------------------------ */
-/*  Common reset + typography                                 */
+/*  Modern reset + typography                                  */
 /* ------------------------------------------------------------ */
-*, *::before, *::after { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+*, *::before, *::after { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0; 
+}
 
-/*  Background gradient ----------------------------------------------------- */
+html { 
+  scroll-behavior: smooth; 
+}
+
 body {
   min-height: 100vh;
-  background: linear-gradient(to right, #e2e2e2, #c9d6ff);
-  color: #000;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #e2e2e2 0%, #c9d6ff 100%);
+  color: #2c3e50;
+  line-height: 1.6;
+  padding: 20px;
+  position: relative;
+}
+
+/*  Декоративные элементы фона */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(201, 214, 255, 0.2) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(226, 226, 226, 0.2) 0%, transparent 50%);
+  z-index: -1;
 }
 
 /*  Typography --------------------------------------------------------------- */
-h1   { font-size: 2rem;  text-align: center; margin: 1rem 0; }
-p, a { font-size: 1rem; text-align: left; margin: 0.5rem 0; }
-main { font-size: 1.5rem; text-align: center; }
+h1 {
+  font-size: 2.8rem;
+  text-align: center;
+  margin: 2rem 0 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+h2 {
+  font-size: 1.8rem;
+  color: #4a5568;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+}
+
+p {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: #4a5568;
+  margin-bottom: 1rem;
+}
+
+main {
+  font-size: 1.2rem;
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 24px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
 
 /*  Buttons -------------------------------------------------------------- */
 button {
-  display: inline-block;
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 2.2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
   cursor: pointer;
   border: none;
-  border-radius: 15px;
-  background: linear-gradient(to right, #e2e2e2, #c9d6ff);
-  color: #fffb00;
-  transition: background 0.25s ease, transform 0.2s;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+  letter-spacing: 0.3px;
+  min-height: 56px;
 }
-button:hover { transform: translateY(-2px); }
-button:active { transform: translateY(0); }
+
+button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: 0.5s;
+}
+
+button:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 25px rgba(102, 126, 234, 0.4);
+}
+
+button:hover::before {
+  left: 100%;
+}
+
+button:active {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+button:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+}
+
+/* Secondary button style */
+button.secondary {
+  background: linear-gradient(135deg, #e2e2e2 0%, #c9d6ff 100%);
+  color: #4a5568;
+  box-shadow: 0 4px 15px rgba(140, 152, 164, 0.1);
+}
+
+button.secondary:hover {
+  box-shadow: 0 8px 20px rgba(140, 152, 164, 0.2);
+}
 
 /*  Inputs --------------------------------------------------------------- */
 input[type="number"],
-input[type="text"] {
-  padding: 0.5rem;
+input[type="text"],
+input[type="password"],
+input[type="datetime-local"],
+textarea,
+select {
+  padding: 1rem 1.2rem;
   font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  width: 200px;
-  margin-right: 0.5rem;
+  font-family: inherit;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  background: white;
+  color: #2c3e50;
+  transition: all 0.3s ease;
+  width: 100%;
+  margin-bottom: 1.2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
 }
 
-/*  Misc --------------------------------------------------------------- */
-.timestep { text-align: right; }
+input[type="number"]:focus,
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="datetime-local"]:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+  transform: translateY(-2px);
+}
+
+textarea {
+  min-height: 120px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+/* Labels for form elements */
+label {
+  display: block;
+  margin-bottom: 0.6rem;
+  font-weight: 600;
+  color: #4a5568;
+  font-size: 1rem;
+}
+
+/* Checkbox and radio button styling */
+input[type="checkbox"],
+input[type="radio"] {
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+  accent-color: #667eea;
+  cursor: pointer;
+}
+
+/*  Container and layout ------------------------------------------------- */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.card {
+  background: white;
+  border-radius: 20px;
+  padding: 2.5rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  margin-bottom: 2rem;
+}
+
+/*  Timestamp styling ---------------------------------------------------- */
+.timestep {
+  text-align: right;
+  font-size: 0.9rem;
+  color: #718096;
+  font-style: italic;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+  margin-top: 2rem;
+}
+
+/*  Links --------------------------------------------------------------- */
+a {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+  position: relative;
+}
+
+a::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  transition: width 0.3s ease;
+}
+
+a:hover {
+  color: #764ba2;
+}
+
+a:hover::after {
+  width: 100%;
+}
+
+/*  Utility classes ----------------------------------------------------- */
+.text-center { text-align: center; }
+.mb-1 { margin-bottom: 1rem; }
+.mb-2 { margin-bottom: 2rem; }
+.mt-1 { margin-top: 1rem; }
+.mt-2 { margin-top: 2rem; }
+.p-1 { padding: 1rem; }
+.p-2 { padding: 2rem; }
+
+/*  Grid system --------------------------------------------------------- */
+.grid {
+  display: grid;
+  gap: 2rem;
+}
+
+.grid-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+
+/*  Responsive design --------------------------------------------------- */
+@media (max-width: 768px) {
+  body {
+    padding: 10px;
+  }
+  
+  h1 {
+    font-size: 2.2rem;
+  }
+  
+  main {
+    padding: 1.5rem;
+    margin: 0 10px;
+  }
+  
+  .grid-2,
+  .grid-3 {
+    grid-template-columns: 1fr;
+  }
+  
+  button {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+  
+  input[type="number"],
+  input[type="text"] {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+}
+
+/*  Animation ----------------------------------------------------------- */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/*  Loading spinner ----------------------------------------------------- */
+.spinner {
+  border: 3px solid rgba(226, 226, 226, 0.3);
+  border-top: 3px solid #667eea;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 2rem auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/*  Alert messages ------------------------------------------------------ */
+.alert {
+  padding: 1.2rem 1.5rem;
+  border-radius: 12px;
+  margin: 1.5rem 0;
+  font-weight: 500;
+  border-left: 5px solid;
+}
+
+.alert-success {
+  background-color: rgba(72, 187, 120, 0.1);
+  border-left-color: #48bb78;
+  color: #276749;
+}
+
+.alert-error {
+  background-color: rgba(245, 101, 101, 0.1);
+  border-left-color: #f56565;
+  color: #c53030;
+}
+
+.alert-info {
+  background-color: rgba(102, 126, 234, 0.1);
+  border-left-color: #667eea;
+  color: #434190;
+}
+
+/*  Custom scrollbar ---------------------------------------------------- */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(226, 226, 226, 0.5);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #e2e2e2 0%, #c9d6ff 100%);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #d1d1d1 0%, #b8c5f2 100%);
+}
