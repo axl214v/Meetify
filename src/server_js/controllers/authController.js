@@ -1,66 +1,188 @@
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const AuthService = require('../services/authService');
 
+// Регистрация нового пользователя
 const register = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const result = await AuthService.register(req.body);
     
-    // Проверка существующего пользователя
-    const existingUser = await User.findByEmail(email);
-    if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
+    res.status(201).json({
+      message: 'User registered successfully',
+      ...result
+    });
+  } catch (error) {
+    console.error('Registration error:', error);
+    
+    // Обработка специфичных ошибок
+    if (error.message.includes('already exists') || error.message.includes('duplicate')) {
+      return res.status(409).json({ 
+        message: 'User with this email already exists' 
+      });
     }
     
-    // Хеширование пароля
-    const hashedPassword = await bcrypt.hash(password, 10);
+    if (error.message.includes('validation') || error.message.includes('Invalid') || error.message.includes('required')) {
+      return res.status(400).json({ 
+        message: error.message 
+      });
+    }
     
-    // Создание пользователя
-    const user = await User.create({
-      email,
-      password: hashedPassword
+    res.status(500).json({ 
+      message: 'An error occurred during registration. Please try again.' 
     });
-    
-    // Генерация JWT токена
-    const token = jwt.sign(
-      { userId: user.id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: '24h' }
-    );
-    
-    res.status(201).json({ token, user: { id: user.id, email } });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
   }
 };
 
+// Вход пользователя
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
     
-    const user = await User.findByEmail(email);
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+    if (!email || !password) {
+      return res.status(400).json({ 
+        message: 'Email and password are required' 
+      });
     }
     
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
-    }
+    const result = await AuthService.login(email, password);
     
-    const token = jwt.sign(
-      { userId: user.id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: '24h' }
-    );
-    
-    res.json({ token, user: { id: user.id, email } });
+    res.json({
+      message: 'Login successful',
+      ...result
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Login error:', error);
+    
+    if (error.message.includes('Invalid')) {
+      return res.status(401).json({ 
+        message: 'Invalid credentials' 
+      });
+    }
+    
+    res.status(500).json({ 
+      message: 'An error occurred during login. Please try again.' 
+    });
+  }
+};
+
+// Обновление токена
+const refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    
+    if (!refreshToken) {
+      return res.status(400).json({ 
+        message: 'Refresh token is required' 
+      });
+    }
+    
+    const result = await AuthService.refreshToken(refreshToken);
+    
+    res.json({
+      message: 'Token refreshed successfully',
+      ...result
+    });
+  } catch (error) {
+    console.error('Token refresh error:', error);
+    
+    if (error.message.includes('Invalid') || error.message.includes('expired')) {
+      return res.status(401).json({ 
+        message: 'Invalid or expired refresh token' 
+      });
+    }
+    
+    res.status(500).json({ 
+      message: 'An error occurred during token refresh' 
+    });
+  }
+};
+
+
+// Выход пользователя
+
+const logout = async (req, res) => {
+  try {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    
+    const result = await AuthService.logout(token);
+    
+    res.json(result);
+  } catch (error) {
+    console.error('Logout error:', error);
+    
+    res.status(500).json({ 
+      message: 'An error occurred during logout' 
+    });
+  }
+};
+
+
+// Получение текущего пользователя
+ 
+const getCurrentUser = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    
+    const user = await AuthService.getCurrentUser(userId);
+    
+    res.json({ user });
+  } catch (error) {
+    console.error('Get current user error:', error);
+    
+    if (error.message.includes('not found')) {
+      return res.status(404).json({ 
+        message: 'User not found' 
+      });
+    }
+    
+    res.status(500).json({ 
+      message: 'An error occurred while fetching user data' 
+    });
+  }
+};
+
+
+// Смена пароля
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.userId;
+    
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ 
+        message: 'Current password and new password are required' 
+      });
+    }
+    
+    await AuthService.changePassword(userId, currentPassword, newPassword);
+    
+    res.json({ 
+      message: 'Password changed successfully' 
+    });
+  } catch (error) {
+    console.error('Change password error:', error);
+    
+    if (error.message.includes('incorrect') || error.message.includes('Invalid')) {
+      return res.status(401).json({ 
+        message: error.message 
+      });
+    }
+    
+    if (error.message.includes('validation') || error.message.includes('must')) {
+      return res.status(400).json({ 
+        message: error.message 
+      });
+    }
+    
+    res.status(500).json({ 
+      message: 'An error occurred while changing password' 
+    });
   }
 };
 
 module.exports = {
   register,
-  login
+  login,
+  refreshToken,
+  logout,
+  getCurrentUser,
+  changePassword
 };
