@@ -435,3 +435,226 @@ function stopScreenShare() {
     document.getElementById('toggleScreen').classList.remove('sharing');
     document.getElementById('toggleScreen').textContent = '🖥️';
 }
+
+// Toggle sidebar
+function toggleSidebar(type) {
+    const participantsSidebar = document.getElementById('participantsSidebar');
+    const chatSidebar = document.getElementById('chatSidebar');
+    
+    if (type === 'participants') {
+        chatSidebar.classList.remove('open');
+        participantsSidebar.classList.toggle('open');
+    } else if (type === 'chat') {
+        participantsSidebar.classList.remove('open');
+        chatSidebar.classList.toggle('open');
+    }
+}
+
+// Close sidebar
+function closeSidebar(type) {
+    if (type === 'participants') {
+        document.getElementById('participantsSidebar').classList.remove('open');
+    } else if (type === 'chat') {
+        document.getElementById('chatSidebar').classList.remove('open');
+    }
+}
+
+// Load participants
+async function loadParticipants() {
+    try {
+        const response = await fetch(`${API_BASE}/api/conferences/${conferenceId}/participants`, {
+            method: 'GET',
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to load participants');
+        }
+
+        const data = await response.json();
+        const participants = data.participants || [];
+
+        renderParticipants(participants);
+        updateParticipantCount();
+
+    } catch (error) {
+        console.error('Load participants error:', error);
+    }
+}
+
+// Render participants list
+function renderParticipants(participants) {
+    const participantsList = document.getElementById('participantsList');
+    
+    if (participants.length === 0) {
+        participantsList.innerHTML = '<p style="color: rgba(255,255,255,0.5); text-align: center;">No participants yet</p>';
+        return;
+    }
+
+    participantsList.innerHTML = participants.map(p => {
+        const initials = (p.userName || p.username || 'U').substring(0, 2).toUpperCase();
+        const hostBadge = p.isHost || p.is_host ? ' 👑' : '';
+        
+        return `
+            <div class="participant-item">
+                <div class="participant-avatar">${initials}</div>
+                <div class="participant-info">
+                    <strong>${escapeHtml(p.userName || p.username || 'Unknown')}${hostBadge}</strong>
+                    <small>Joined ${formatJoinTime(p.joinedAt || p.joined_at)}</small>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Format join time
+function formatJoinTime(timestamp) {
+    if (!timestamp) return 'recently';
+    
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 1) return 'just now';
+    if (diffMins === 1) return '1 minute ago';
+    if (diffMins < 60) return `${diffMins} minutes ago`;
+    
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours === 1) return '1 hour ago';
+    return `${diffHours} hours ago`;
+}
+
+// Update participant count
+function updateParticipantCount() {
+    const count = Object.keys(peers).length + 1; // +1 for local user
+    document.getElementById('participantCount').textContent = count;
+}
+
+// Send chat message
+function sendMessage() {
+    const input = document.getElementById('chatInput');
+    const message = input.value.trim();
+    
+    if (!message) return;
+    
+    // Send via socket
+    socket.emit('chat-message', {
+        conferenceId,
+        message,
+        timestamp: new Date().toISOString()
+    });
+    
+    // Clear input
+    input.value = '';
+}
+
+// Add chat message
+function addChatMessage(userName, message, timestamp) {
+    const chatMessages = document.getElementById('chatMessages');
+    
+    const messageEl = document.createElement('div');
+    messageEl.className = 'chat-message';
+    
+    const time = timestamp ? new Date(timestamp).toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+    }) : '';
+    
+    messageEl.innerHTML = `
+        <strong>${escapeHtml(userName)} <span style="color: rgba(255,255,255,0.5); font-size: 0.85rem; font-weight: normal;">${time}</span></strong>
+        <p>${escapeHtml(message)}</p>
+    `;
+    
+    chatMessages.appendChild(messageEl);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Update chat badge
+function updateChatBadge() {
+    const badge = document.getElementById('chatBadge');
+    
+    if (unreadMessages > 0) {
+        badge.textContent = unreadMessages > 99 ? '99+' : unreadMessages;
+        badge.style.display = 'flex';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+// Start room timer
+function startRoomTimer() {
+    startTime = Date.now();
+    
+    roomTimer = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const minutes = Math.floor(elapsed / 60000);
+        const seconds = Math.floor((elapsed % 60000) / 1000);
+        
+        document.getElementById('roomTimer').textContent = 
+            `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }, 1000);
+}
+
+// Leave conference
+async function leaveConference() {
+    if (!confirm('Are you sure you want to leave this conference?')) {
+        return;
+    }
+
+    try {
+        // Stop timer
+        if (roomTimer) {
+            clearInterval(roomTimer);
+        }
+
+        // Stop all media tracks
+        if (localStream) {
+            localStream.getTracks().forEach(track => track.stop());
+        }
+        
+        if (screenStream) {
+            screenStream.getTracks().forEach(track => track.stop());
+        }
+
+        // Close all peer connections
+        Object.values(peers).forEach(peer => peer.close());
+        peers = {};
+
+        // Disconnect socket
+        if (socket) {
+            socket.emit('leave-conference', { conferenceId });
+            socket.disconnect();
+        }
+
+        // Call API to leave
+        await fetch(`${API_BASE}/api/conferences/${conferenceId}/leave`, {
+            method: 'POST',
+            credentials: 'include'
+        });
+
+        // Redirect
+        window.location.href = 'conf.html';
+
+    } catch (error) {
+        console.error('Leave conference error:', error);
+        // Redirect anyway
+        window.location.href = 'conf.html';
+    }
+}
+
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Handle page unload
+window.addEventListener('beforeunload', (e) => {
+    leaveConference();
+});
+
+// Make functions globally accessible
+window.closeSidebar = closeSidebar;
+window.sendMessage = sendMessage;
