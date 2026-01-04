@@ -593,3 +593,12 @@ input.success {
   transform: translateY(-20px);
   transition: all 0.4s ease;
 }
+input.error {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2) !important;
+}
+
+input.success {
+    border-color: #10b981 !important;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2) !important;
+}
