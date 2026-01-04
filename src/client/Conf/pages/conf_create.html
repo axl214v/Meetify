@@ -1,19 +1,140 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Meetify – Создать конференцию</title>
-  <link rel="stylesheet" href="conf.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Conference - Meetify</title>
+    <link rel="stylesheet" href="conf.css">
+    <link rel="icon" href="/meetify/assets/logo.png">
 </head>
 <body>
-  <h1>Создайте конференцию</h1>
+    <header>
+        <h1>Create New Conference</h1>
+        <button onclick="window.location.href='conf.html'" class="secondary">
+            Back to Dashboard
+        </button>
+    </header>
 
-  <main>
-    <button id="createconf">Создать конференцию</button>
-  </main>
+    <main>
+        <div class="conference-form">
+            <h3>📹 Conference Details</h3>
+            
+            <form id="createConferenceForm">
+                <!-- Conference Name -->
+                <div class="form-group">
+                    <label for="name" class="conference-label">Conference Name *</label>
+                    <input 
+                        type="text" 
+                        id="name" 
+                        name="name"
+                        placeholder="Enter conference name" 
+                        maxlength="255"
+                        required
+                    >
+                </div>
 
-  <script src="conf.js" defer></script>
-  <noscript>Извините, ваш браузер не поддерживает JavaScript.</noscript>
+                <!-- Description -->
+                <div class="form-group">
+                    <label for="description" class="conference-label">Description</label>
+                    <textarea 
+                        id="description" 
+                        name="description"
+                        placeholder="Brief description (optional)"
+                        maxlength="1000"
+                        rows="3"
+                    ></textarea>
+                </div>
+
+                <!-- Max Participants -->
+                <div class="form-group">
+                    <label for="maxParticipants" class="conference-label">Max Participants</label>
+                    <input 
+                        type="number" 
+                        id="maxParticipants" 
+                        name="maxParticipants"
+                        placeholder="Leave empty for unlimited"
+                        min="2"
+                        max="1000"
+                    >
+                </div>
+
+                <!-- Settings Section -->
+                <div class="settings-section">
+                    <h4>⚙️ Settings</h4>
+                    
+                    <div class="checkbox-group">
+                        <label>
+                            <input type="checkbox" id="isPublic" checked>
+                            <span>Make conference public</span>
+                        </label>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <label>
+                            <input type="checkbox" id="requirePassword">
+                            <span>Require password to join</span>
+                        </label>
+                    </div>
+
+                    <div id="passwordField" style="display: none;">
+                        <label for="password" class="conference-label">Password</label>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password"
+                            placeholder="Enter password"
+                            minlength="4"
+                        >
+                    </div>
+                </div>
+
+                <!-- Schedule Section (Optional) -->
+                <div class="settings-section">
+                    <h4>📅 Schedule (Optional)</h4>
+                    
+                    <div class="form-group">
+                        <label for="startTime" class="conference-label">Start Time</label>
+                        <input 
+                            type="datetime-local" 
+                            id="startTime" 
+                            name="startTime"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="endTime" class="conference-label">End Time</label>
+                        <input 
+                            type="datetime-local" 
+                            id="endTime" 
+                            name="endTime"
+                        >
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="button-container">
+                    <button type="submit" id="submitBtn">
+                        Create Conference
+                    </button>
+                    <button type="button" class="secondary" onclick="window.location.href='conf.html'">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+
+            <!-- Created Conference Info (hidden initially) -->
+            <div id="conferenceInfo" class="info-message" style="display: none;">
+                <h4>✅ Conference Created!</h4>
+                <p>Conference ID: <strong id="conferenceId"></strong></p>
+                <button onclick="copyConferenceId()">Copy ID</button>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Meetify. All rights reserved.</p>
+    </footer>
+
+    <script src="js/conf_create.js"></script>
 </body>
 </html>

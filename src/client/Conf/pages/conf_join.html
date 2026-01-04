@@ -1,21 +1,113 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Meetify – Присоединиться к конференции</title>
-  <link rel="stylesheet" href="conf.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Conference - Meetify</title>
+    <link rel="stylesheet" href="conf.css">
+    <link rel="icon" href="/meetify/assets/logo.png">
 </head>
 <body>
-  <h1>Присоединиться к конференции</h1>
+    <header>
+        <h1>Join Conference</h1>
+        <button onclick="window.location.href='conf.html'" class="secondary">
+            Back to Dashboard
+        </button>
+    </header>
 
-  <main>
-    <p>Код конференции:</p>
-    <input id="id_conf" type="number" maxlength="10" placeholder="Введите код" required>
-    <button id="conf_connect">Присоединиться!</button>
-  </main>
+    <main>
+        <div class="conference-form">
+            <h3>🔗 Enter Conference Details</h3>
+            
+            <form id="joinConferenceForm">
+                <!-- Conference ID -->
+                <div class="form-group">
+                    <label for="conferenceId" class="conference-label">Conference ID *</label>
+                    <input 
+                        type="text" 
+                        id="conferenceId" 
+                        name="conferenceId"
+                        placeholder="Enter conference ID (e.g., 12345)" 
+                        required
+                        autocomplete="off"
+                    >
+                    <small class="input-hint">Enter the ID provided by the conference host</small>
+                </div>
 
-  <script src="conf.js" defer></script>
-  <noscript>Извините, ваш браузер не поддерживает JavaScript.</noscript>
+                <!-- Password Field (hidden by default) -->
+                <div id="passwordField" class="form-group" style="display: none;">
+                    <label for="password" class="conference-label">Password *</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password"
+                        placeholder="Enter conference password"
+                    >
+                    <small class="input-hint">This conference is password protected</small>
+                </div>
+
+                <!-- Conference Preview (shown after ID entered) -->
+                <div id="conferencePreview" class="conference-preview" style="display: none;">
+                    <h4>📹 Conference Details</h4>
+                    <div class="preview-content">
+                        <div class="preview-item">
+                            <span class="preview-label">Name:</span>
+                            <span id="previewName">-</span>
+                        </div>
+                        <div class="preview-item">
+                            <span class="preview-label">Host:</span>
+                            <span id="previewHost">-</span>
+                        </div>
+                        <div class="preview-item">
+                            <span class="preview-label">Participants:</span>
+                            <span id="previewParticipants">-</span>
+                        </div>
+                        <div class="preview-item">
+                            <span class="preview-label">Status:</span>
+                            <span id="previewStatus" class="status-badge">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="button-container">
+                    <button type="button" id="checkBtn" onclick="checkConference()">
+                        Check Conference
+                    </button>
+                    <button type="submit" id="joinBtn" style="display: none;">
+                        Join Conference
+                    </button>
+                    <button type="button" class="secondary" onclick="window.location.href='conf.html'">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+
+            <!-- Info Messages -->
+            <div id="errorMessage" class="error-message" style="display: none;">
+                <strong>⚠️ Error:</strong>
+                <span id="errorText"></span>
+            </div>
+
+            <div id="successMessage" class="info-message" style="display: none;">
+                <strong>✅ Success:</strong>
+                <span id="successText"></span>
+            </div>
+        </div>
+
+        <!-- Quick Access to Recent Conferences -->
+        <div class="recent-conferences">
+            <h3>🕒 Recently Joined</h3>
+            <div id="recentList" class="recent-list">
+                <p class="loading-text">Loading recent conferences...</p>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Meetify. All rights reserved.</p>
+    </footer>
+
+    <script src="js/conf_join.js"></script>
 </body>
 </html>

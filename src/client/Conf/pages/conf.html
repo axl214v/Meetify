@@ -3,20 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Conferences - Meetify</title>
     <link rel="stylesheet" href="conf.css">
-    <title>Meetify</title>
     <link rel="icon" href="/meetify/assets/logo.png">
-    <h1>Конференции</h1>
 </head>
 <body>
-    <div>
-        <button id="createconf"><a href="conf_create.html">Создать конференцию</a></button>
-    </div>
-    <div>
-        <button id="joinconf"><a href="conf_join.html">Присоединиться к конференции</a></button>
-        <input type="text">
-    </div>
-    <script src="conf.js"></script>
-    <noscript>Извините, ваш браузер не поддерживает JavaScript.</noscript>
+    <header>
+        <h1>My Conferences</h1>
+        <div class="header-actions">
+            <button onclick="window.location.href='conf_create.html'">
+                ➕ Create Conference
+            </button>
+            <button onclick="window.location.href='conf_join.html'" class="secondary">
+                🔗 Join Conference
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <!-- User Info -->
+        <div class="user-info" id="userInfo">
+            <div class="status-indicator"></div>
+            <span id="userName">Loading...</span>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-section">
+            <div class="filter-tabs">
+                <button class="filter-tab active" data-filter="all">
+                    All Conferences
+                </button>
+                <button class="filter-tab" data-filter="host">
+                    My Hosted
+                </button>
+                <button class="filter-tab" data-filter="participant">
+                    Joined
+                </button>
+            </div>
+
+            <div class="search-box">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="🔍 Search conferences..."
+                >
+            </div>
+        </div>
+
+        <!-- Conferences List -->
+        <div class="conferences-container">
+            <div id="loadingIndicator" class="loading-state">
+                <div class="spinner"></div>
+                <p>Loading conferences...</p>
+            </div>
+
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <div class="empty-icon">📭</div>
+                <h3>No conferences found</h3>
+                <p>Create your first conference or join an existing one!</p>
+                <div class="button-container">
+                    <button onclick="window.location.href='conf_create.html'">
+                        Create Conference
+                    </button>
+                    <button onclick="window.location.href='conf_join.html'" class="secondary">
+                        Join Conference
+                    </button>
+                </div>
+            </div>
+
+            <div id="conferencesList" class="conferences-grid">
+                <!-- Conferences will be loaded here dynamically -->
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div id="pagination" class="pagination" style="display: none;">
+            <button id="prevPage" class="secondary" disabled>← Previous</button>
+            <span id="pageInfo">Page 1</span>
+            <button id="nextPage" class="secondary">Next →</button>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Meetify. All rights reserved.</p>
+    </footer>
+
+    <script src="js/conf.js"></script>
 </body>
 </html>

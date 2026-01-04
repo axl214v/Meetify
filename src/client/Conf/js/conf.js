@@ -1,413 +1,355 @@
-// Const of api
+// js/conf.js
 const API_BASE = 'http://localhost:3000';
 
-// Function that checks status of api
-async function checkServiceStatus() {
-  try {
-    const res = await fetch(`${API_BASE}/check-status`, { method: 'GET' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    console.log('Service status:', data);
-  } catch (err) {
-    console.error('Service unavailable:', err);
-    alert('Сервис временно недоступен. Попробуйте позже.');
-  }
-}
+// State
+let currentFilter = 'all'; // 'all', 'host', 'participant'
+let currentPage = 1;
+let conferences = [];
+let totalConferences = 0;
+const ITEMS_PER_PAGE = 12;
 
-
-// function that checks if user is logged in
-async function checkAuthStatus() {
-  try {
-    const res = await fetch(`${API_BASE}/check-auth`, {
-      method: 'GET',
-      credentials: 'include',
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    if (!data.authenticated) {
-      alert('Пожалуйста, авторизуйтесь!');
-      window.location.href = '../auth/auth.html';
-    }
-  } catch (err) {
-    console.error('Auth error:', err);
-    alert('Пожалуйста, авторизуйтесь!');
-    window.location.href = '../auth/auth.html';
-  }
-}
-
-
-// Function that connects to the conference
-async function connectConference() {
-  const idInput = document.getElementById('id_conf');
-  if (!idInput) return;
-
-  const conferenceId = idInput.value.trim();
-  if (!conferenceId) {
-    alert('Введите код конференции.');
-    return;
-  }
-
-  try {
-    const res = await fetch(`${API_BASE}/joinconf`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: conferenceId }),
-    });
-
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    window.location.href = `/conference/${data.conferenceId}`;
-  } catch (err) {
-    console.error(err);
-    alert('Проверьте, что конференция доступна и код правильный.');
-  }
-}
-
-
-// Function that creates a conference
-async function createConference() {
-  // Проверяем, есть ли уже форма в HTML
-  const existingForm = document.getElementById('conference-form');
-  
-  // Если формы нет, создаем модальное окно с полной формой
-  if (!existingForm) {
-    showCreateConferenceModal();
-    return;
-  }
-  else {
-    submitConferenceForm(document.getElementById('conference-form'));
-  }
-}
-
-// Показать модальное окно для создания конференции с полными полями
-function showCreateConferenceModal() {
-  const modalHTML = `
-    <div id="conference-modal" style="
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.5);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    ">
-      <div style="
-        background: white;
-        padding: 25px;
-        border-radius: 10px;
-        width: 90%;
-        max-width: 600px;
-        max-height: 90vh;
-        overflow-y: auto;
-      ">
-        <h2 style="margin-top: 0; color: #333;">Создать конференцию</h2>
-        <form id="conference-form">
-          <!-- Обязательные поля -->
-          <div style="margin-bottom: 20px;">
-            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
-              Название конференции *
-            </label>
-            <input type="text" id="conference-name" required 
-                   placeholder="Введите название конференции"
-                   style="width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px;">
-          </div>
-          
-          <!-- Описание -->
-          <div style="margin-bottom: 20px;">
-            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
-              Описание
-            </label>
-            <textarea id="conference-description" 
-                     placeholder="Опишите тему или цель конференции (необязательно)"
-                     style="width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; height: 100px; resize: vertical;"></textarea>
-          </div>
-          
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-            <!-- Максимальное количество участников -->
-            <div>
-              <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
-                Максимальное количество участников
-              </label>
-              <input type="number" id="conference-max-participants" value="20" min="2" max="500"
-                     style="width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px;">
-            </div>
-            
-            <!-- Публичная/приватная -->
-            <div>
-              <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
-                Тип конференции
-              </label>
-              <div style="display: flex; gap: 15px; align-items: center; height: 40px;">
-                <label style="display: flex; align-items: center; gap: 5px;">
-                  <input type="radio" name="conference-type" id="conference-public" value="public" checked>
-                  Публичная
-                </label>
-                <label style="display: flex; align-items: center; gap: 5px;">
-                  <input type="radio" name="conference-type" id="conference-private" value="private">
-                  Приватная
-                </label>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Поле пароля (скрыто по умолчанию) -->
-          <div id="password-field" style="display: none; margin-bottom: 20px;">
-            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
-              Пароль для входа *
-            </label>
-            <input type="password" id="conference-password"
-                   placeholder="Введите пароль для приватной конференции"
-                   style="width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px;">
-            <small style="display: block; margin-top: 5px; color: #666;">
-              Участникам потребуется ввести этот пароль для присоединения к конференции
-            </small>
-          </div>
-          
-          <!-- Время начала и окончания -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
-            <div>
-              <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
-                Дата и время начала
-              </label>
-              <input type="datetime-local" id="conference-start-time"
-                     style="width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px;">
-              <small style="display: block; margin-top: 5px; color: #666;">
-                (необязательно)
-              </small>
-            </div>
-            
-            <div>
-              <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
-                Дата и время окончания
-              </label>
-              <input type="datetime-local" id="conference-end-time"
-                     style="width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px;">
-              <small style="display: block; margin-top: 5px; color: #666;">
-                (необязательно)
-              </small>
-            </div>
-          </div>
-          
-          <!-- Кнопки -->
-          <div style="display: flex; gap: 15px; justify-content: flex-end; padding-top: 20px; border-top: 1px solid #eee;">
-            <button type="button" id="cancel-create" style="
-              padding: 10px 20px;
-              background: #f5f5f5;
-              color: #333;
-              border: 1px solid #ddd;
-              border-radius: 4px;
-              cursor: pointer;
-              font-weight: 500;
-            ">
-              Отмена
-            </button>
-            <button type="submit" style="
-              padding: 10px 25px;
-              background: #007bff;
-              color: white;
-              border: none;
-              border-radius: 4px;
-              cursor: pointer;
-              font-weight: 500;
-            ">
-              Создать конференцию
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  `;
-  
-  // Добавляем модальное окно в DOM
-  const modalContainer = document.createElement('div');
-  modalContainer.innerHTML = modalHTML;
-  document.body.appendChild(modalContainer);
-  
-  // Настройка видимости поля пароля в зависимости от типа конференции
-  const publicRadio = document.getElementById('conference-public');
-  const privateRadio = document.getElementById('conference-private');
-  const passwordField = document.getElementById('password-field');
-  const passwordInput = document.getElementById('conference-password');
-  
-  function updatePasswordFieldVisibility() {
-    if (privateRadio.checked) {
-      passwordField.style.display = 'block';
-      passwordInput.required = true;
-    } else {
-      passwordField.style.display = 'none';
-      passwordInput.required = false;
-    }
-  }
-  
-  publicRadio.addEventListener('change', updatePasswordFieldVisibility);
-  privateRadio.addEventListener('change', updatePasswordFieldVisibility);
-  
-  // Установка минимальной даты для полей времени (текущая дата)
-  const now = new Date();
-  const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-  document.getElementById('conference-start-time').min = localDateTime;
-  document.getElementById('conference-end-time').min = localDateTime;
-  
-  // Обработчик отправки формы
-  const form = document.getElementById('conference-form');
-  form.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    await submitConferenceForm();
-  });
-  
-  // Обработчик отмены
-  const cancelBtn = document.getElementById('cancel-create');
-  cancelBtn.addEventListener('click', function() {
-    document.body.removeChild(modalContainer);
-  });
-  
-  // Закрытие модального окна при клике на фон
-  const modal = document.getElementById('conference-modal');
-  modal.addEventListener('click', function(e) {
-    if (e.target === modal) {
-      document.body.removeChild(modalContainer);
-    }
-  });
-}
-
-// Отправка данных на сервер
-async function submitConferenceForm() {
-  // Собираем данные из формы
-  const conferenceData = {
-    name: document.getElementById('conference-name').value.trim(),
-    description: document.getElementById('conference-description').value.trim() || null,
-    maxParticipants: parseInt(document.getElementById('conference-max-participants').value) || 20,
-    isPublic: document.getElementById('conference-public').checked
-  };
-  
-  // Обработка пароля для приватной конференции
-  if (!conferenceData.isPublic) {
-    const password = document.getElementById('conference-password').value.trim();
-    if (!password) {
-      alert('Для приватной конференции необходимо указать пароль');
-      document.getElementById('conference-password').focus();
-      return;
-    }
-    conferenceData.password = password;
-  }
-  
-  // Обработка времени начала и окончания
-  const startTimeInput = document.getElementById('conference-start-time').value;
-  const endTimeInput = document.getElementById('conference-end-time').value;
-  
-  if (startTimeInput) {
-    conferenceData.startTime = new Date(startTimeInput).toISOString();
-  }
-  
-  if (endTimeInput) {
-    conferenceData.endTime = new Date(endTimeInput).toISOString();
-    
-    // Проверка, чтобы время окончания было после времени начала
-    if (conferenceData.startTime && new Date(conferenceData.endTime) <= new Date(conferenceData.startTime)) {
-      alert('Время окончания должно быть позже времени начала');
-      return;
-    }
-  }
-  
-  // Валидация обязательных полей
-  if (!conferenceData.name) {
-    alert('Пожалуйста, введите название конференции');
-    document.getElementById('conference-name').focus();
-    return;
-  }
-  
-  // Валидация максимального количества участников
-  if (conferenceData.maxParticipants < 2 || conferenceData.maxParticipants > 500) {
-    alert('Максимальное количество участников должно быть от 2 до 500');
-    return;
-  }
-  
-  try {
-    // Показываем индикатор загрузки
-    const submitButton = document.querySelector('#conference-form button[type="submit"]');
-    const originalText = submitButton.textContent;
-    submitButton.textContent = 'Создание...';
-    submitButton.disabled = true;
-    
-    // Отправляем запрос на создание конференции
-    const res = await fetch(`${API_BASE}/conferences`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify(conferenceData)
-    });
-    
-    // Восстанавливаем кнопку
-    submitButton.textContent = originalText;
-    submitButton.disabled = false;
-    
-    // Обработка ответа
-    if (!res.ok) {
-      let errorMessage = 'Ошибка при создании конференции';
-      try {
-        const errorData = await res.json();
-        errorMessage = errorData.message || errorMessage;
-      } catch (e) {
-        errorMessage = `HTTP ${res.status}: ${res.statusText}`;
-      }
-      throw new Error(errorMessage);
-    }
-    
-    const data = await res.json();
-    
-    // Закрываем модальное окно
-    const modal = document.getElementById('conference-modal');
-    if (modal) {
-      modal.parentElement.remove();
-    }
-    
-    // Показываем сообщение об успехе и перенаправляем
-    if (data.conference && data.conference.id) {
-      alert(`Конференция "${conferenceData.name}" успешно создана!`);
-      window.location.href = `/conference/${data.conference.id}`;
-    } else {
-      alert('Конференция создана, но произошла ошибка при получении данных');
-    }
-    
-  } catch (err) {
-    console.error('Ошибка создания конференции:', err);
-    alert(`Не удалось создать конференцию: ${err.message}`);
-  }
-}
-
-// Обновляем обработчики в DOMContentLoaded
+// Initialize
 document.addEventListener('DOMContentLoaded', () => {
-  checkServiceStatus();
-  checkAuthStatus();
-  
-  const connectBtn = document.getElementById('conf_connect');
-  if (connectBtn) connectBtn.addEventListener('click', connectConference);
-  
-  const createBtn = document.getElementById('createconf');
-  if (createBtn) {
-    createBtn.addEventListener('click', createConference);
-  }
+    checkAuth();
+    setupEventListeners();
+    loadConferences();
 });
 
-// Checks status of service and checks if user is logged in
-document.addEventListener('DOMContentLoaded', () => {
-  checkServiceStatus();
-  checkAuthStatus();
-// On click connects to the conferention
-  const connectBtn = document.getElementById('conf_connect');
-  if (connectBtn) connectBtn.addEventListener('click', connectConference);
-// On click creates conferention(currently not working)
-  const createBtn = document.getElementById('createconf');
-  if (createBtn) {
-    createBtn.addEventListener('click', () => {
-      createConference();
+// Check authentication
+async function checkAuth() {
+    try {
+        const response = await fetch(`${API_BASE}/check-auth`, {
+            method: 'GET',
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            window.location.href = '../auth/Auth.html';
+            return;
+        }
+
+        const data = await response.json();
+        if (data.authenticated && data.user) {
+            document.getElementById('userName').textContent = data.user.name || data.user.email;
+        }
+    } catch (error) {
+        console.error('Auth check error:', error);
+        window.location.href = '../auth/Auth.html';
+    }
+}
+
+// Setup event listeners
+function setupEventListeners() {
+    // Filter tabs
+    document.querySelectorAll('.filter-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            // Update active tab
+            document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Update filter
+            currentFilter = this.dataset.filter;
+            currentPage = 1;
+            loadConferences();
+        });
     });
-  }
-});
+
+    // Search
+    const searchInput = document.getElementById('searchInput');
+    let searchTimeout;
+    searchInput?.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            currentPage = 1;
+            loadConferences();
+        }, 500);
+    });
+
+    // Pagination
+    document.getElementById('prevPage')?.addEventListener('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            loadConferences();
+        }
+    });
+
+    document.getElementById('nextPage')?.addEventListener('click', () => {
+        const maxPage = Math.ceil(totalConferences / ITEMS_PER_PAGE);
+        if (currentPage < maxPage) {
+            currentPage++;
+            loadConferences();
+        }
+    });
+}
+
+// Load conferences
+async function loadConferences() {
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const conferencesList = document.getElementById('conferencesList');
+    const emptyState = document.getElementById('emptyState');
+    const pagination = document.getElementById('pagination');
+
+    // Show loading
+    loadingIndicator.style.display = 'flex';
+    conferencesList.innerHTML = '';
+    emptyState.style.display = 'none';
+    pagination.style.display = 'none';
+
+    try {
+        let url;
+        const searchQuery = document.getElementById('searchInput')?.value.trim();
+        const offset = (currentPage - 1) * ITEMS_PER_PAGE;
+
+        // Choose endpoint based on filter
+        if (currentFilter === 'all') {
+            url = `${API_BASE}/api/conferences?limit=${ITEMS_PER_PAGE}&offset=${offset}`;
+            if (searchQuery) {
+                url += `&search=${encodeURIComponent(searchQuery)}`;
+            }
+        } else {
+            // Get user's conferences with role filter
+            url = `${API_BASE}/api/conferences/user/my`;
+            if (currentFilter !== 'all') {
+                url += `?role=${currentFilter}`;
+            }
+        }
+
+        const response = await fetch(url, {
+            method: 'GET',
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to load conferences');
+        }
+
+        const data = await response.json();
+        conferences = data.conferences || [];
+        totalConferences = data.total || conferences.length;
+
+        // Hide loading
+        loadingIndicator.style.display = 'none';
+
+        // Show results or empty state
+        if (conferences.length === 0) {
+            emptyState.style.display = 'block';
+        } else {
+            renderConferences(conferences);
+            
+            // Show pagination if needed
+            const maxPage = Math.ceil(totalConferences / ITEMS_PER_PAGE);
+            if (maxPage > 1 && currentFilter === 'all') {
+                pagination.style.display = 'flex';
+                updatePagination(maxPage);
+            }
+        }
+
+    } catch (error) {
+        console.error('Load conferences error:', error);
+        loadingIndicator.style.display = 'none';
+        emptyState.style.display = 'block';
+        alert('Failed to load conferences. Please try again.');
+    }
+}
+
+// Render conferences
+function renderConferences(conferences) {
+    const conferencesList = document.getElementById('conferencesList');
+    conferencesList.innerHTML = '';
+
+    conferences.forEach(conf => {
+        const card = createConferenceCard(conf);
+        conferencesList.appendChild(card);
+    });
+}
+
+// Create conference card
+function createConferenceCard(conf) {
+    const card = document.createElement('div');
+    card.className = 'conference-card';
+    
+    // Status badge
+    const status = getConferenceStatus(conf);
+    const statusClass = status.toLowerCase().replace(' ', '-');
+    
+    // Participant count
+    const participantCount = conf.participant_count || 0;
+    const maxParticipants = conf.max_participants;
+    const participantText = maxParticipants 
+        ? `${participantCount}/${maxParticipants}` 
+        : participantCount;
+
+    // Host badge
+    const isHost = conf.is_host === 1 || conf.is_host === true;
+    const hostBadge = isHost ? '<span class="host-badge">👑 Host</span>' : '';
+
+    card.innerHTML = `
+        <div class="card-header">
+            <h3>${escapeHtml(conf.name)}</h3>
+            <span class="status-badge ${statusClass}">${status}</span>
+        </div>
+        
+        ${conf.description ? `<p class="card-description">${escapeHtml(conf.description)}</p>` : ''}
+        
+        <div class="card-info">
+            <div class="info-item">
+                <span class="info-label">Host:</span>
+                <span>${escapeHtml(conf.host_username || conf.host_email || 'Unknown')}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Participants:</span>
+                <span>👥 ${participantText}</span>
+            </div>
+            ${conf.start_time ? `
+                <div class="info-item">
+                    <span class="info-label">Start:</span>
+                    <span>📅 ${formatDate(conf.start_time)}</span>
+                </div>
+            ` : ''}
+        </div>
+        
+        <div class="card-actions">
+            ${hostBadge}
+            ${isHost ? `
+                <button onclick="editConference(${conf.id})" class="secondary">
+                    ✏️ Edit
+                </button>
+                <button onclick="deleteConference(${conf.id})" class="danger">
+                    🗑️ Delete
+                </button>
+            ` : `
+                <button onclick="joinConference(${conf.id})">
+                    🚀 Join
+                </button>
+            `}
+        </div>
+    `;
+
+    return card;
+}
+
+// Get conference status
+function getConferenceStatus(conf) {
+    const now = new Date();
+    
+    if (conf.end_time && new Date(conf.end_time) < now) {
+        return 'Ended';
+    }
+    
+    if (conf.start_time) {
+        const start = new Date(conf.start_time);
+        if (start > now) {
+            return 'Scheduled';
+        } else if (start <= now && (!conf.end_time || new Date(conf.end_time) >= now)) {
+            return 'Ongoing';
+        }
+    }
+    
+    return 'Active';
+}
+
+// Format date
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    
+    // If today, show time only
+    if (date.toDateString() === now.toDateString()) {
+        return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    }
+    
+    // If this year, show month and day
+    if (date.getFullYear() === now.getFullYear()) {
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+    
+    // Otherwise, show full date
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Update pagination
+function updatePagination(maxPage) {
+    const prevBtn = document.getElementById('prevPage');
+    const nextBtn = document.getElementById('nextPage');
+    const pageInfo = document.getElementById('pageInfo');
+
+    prevBtn.disabled = currentPage === 1;
+    nextBtn.disabled = currentPage === maxPage;
+    pageInfo.textContent = `Page ${currentPage} of ${maxPage}`;
+}
+
+// Join conference
+async function joinConference(conferenceId) {
+    if (!confirm('Do you want to join this conference?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/api/conferences/${conferenceId}/join`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({})
+        });
+
+        const data = await response.json();
+
+        if (response.status === 200) {
+            alert(data.message || 'Successfully joined!');
+            // Redirect to conference room (implement later)
+            // window.location.href = `conf_room.html?id=${conferenceId}`;
+            loadConferences(); // Reload list
+        } else if (response.status === 400 && data.requiresPassword) {
+            // Redirect to join page for password input
+            window.location.href = `conf_join.html?id=${conferenceId}`;
+        } else {
+            alert(data.message || 'Failed to join conference');
+        }
+
+    } catch (error) {
+        console.error('Join conference error:', error);
+        alert('Network error. Please try again.');
+    }
+}
+
+// Edit conference (placeholder)
+function editConference(conferenceId) {
+    alert(`Edit functionality coming soon for conference #${conferenceId}`);
+    // TODO: Implement edit page
+}
+
+// Delete conference
+async function deleteConference(conferenceId) {
+    if (!confirm('Are you sure you want to delete this conference? This action cannot be undone.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/api/conferences/${conferenceId}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert(data.message || 'Conference deleted successfully');
+            loadConferences(); // Reload list
+        } else {
+            alert(data.message || 'Failed to delete conference');
+        }
+
+    } catch (error) {
+        console.error('Delete conference error:', error);
+        alert('Network error. Please try again.');
+    }
+}
