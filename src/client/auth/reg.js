@@ -98,7 +98,7 @@ document.getElementById('submit')?.addEventListener('click', async function (e) 
     submitButton.textContent = 'Registering...';
     
     try {
-        const response = await fetch(`${API_BASE}/register`, {
+        const response = await fetch(`${API_BASE}/api/auth/register`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

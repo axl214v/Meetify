@@ -30,7 +30,7 @@ async function checkServiceStatus() {
 // Checking if user is authenticated
 async function checkAuthentication() {
     try {
-        const res = await fetch(`${API_BASE}/check-auth`, {
+        const res = await fetch(`${API_BASE}/api/auth/me`, {
             method: 'GET',
             credentials: 'include'
         });
@@ -87,7 +87,7 @@ document.getElementById('submit')?.addEventListener('click', async function (e) 
     submitButton.textContent = 'Logging in...';
     
     try {
-        const response = await fetch(`${API_BASE}/login`, {
+        const response = await fetch(`${API_BASE}/api/auth/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
