@@ -18,9 +18,9 @@ async function checkServiceStatus() {
             method: 'GET'
         });
         
-        if (!res.ok) {
-            error = 'Service temporarily unavailable. Please try again later.';
-            showError(error);
+        if (res.ok) {
+            console.log('Service is operational.');
+            window.location.href = '/index.html'; // Redirect to main page
         }
         return res.ok;
     } catch (err) {

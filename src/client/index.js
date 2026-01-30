@@ -11,6 +11,8 @@ fetch(`${API_BASE}/check-status`, {
     } else {
         alert('Сервис временно не доступен. Попробуйте позже.');
         throw new Error('Service unavailable');
+        // redirect to error page 
+        window.location.href = './err/err.html';
     }
 })
 .then(data => {

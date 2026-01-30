@@ -18,12 +18,16 @@ async function checkServiceStatus() {
         
         if (!res.ok) {
             showError('Service temporarily unavailable. Please try again later.');
+            // redirect to error page 
+            window.location.href = './err/err.html';
         }
         return res.ok;
     } catch (err) {
         console.error('Service status check failed:', err);
         showError('Service temporarily unavailable. Please try again later.');
         return false;
+        // redirect to error page 
+        window.location.href = './err/err.html';
     }
 }
 
