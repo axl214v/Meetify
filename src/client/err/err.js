@@ -45,6 +45,7 @@ async function logErrorToServer(errorMessage) {
         });
     } catch (err) {
         console.error('Failed to log error to server:', err);
+        logErrorToServer(errorMessage);
     }
 }
 logErrorToServer(error);
