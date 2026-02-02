@@ -143,8 +143,13 @@ class ConferenceService {
 
       // Check if private and user is not invited
       if (!conference.is_public) {
-        // TODO: Implement invitation system
-        return { allowed: false, reason: 'Conference is private' };
+        // TODO: Implement invitation system(on working)
+        if(!userId.hasPermission){
+          return { allowed: false, reason: 'Conference is private' };
+        }
+        else{
+          return { allowed: true }
+        }
       }
 
       return { allowed: true };
