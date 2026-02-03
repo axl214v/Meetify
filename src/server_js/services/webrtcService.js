@@ -346,7 +346,7 @@ class WebRTCService {
       ...metrics
     });
 
-    // TODO: Send to analytics service or store in database
+    // TODO: Send to analytics service or store in database (Need new not sql db)
   }
 
   /**

@@ -144,11 +144,11 @@ class ConferenceService {
       // Check if private and user is not invited
       if (!conference.is_public) {
         // TODO: Implement invitation system(on working)
-        if(!userId.hasPermission){
-          return { allowed: false, reason: 'Conference is private' };
+        if (userId.hasPermission = true){
+          return { allowed: true }
         }
         else{
-          return { allowed: true }
+          return { allowed: false, reason: 'Conference is private' };
         }
       }
 
@@ -299,6 +299,11 @@ class ConferenceService {
       });
 
       // TODO: Notify all participants via socket that conference has ended
+      if (conference.endTime > currentTime) {
+        // Notify participants
+        console.log(`[ConferenceService] Notifying participants that conference ${conferenceId} has ended`);
+        return conference.action; // Example action
+      }
 
       return true;
     } catch (error) {
@@ -319,11 +324,11 @@ class ConferenceService {
       console.log(`[ConferenceService] Cleanup task: Would delete conferences older than ${daysOld} days`);
       
       // TODO: Implement actual cleanup
-      // const cutoffDate = new Date();
-      // cutoffDate.setDate(cutoffDate.getDate() - daysOld);
-      // return await Conference.deleteOlderThan(cutoffDate);
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - daysOld);
+      return await Conference.deleteOlderThan(cutoffDate);
       
-      return 0;
+      return 0; // Placeholder
     } catch (error) {
       console.error('ConferenceService.cleanupOldConferences error:', error);
       throw error;
