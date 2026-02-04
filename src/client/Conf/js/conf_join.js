@@ -198,9 +198,9 @@ document.getElementById('joinConferenceForm')?.addEventListener('submit', async 
             
             // Redirect to conference room after delay
             setTimeout(() => {
-                // TODO: Redirect to conference room
-                // window.location.href = `conf_room.html?id=${currentConference.id}`;
-                window.location.href = 'conf.html';
+                // TODO: Redirect to conference room (On work)
+                window.location.href = `conf_room.html?id=${currentConference.id}`;
+                return conferenceId;
             }, 1500);
             
         } else if (response.status === 403) {
