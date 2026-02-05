@@ -302,7 +302,7 @@ class ConferenceService {
       if (conference.endTime > currentTime) {
         // Notify participants
         console.log(`[ConferenceService] Notifying participants that conference ${conferenceId} has ended`);
-        return conference.action; // Example action
+        return conference.endConference; // Example action
       }
 
       return true;
