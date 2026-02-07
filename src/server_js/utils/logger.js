@@ -10,7 +10,7 @@ function showInfo(data, tabletop) {
     console.log(data);
     console.save(data, console.json)
   }
-function(console) {
+function log(console) {
     console.save = function(data, filename){
 
     if(!data) {
@@ -33,4 +33,4 @@ function(console) {
     a.dataset.downloadurl =  ['text/json', a.download, a.href].join(':')
     e.initMouseEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null)
     a.dispatchEvent(e)
-}
+}}
