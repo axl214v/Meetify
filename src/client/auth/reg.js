@@ -32,7 +32,12 @@ async function checkServiceStatus() {
 }
 
 // Initialize check on page load
-checkServiceStatus();
+checkServiceStatus(err => {
+    console.error('Service status check failed:', err);
+    showError('Service temporarily unavailable. Please try again later.');
+    // redirect to error page 
+    window.location.href = './err/err.html';
+});
 
 // Validation functions
 function validateEmail(email) {

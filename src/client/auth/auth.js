@@ -50,8 +50,13 @@ async function checkAuthentication() {
     }
 }
 
-// Initialize checks on page load
-checkServiceStatus();
+// Initialize check on page load
+checkServiceStatus(err => {
+    console.error('Service status check failed:', err);
+    showError('Service temporarily unavailable. Please try again later.');
+    // redirect to error page 
+    window.location.href = './err/err.html';
+});
 checkAuthentication();
 
 // Login form handler
