@@ -1,6 +1,3 @@
-// Const of api
-const API_BASE = 'http://localhost:3000';
-
 async function checkServiceStatus() {
     try {
         const res = await fetch(`${API_BASE}/check-status`, {
