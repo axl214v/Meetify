@@ -1,5 +1,15 @@
 // Const of api
 const API_BASE = 'http://localhost:3000';
+const serviceStatus = require('./checkStatus/index.js');
+
+
+// Initialize check on page load
+checkServiceStatus(err => {
+    console.error('Service status check failed:', err);
+    showError('Service temporarily unavailable. Please try again later.');
+    // redirect to error page 
+    window.location.href = './err/err.html';
+});
 
 // Utility function for showing user-friendly errors
 function showError(message, input = null) {
@@ -8,29 +18,6 @@ function showError(message, input = null) {
         input.classList.add('error');
     }
 }
-
-// Check service status
-async function checkServiceStatus() {
-    try {
-        const res = await fetch(`${API_BASE}/check-status`, {
-            method: 'GET'
-        });
-        
-        if (!res.ok) {
-            showError('Service temporarily unavailable. Please try again later.');
-            // redirect to error page 
-            window.location.href = './err/err.html';
-        }
-        return res.ok;
-    } catch (err) {
-        console.error('Service status check failed:', err);
-        showError('Service temporarily unavailable. Please try again later.');
-        // redirect to error page 
-        window.location.href = './err/err.html';
-        return false;
-    }
-}
-
 // Checking if user is authenticated
 async function checkAuthentication() {
     try {
@@ -50,14 +37,6 @@ async function checkAuthentication() {
     }
 }
 
-// Initialize check on page load
-checkServiceStatus(err => {
-    console.error('Service status check failed:', err);
-    showError('Service temporarily unavailable. Please try again later.');
-    // redirect to error page 
-    window.location.href = './err/err.html';
-});
-checkAuthentication();
 
 // Login form handler
 document.getElementById('submit')?.addEventListener('click', async function (e) {
