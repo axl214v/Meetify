@@ -4,12 +4,16 @@ const serviceStatus = require('./checkStatus/index.js');
 
 
 // Initialize check on page load
-checkServiceStatus(err => {
-    console.error('Service status check failed:', err);
-    showError('Service temporarily unavailable. Please try again later.');
-    // redirect to error page 
-    window.location.href = './err/err.html';
-});
+async () => {
+    try {
+        await checkServiceStatus();
+        // инициализация остальных модулей
+    } catch (err) {
+        console.error('Service check failed', err);
+        showError('Service temporarily unavailable. Please try again later.');
+        window.location.href = '../err';
+    }
+}
 
 // Utility function for showing user-friendly errors
 function showError(message, input = null) {
