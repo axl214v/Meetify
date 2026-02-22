@@ -2,6 +2,7 @@ const config = require('../config/config');
 
 // Middleware для обработки ошибок
 const errorHandler = (err, req, res, next) => {
+  var ErrLogger = new Map()
   console.error('Error:', {
     message: err.message,
     stack: config.environment.development ? err.stack : undefined,
@@ -46,6 +47,7 @@ const errorHandler = (err, req, res, next) => {
   }
 
   res.status(statusCode).json(errorResponse);
+  ErrLogger.set(statusCode, errorMessage)
 };
 
 // Middleware для обработки 404 ошибок
