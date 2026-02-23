@@ -81,14 +81,27 @@ app.get('/check-status', (req, res) => {
 // Статические файлы
 app.use(express.static(path.join(__dirname, '../client')));
 
-// Serve index.html для всех маршрутов (SPA)
+// Маршруты для SPA (это ВАЖНО!)
+app.get('/meetify/src/client/auth/:page', (req, res) => {
+  res.sendFile(path.join(__dirname, '../app/auth', req.params.page));
+});
+
+app.get('/meetify/src/client/Conf/:page', (req, res) => {
+  res.sendFile(path.join(__dirname, '../app/Conf', req.params.page));
+});
+
+// Корневой маршрут
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../app/index.html'));
+});
+
+// Для всех остальных маршрутов (SPA fallback)
 app.get('*', (req, res, next) => {
   // Пропускаем API запросы
   if (req.path.startsWith('/api/') || req.path.startsWith('/socket.io/')) {
     return next();
   }
-  
-  res.sendFile(path.join(__dirname, '../client/index.html'));
+  res.sendFile(path.join(__dirname, '../app/index.html'));
 });
 
 // Socket.IO Setup
