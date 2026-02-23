@@ -3,59 +3,21 @@
  * This file contains all WebRTC-related configuration including STUN/TURN servers
  */
 
+// ============================================
 // ICE Servers Configuration
+// ============================================
+
+// Import STUN/TURN server configuration
+const { getIceServers, getAllIceServers } = require('./stunServer');
 
 /**
- * Public STUN servers (free)
- * STUN servers help with NAT traversal by discovering public IP addresses
+ * Get ICE servers configuration
+ * This function is imported from stunServer.js
  */
-const PUBLIC_STUN_SERVERS = [
-  { urls: 'stun:stun.l.google.com:19302' },
-  { urls: 'stun:stun1.l.google.com:19302' },
-  { urls: 'stun:stun2.l.google.com:19302' },
-  { urls: 'stun:stun3.l.google.com:19302' },
-  { urls: 'stun:stun4.l.google.com:19302' }
-];
 
-/**
- * TURN servers configuration (for production)
- * TURN servers relay media when direct peer-to-peer connection fails
- * 
- * For production, you should set up your own TURN server or use a service like:
- * - Twilio (https://www.twilio.com/stun-turn)
- * - Xirsys (https://xirsys.com/)
- * - CoTURN (open source self-hosted)
- */
-const TURN_SERVERS = [
-  // Example TURN server configuration (replace with your own)
-  // {
-  //   urls: 'turn:your-turn-server.com:3478',
-  //   username: process.env.TURN_USERNAME || 'username',
-  //   credential: process.env.TURN_PASSWORD || 'password'
-  // },
-  // {
-  //   urls: 'turns:your-turn-server.com:5349',
-  //   username: process.env.TURN_USERNAME || 'username',
-  //   credential: process.env.TURN_PASSWORD || 'password'
-  // }
-];
-
-/**
- * Get complete ICE servers configuration
- * @returns {Array} Array of ICE server configurations
- */
-function getIceServers() {
-  const iceServers = [...PUBLIC_STUN_SERVERS];
-  
-  // Add TURN servers if configured
-  if (TURN_SERVERS.length > 0) {
-    iceServers.push(...TURN_SERVERS);
-  }
-  
-  return iceServers;
-}
-
+// ============================================
 // WebRTC Peer Connection Configuration
+// ============================================
 
 /**
  * RTCPeerConnection configuration
@@ -78,7 +40,9 @@ const rtcConfiguration = {
   iceCandidatePoolSize: 10
 };
 
+// ============================================
 // Media Constraints
+// ============================================
 
 /**
  * Default video constraints
@@ -125,7 +89,9 @@ const screenShareConstraints = {
   audio: false // Set to true if you want to capture system audio
 };
 
+// ============================================
 // Conference Limits
+// ============================================
 
 /**
  * Conference participant limits
@@ -142,7 +108,9 @@ const conferenceLimits = {
   maxAudioStreams: 50
 };
 
+// ============================================
 // Quality Settings
+// ============================================
 
 /**
  * Video quality presets
@@ -215,10 +183,9 @@ const timeouts = {
 // ============================================
 
 module.exports = {
-  // ICE Servers
+  // ICE Servers (from stunServer.js)
   getIceServers,
-  PUBLIC_STUN_SERVERS,
-  TURN_SERVERS,
+  getAllIceServers, // Dynamic ICE servers including third-party
   
   // Peer Connection
   rtcConfiguration,
