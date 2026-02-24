@@ -1,24 +1,50 @@
+# ==========================================
+# Meetify Backend Dockerfile
+# Node.js + Express + Socket.IO
+# ==========================================
+
+# Use official Node.js LTS image
 FROM node:18-alpine
 
-# Создание директории приложения
-RUN mkdir -p /home/node/app/node_modules && chown -R node:node /home/node/app
+# Set working directory
+WORKDIR /app
 
-WORKDIR /home/node/app
+# Install system dependencies
+RUN apk add --no-cache \
+    curl \
+    bash \
+    python3 \
+    make \
+    g++
 
-# Копирование зависимостей
+# Copy package files
 COPY package*.json ./
 
-# Переключение на пользователя node
-USER node
+# Install dependencies
+RUN npm ci --only=production && \
+    npm cache clean --force
 
-# Установка зависимостей
-RUN npm ci --only=production
+# Copy application code
+COPY . .
 
-# Копирование исходного кода
-COPY --chown=node:node . .
+# Create logs directory
+RUN mkdir -p /app/logs && \
+    chmod 755 /app/logs
 
-# Открытие порта
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001 && \
+    chown -R nodejs:nodejs /app
+
+# Switch to non-root user
+USER nodejs
+
+# Expose port
 EXPOSE 3000
 
-# Команда запуска
-CMD [ "node", "index.js" ]
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:3000/check-status || exit 1
+
+# Start application
+CMD ["node", "index.js"]
