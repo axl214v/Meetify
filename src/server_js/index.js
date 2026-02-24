@@ -1,11 +1,35 @@
+// index.js (server entry point)
 const { server } = require('./app');
 const config = require('./config/config');
+const initDatabase = require('./utils/initDatabase');
 
+// ============================================
+// Initialize Database
+// ============================================
+(async () => {
+  try {
+    // Wait for database connection
+    await new Promise(resolve => setTimeout(resolve, 5000));
+    
+    // Initialize database schema
+    await initDatabase();
+    
+    // Start server
+    startServer();
+  } catch (error) {
+    console.error('Failed to initialize:', error);
+    process.exit(1);
+  }
+})();
+
+// ============================================
 // Start Server
-const PORT = config.server.port;
-const HOST = config.server.host;
+// ============================================
+function startServer() {
+  const PORT = config.server.port;
+  const HOST = config.server.host;
 
-server.listen(PORT, HOST, () => {
+  server.listen(PORT, HOST, () => {
   console.log('\n');
   console.log('╔═══════════════════════════════════════════════════════╗');
   console.log('║                                                       ║');
@@ -45,6 +69,7 @@ server.listen(PORT, HOST, () => {
   
   console.log('\n📝 Press CTRL+C to stop the server\n');
 });
+}
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
