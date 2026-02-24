@@ -290,5 +290,6 @@ if (typeof module !== 'undefined' && module.exports) {
 window.logError = (message, details) => errorLogger.logCustomError(message, details);
 window.logApiError = (endpoint, status, message) => errorLogger.logApiError(endpoint, status, message);
 window.logWebRTCError = (message, details) => errorLogger.logWebRTCError(message, details);
+window.ErrorPerformance = (message, details) => ErrorLogger.logPerformance('page_load', 3500); 
 
 console.log('[ErrorLogger] Ready - Errors will be sent to backend');
