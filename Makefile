@@ -2,12 +2,13 @@
 # Meetify Docker Commands
 # ==========================================
 
-.PHONY: help build up down restart logs clean
+.PHONY: help build up down restart logs clean first-run
 
 # Default target
 help:
 	@echo "Meetify Docker Commands:"
 	@echo ""
+	@echo "  make first-run - First time setup (recommended)"
 	@echo "  make build     - Build Docker images"
 	@echo "  make up        - Start all containers"
 	@echo "  make down      - Stop all containers"
@@ -18,6 +19,11 @@ help:
 	@echo "  make shell-be  - Enter backend shell"
 	@echo "  make shell-db  - Enter database shell"
 	@echo ""
+
+# First run setup
+first-run:
+	@chmod +x first-run.sh
+	@./first-run.sh
 
 # Build Docker images
 build:
