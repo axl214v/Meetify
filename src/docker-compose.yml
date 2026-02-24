@@ -1,67 +1,139 @@
 version: '3.8'
 
 services:
+  # ==========================================
   # MySQL Database
-  mysql:
+  # ==========================================
+  db:
     image: mysql:8.0
-    container_name: mysql_db
+    container_name: meetify-db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root_password}
+      MYSQL_DATABASE: ${DB_NAME:-meetify}
+      MYSQL_USER: ${DB_USER:-meetify_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-meetify_password}
     ports:
-      - "3306:3306"
+      - "${DB_PORT:-3306}:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - db_data:/var/lib/mysql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
-      - app-network
+      - meetify-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-root_password}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # Backend API
+  # ==========================================
+  # Backend Server (Node.js)
+  # ==========================================
   backend:
-    build: ./server_js
-    container_name: backend_api
+    build:
+      context: ./src/server_js
+      dockerfile: Dockerfile
+    container_name: meetify-backend
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "${PORT:-3000}:3000"
     environment:
-      DB_HOST: mysql
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3000
+      
+      # Database
+      DB_HOST: db
+      DB_USER: ${DB_USER:-meetify_user}
+      DB_PASSWORD: ${DB_PASSWORD:-meetify_password}
+      DB_NAME: ${DB_NAME:-meetify}
       DB_PORT: 3306
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_NAME: ${DB_NAME}
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
-      NODE_ENV: production
-      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS}
-      RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS}
-      AUTH_RATE_LIMIT_MAX: ${AUTH_RATE_LIMIT_MAX}
+      
+      # JWT
+      JWT_SECRET: ${JWT_SECRET:-your_jwt_secret_change_in_production}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
+      
+      # URLs
+      SERVER_URL: ${SERVER_URL:-http://localhost:3000}
+      CLIENT_URL: ${CLIENT_URL:-http://localhost:3000}
+      
+      # STUN/TURN
+      USE_OWN_STUN_SERVER: ${USE_OWN_STUN_SERVER:-false}
+      STUN_SERVER_URL: ${STUN_SERVER_URL:-stun:stun.l.google.com:19302}
+      TURN_SERVER_URL: ${TURN_SERVER_URL}
+      TURN_USERNAME: ${TURN_USERNAME}
+      TURN_PASSWORD: ${TURN_PASSWORD}
+      
+      # Conference limits
+      MAX_CONFERENCE_PARTICIPANTS: ${MAX_CONFERENCE_PARTICIPANTS:-50}
+      
+    volumes:
+      - ./src/server_js:/app
+      - /app/node_modules
+      - server_logs:/app/logs
     depends_on:
-      mysql:
+      db:
         condition: service_healthy
     networks:
-      - app-network
+      - meetify-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/check-status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  # Telegram Bot
-  web:
-    build: ./app
-    container_name: web
+  # ==========================================
+  # Frontend (Nginx serving static files)
+  # ==========================================
+  frontend:
+    build:
+      context: ./src/app
+      dockerfile: Dockerfile
+    container_name: meetify-frontend
     restart: unless-stopped
-    environment:
-      API_URL: http://backend:3000
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./src/app:/usr/share/nginx/html:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
     depends_on:
       - backend
     networks:
-      - app-network
+      - meetify-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
+  # ==========================================
+  # CoTURN Server (Optional - for production)
+  # ==========================================
+  # Uncomment this section if you want to run your own TURN server
+  # coturn:
+  #   image: coturn/coturn:latest
+  #   container_name: meetify-coturn
+  #   restart: unless-stopped
+  #   network_mode: host
+  #   volumes:
+  #     - ./coturn/turnserver.conf:/etc/coturn/turnserver.conf:ro
+  #   environment:
+  #     TURN_USERNAME: ${TURN_USERNAME:-meetify_user}
+  #     TURN_PASSWORD: ${TURN_PASSWORD:-turn_secret}
+
+# ==========================================
+# Networks
+# ==========================================
 networks:
-  app-network:
+  meetify-network:
     driver: bridge
 
+# ==========================================
+# Volumes
+# ==========================================
 volumes:
-  mysql_data:
+  db_data:
+    driver: local
+  server_logs:
+    driver: local
