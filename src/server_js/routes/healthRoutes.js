@@ -1,17 +1,33 @@
+// routes/healthRoutes.js
 const express = require('express');
 const router = express.Router();
 
-const healthService = require('../services/healthService');
-const checkStatus = async (req, res, next) => {
-  try {
-    const data = await healthService.getStatus();
-    res.json(data);   // {status:"ok",timestamp:"…"}
-  } catch (err) {
-    console.error('Health‑check failed', err);
-    res.status(503).json({ status: 'error', message: 'Health check failed' });
-  }
-};
+// Health check endpoint
+router.get('/check-status', (req, res) => {
+  res.json({
+    status: 'online',
+    timestamp: new Date().toISOString(),
+    socketConnections: req.app.get('io')?.engine?.clientsCount || 0,
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
 
-router.get('/check-status', checkStatus);  
+// Alternative health check
+router.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    uptime: process.uptime(),
+    timestamp: Date.now()
+  });
+});
+
+// Root endpoint
+router.get('/', (req, res) => {
+  res.json({
+    name: 'Meetify API',
+    version: '1.0.0',
+    status: 'running'
+  });
+});
 
 module.exports = router;

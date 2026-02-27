@@ -64,10 +64,10 @@ app.use((req, res, next) => {
 });
 
 // Маршруты API
+app.use('/api', healthRoutes);  // Для /api/check-status
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/conferences', conferenceRoutes);
-app.use('/', healthRoutes);
 app.use('/api/logs', logRoutes);
 
 // Health check с Socket.IO info
