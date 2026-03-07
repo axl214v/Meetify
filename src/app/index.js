@@ -2,7 +2,7 @@
 const API_BASE = window.location.origin; // Use current host
 
 // Check backend health
-fetch(`${API_BASE}/api/check-status`, {
+fetch(`${API_BASE}/check-status`, {
     method: 'GET'
 })
 .then(res => {
