@@ -10,6 +10,14 @@ const socketUsers = new Map(); // socket ID -> { userId, userName, conferenceId 
  * @param {SocketIO.Server} io - Socket.IO server instance
  */
 function initializeConferenceSocket(io) {
+  io.use((socket, next) => {
+  const token = socket.handshake.auth.token;
+  try {
+    socket.user = jwt.verify(token, process.env.JWT_SECRET);
+    next();
+  } catch { next(new Error('Unauthorized')); }
+});
+
   io.on('connection', (socket) => {
     console.log(`[Socket] Client connected: ${socket.id}`);
 
