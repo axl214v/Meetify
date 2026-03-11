@@ -94,7 +94,11 @@ app.get('/meetify/src/client/Conf/:page', (req, res) => {
 
 // Корневой маршрут
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../app/index.html'));
+  const filePath = path.join(__dirname, '../app/index.html');
+  console.log('[Route /] Sending file:', filePath);
+  res.sendFile(filePath, (err) => {
+    if (err) console.error('[Route /] sendFile error:', err);
+  });
 });
 
 // Для всех остальных маршрутов (SPA fallback)
@@ -126,23 +130,6 @@ io.use((socket, next) => {
 
 // Инициализация Socket.IO обработчиков для конференций
 initializeConferenceSocket(io);
-
-// Базовые Socket.IO события
-io.on('connection', (socket) => {
-  console.log(`[Socket.IO] Client connected: ${socket.id}, Total: ${io.engine.clientsCount}`);
-  
-  socket.on('disconnect', (reason) => {
-    console.log(`[Socket.IO] Client disconnected: ${socket.id}, Reason: ${reason}`);
-  });
-  
-  socket.on('error', (error) => {
-    console.error(`[Socket.IO] Socket error (${socket.id}):`, error);
-  });
-  
-  socket.on('ping', () => {
-    socket.emit('pong');
-  });
-});
 
 // Error Handling
 
