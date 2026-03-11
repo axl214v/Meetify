@@ -1,6 +1,6 @@
 // js/conf_room.js
-const API_BASE = 'http://localhost:3000';
-const SOCKET_URL = 'http://localhost:3000';
+const API_BASE = window.location.origin;
+const SOCKET_URL = window.location.origin;
 const serviceStatus = require('./checkStatus/index.js');
 
 
