@@ -3,7 +3,7 @@
  * Captures and sends errors to backend for analytics
  */
 
-const API_BASE = 'http://localhost:3000';
+const API_BASE_ERROR = window.location.origin;;
 
 class ErrorLogger {
   constructor() {
@@ -191,11 +191,11 @@ class ErrorLogger {
       // Use sendBeacon for synchronous sending (more reliable on page unload)
       if (navigator.sendBeacon) {
         const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-        navigator.sendBeacon(`${API_BASE}/api/logs/errors`, blob);
+        navigator.sendBeacon(`${API_BASE_ERROR}/api/logs/errors`, blob);
       }
     } else {
       // Normal async request
-      fetch(`${API_BASE}/api/logs/errors`, {
+      fetch(`${API_BASE_ERROR}/api/logs/errors`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

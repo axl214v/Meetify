@@ -1,19 +1,19 @@
 // Const of api
-const API_BASE = 'http://localhost:3000';
-const serviceStatus = require('./checkStatus/index.js');
+const API_BASE = window.location.origin;;
+// const serviceStatus = require('./checkStatus/index.js');
 
 
 // Initialize check on page load
-async () => {
-    try {
-        await checkServiceStatus();
-        // инициализация остальных модулей
-    } catch (err) {
-        console.error('Service check failed', err);
-        showError('Service temporarily unavailable. Please try again later.');
-        window.location.href = '../err';
-    }
-}
+//async () => {
+//    try {
+//        await checkServiceStatus();
+//        // инициализация остальных модулей
+//    } catch (err) {
+//        console.error('Service check failed', err);
+//        showError('Service temporarily unavailable. Please try again later.');
+//        window.location.href = '../err';
+//    }
+//}
 
 // Utility function for showing user-friendly errors
 function showError(message, input = null) {
