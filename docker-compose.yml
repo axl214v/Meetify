@@ -39,6 +39,7 @@ services:
       - "${PORT:-3000}:3000"
     environment:
       NODE_ENV: ${NODE_ENV:-production}
+      HOST: '0.0.0.0'
       PORT: 3000
       
       # Database
