@@ -33,7 +33,7 @@ async function checkAuthentication() {
         if (res.ok) {
             const data = await res.json();
             if (data.authenticated) {
-                window.location.href = '../Conf/conf.html';
+                window.location.href = '/Conf/pages/conf.html';
             }
         }
     } catch (err) {
