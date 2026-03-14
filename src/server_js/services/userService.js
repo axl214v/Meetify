@@ -7,32 +7,26 @@ class UserService {
   // Создание нового пользователя
   static async createUser(userData) {
     try {
-      const { email, password } = userData;
+        const { email, password, name, username } = userData;
+        const userName = username || name; // поддержка обоих вариантов
 
-      // Проверяем, что email не пустой
-      if (!email) {
-        throw new Error('Email is required');
-      }
+        if (!email) throw new Error('Email is required');
 
-      // Проверяем уникальность email
-      const existingUser = await User.findByEmail(email);
-      if (existingUser) {
-        throw new Error('Email already exists');
-      }
+        const existingUser = await User.findByEmail(email);
+        if (existingUser) throw new Error('Email already exists');
 
-      // Хешируем пароль
-      const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Создаем пользователя
-      const user = await User.create({
-        email,
-        password: hashedPassword
-      });
+        const user = await User.create({
+            email,
+            username: userName,
+            password: hashedPassword
+        });
 
-      return user;
+        return user;
     } catch (error) {
-      console.error('Error creating user:', error);
-      throw error;
+        console.error('Error creating user:', error);
+        throw error;
     }
   }
 
