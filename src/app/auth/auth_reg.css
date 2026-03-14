@@ -602,3 +602,11 @@ input.success {
     border-color: #10b981 !important;
     box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2) !important;
 }
+.strength-weak   { color: #ef4444; }
+.strength-medium { color: #f59e0b; }
+.strength-strong { color: #10b981; }
+#password-strength {
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    display: block;
+}
