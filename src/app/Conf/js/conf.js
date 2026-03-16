@@ -1,19 +1,19 @@
 // js/conf.js
-const API_BASE = 'http://localhost:3000';
-const serviceStatus = require('./checkStatus/index.js');
+const API_BASE = window.location.origin;
+//const serviceStatus = require('./checkStatus/index.js');
 
 
 // Initialize check on page load
-async () => {
-    try {
-        await checkServiceStatus();
-        // инициализация остальных модулей
-    } catch (err) {
-        console.error('Service check failed', err);
-        showError('Service temporarily unavailable. Please try again later.');
-        window.location.href = '../err';
-    }
-}
+// async () => {
+//    try {
+//        await checkServiceStatus();
+//        // инициализация остальных модулей
+//    } catch (err) {
+//        console.error('Service check failed', err);
+//        showError('Service temporarily unavailable. Please try again later.');
+//        window.location.href = '../err';
+//    }
+//}
 
 // State
 let currentFilter = 'all'; // 'all', 'host', 'participant'
@@ -32,13 +32,13 @@ document.addEventListener('DOMContentLoaded', () => {
 // Check authentication
 async function checkAuth() {
     try {
-        const response = await fetch(`${API_BASE}/check-auth`, {
+        const response = await fetch(`${API_BASE}/api/auth/me`, {
             method: 'GET',
             credentials: 'include'
         });
 
         if (!response.ok) {
-            window.location.href = '../auth/Auth.html';
+            window.location.href = '/auth/Auth.html';
             return;
         }
 
@@ -51,7 +51,6 @@ async function checkAuth() {
         window.location.href = '/auth/Auth.html';
     }
 }
-checkAuth();
 
 // Setup event listeners
 function setupEventListeners() {
@@ -326,6 +325,8 @@ async function joinConference(conferenceId) {
         } else if (response.status === 400 && data.requiresPassword) {
             // Redirect to join page for password input
             window.location.href = `conf_join.html?id=${conferenceId}`;
+        } else if (data.requiresPassword) {
+            window.location.href = `conf_join.html?id=${conferenceId}`;            
         } else {
             alert(data.message || 'Failed to join conference');
         }
