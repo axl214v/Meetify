@@ -22,7 +22,7 @@ fetch(`${API_BASE}/check-status`, {
 });
 
 // Check if user is authenticated
-fetch(`${API_BASE}/api/auth/check-auth`, {
+fetch(`${API_BASE}/api/auth/me`, {
     method: 'GET',
     credentials: 'include'
 })
