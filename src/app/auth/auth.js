@@ -40,6 +40,7 @@ async function checkAuthentication() {
         console.log('User not authenticated:', err.message);
     }
 }
+checkAuthentication();
 
 
 // Login form handler
@@ -94,7 +95,7 @@ document.getElementById('submit')?.addEventListener('click', async function (e) 
             
             // Small delay for visual feedback
             setTimeout(() => {
-                window.location.href = '../Conf/conf.html';
+                window.location.href = '../Conf/pages/conf.html';
             }, 300);
         } else if (response.status === 401) {     
             showError('Invalid email or password.', passwordInput);

@@ -48,9 +48,10 @@ async function checkAuth() {
         }
     } catch (error) {
         console.error('Auth check error:', error);
-        window.location.href = '../auth/Auth.html';
+        window.location.href = '/auth/Auth.html';
     }
 }
+checkAuth();
 
 // Setup event listeners
 function setupEventListeners() {
