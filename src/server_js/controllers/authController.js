@@ -44,9 +44,17 @@ const login = async (req, res) => {
     
     const result = await AuthService.login(email, password);
     
+    // ✅ сохраняй токен в httpOnly cookie
+    res.cookie('token', result.token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'Strict',
+        maxAge: 24 * 60 * 60 * 1000
+    });
+    
     res.json({
-      message: 'Login successful',
-      ...result
+        message: 'Login successful',
+        user: result.user
     });
   } catch (error) {
     console.error('Login error:', error);
