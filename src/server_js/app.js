@@ -20,6 +20,9 @@ const { initializeConferenceSocket } = require('./sockets/conferenceSocket');
 // Создаём экземпляр приложения
 const app = express();
 
+// Доверяем прокси (важно для правильной работы в production, особенно если сервер за Nginx)
+app.set('trust proxy', 1);
+
 // IMPORTANT: Создаём HTTP server (оборачиваем Express)
 const server = http.createServer(app);
 

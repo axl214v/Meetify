@@ -1,4 +1,4 @@
-const mysql = require('mysql');
+const mysql = require('mysql2');
 const config = require('../config/config');
 
 // Создаем пул соединений для лучшей производительности

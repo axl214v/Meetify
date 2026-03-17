@@ -90,6 +90,19 @@ class AuthService {
       throw new Error('Invalid token');
     }
   }
+  
+  // Получение текущего пользователя по ID из токена
+  static async getCurrentUser(userId) {
+    const user = await User.findById(userId);
+    if (!user) throw new Error('User not found');
+    
+    return {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        createdAt: user.created_at
+    };
+  }
 
   // Обновление токена (refresh)
   static async refreshToken(refreshToken) {

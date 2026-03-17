@@ -1,6 +1,15 @@
 const db = require('../config/database');
 
 const User = {
+    findById: (id) => {
+        return new Promise((resolve, reject) => {
+            const query = 'SELECT * FROM users WHERE id = ?';
+            db.query(query, [id], (error, results) => {
+                if (error) return reject(error);
+                resolve(results[0]);
+            });
+        });
+    }, 
     findByEmail: (email) => {
         return new Promise((resolve, reject) => {
             const query = 'SELECT * FROM users WHERE email = ?';
