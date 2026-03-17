@@ -10,11 +10,8 @@
 <body>
     <header>
         <h1>Create New Conference</h1>
-        <button onclick="window.location.href='conf.html'" class="secondary">
-            Back to Dashboard
-        </button>
+        <button type="button" id="backBtn" class="secondary">Back to Dashboard</button>
     </header>
-
     <main>
         <div class="conference-form">
             <h3>📹 Conference Details</h3>
@@ -116,9 +113,7 @@
                     <button type="submit" id="submitBtn">
                         Create Conference
                     </button>
-                    <button type="button" class="secondary" onclick="window.location.href='conf.html'">
-                        Cancel
-                    </button>
+                    <button type="button" id="cancelBtn" class="secondary">Cancel</button>
                 </div>
             </form>
 
@@ -126,7 +121,7 @@
             <div id="conferenceInfo" class="info-message" style="display: none;">
                 <h4>✅ Conference Created!</h4>
                 <p>Conference ID: <strong id="conferenceId"></strong></p>
-                <button onclick="copyConferenceId()">Copy ID</button>
+                <button type="button" id="copyBtn">Copy ID</button>
             </div>
         </div>
     </main>
