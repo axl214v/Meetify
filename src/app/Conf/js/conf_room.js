@@ -1,26 +1,11 @@
-// js/conf_room.js
 const API_BASE = window.location.origin;
 const SOCKET_URL = window.location.origin;
-const serviceStatus = require('./checkStatus/index.js');
-
-
-// Initialize check on page load
-async () => {
-    try {
-        await checkServiceStatus();
-        // инициализация остальных модулей
-    } catch (err) {
-        console.error('Service check failed', err);
-        showError('Service temporarily unavailable. Please try again later.');
-        window.location.href = '../err';
-    }
-}
 
 // State
 let socket = null;
 let localStream = null;
 let screenStream = null;
-let peers = {}; // { userId: RTCPeerConnection }
+let peers = {};
 let conferenceId = null;
 let currentUser = null;
 let isAudioEnabled = true;
@@ -38,9 +23,23 @@ const rtcConfig = {
     ]
 };
 
+// Get cookie helper
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+}
+
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
-    // Get conference ID from URL
     const urlParams = new URLSearchParams(window.location.search);
     conferenceId = urlParams.get('id');
 
@@ -51,21 +50,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     try {
+        // Load current user first
+        const meRes = await fetch(`${API_BASE}/api/auth/me`, {
+            credentials: 'include'
+        });
+
+        if (!meRes.ok) {
+            window.location.href = '/auth/Auth.html';
+            return;
+        }
+
+        const meData = await meRes.json();
+        currentUser = meData.user;
+
         // Load conference details
         await loadConferenceDetails();
-        
+
         // Initialize local media
         await initLocalMedia();
-        
+
         // Connect to signaling server
         initSocket();
-        
+
         // Setup event listeners
         setupEventListeners();
-        
+
         // Start room timer
         startRoomTimer();
-        
+
     } catch (error) {
         console.error('Initialization error:', error);
         alert('Failed to join conference. Please check your camera/microphone permissions.');
@@ -77,36 +89,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function loadConferenceDetails() {
     try {
         const response = await fetch(`${API_BASE}/api/conferences/${conferenceId}`, {
-            method: 'GET',
             credentials: 'include'
         });
 
-        if (!response.ok) {
-            throw new Error('Conference not found');
-        }
+        if (!response.ok) throw new Error('Conference not found');
 
         const data = await response.json();
-        const conference = data.conference;
+        document.getElementById('conferenceName').textContent = data.conference.name;
 
-        document.getElementById('conferenceName').textContent = conference.name;
-        
-        // Load participants
         await loadParticipants();
-        
+
     } catch (error) {
         console.error('Load conference error:', error);
         throw error;
     }
 }
 
-// Initialize local media (camera + microphone)
+// Initialize local media
 async function initLocalMedia() {
     try {
         localStream = await navigator.mediaDevices.getUserMedia({
-            video: {
-                width: { ideal: 1280 },
-                height: { ideal: 720 }
-            },
+            video: { width: { ideal: 1280 }, height: { ideal: 720 } },
             audio: {
                 echoCancellation: true,
                 noiseSuppression: true,
@@ -114,86 +117,80 @@ async function initLocalMedia() {
             }
         });
 
-        const localVideo = document.getElementById('localVideo');
-        localVideo.srcObject = localStream;
-
+        document.getElementById('localVideo').srcObject = localStream;
         console.log('Local media initialized');
+
     } catch (error) {
         console.error('Error accessing media devices:', error);
         throw error;
     }
 }
 
-// Initialize Socket.IO connection
+// Initialize Socket.IO
 function initSocket() {
     socket = io(SOCKET_URL, {
-        transports: ['websocket', 'polling']
+        transports: ['websocket', 'polling'],
+        auth: { token: getCookie('token') }
     });
 
     socket.on('connect', () => {
         console.log('Connected to signaling server');
-        
-        // Join conference room
-        socket.emit('join-conference', { conferenceId });
+        socket.emit('join-conference', {
+            conferenceId,
+            userId: currentUser.id,
+            userName: currentUser.username || currentUser.email
+        });
     });
 
-    socket.on('user-connected', async ({ userId }) => {
-        console.log('User connected:', userId);
-        
-        // Create peer connection for new user
+    socket.on('room-participants', ({ participants }) => {
+        console.log('Existing participants:', participants);
+        participants.forEach(async (p) => {
+            if (p.userId !== currentUser.id) {
+                await createPeerConnection(p.userId, true);
+            }
+        });
+    });
+
+    socket.on('user-connected', async ({ userId, userName }) => {
+        console.log('User connected:', userId, userName);
         await createPeerConnection(userId, true);
     });
 
     socket.on('user-disconnected', ({ userId }) => {
         console.log('User disconnected:', userId);
-        
-        // Remove peer connection
         if (peers[userId]) {
             peers[userId].close();
             delete peers[userId];
         }
-        
-        // Remove video element
         const videoContainer = document.getElementById(`video-${userId}`);
-        if (videoContainer) {
-            videoContainer.remove();
-        }
-        
+        if (videoContainer) videoContainer.remove();
         updateParticipantCount();
     });
 
     socket.on('offer', async ({ userId, offer }) => {
         console.log('Received offer from:', userId);
-        
         await createPeerConnection(userId, false);
         await peers[userId].setRemoteDescription(new RTCSessionDescription(offer));
-        
         const answer = await peers[userId].createAnswer();
         await peers[userId].setLocalDescription(answer);
-        
         socket.emit('answer', { to: userId, answer });
     });
 
     socket.on('answer', async ({ userId, answer }) => {
         console.log('Received answer from:', userId);
-        
         if (peers[userId]) {
             await peers[userId].setRemoteDescription(new RTCSessionDescription(answer));
         }
     });
 
     socket.on('ice-candidate', async ({ userId, candidate }) => {
-        console.log('Received ICE candidate from:', userId);
-        
-        if (peers[userId]) {
+        if (peers[userId] && candidate) {
             await peers[userId].addIceCandidate(new RTCIceCandidate(candidate));
         }
     });
 
     socket.on('chat-message', ({ userId, userName, message, timestamp }) => {
         addChatMessage(userName, message, timestamp);
-        
-        // Update unread count if chat is closed
         const chatSidebar = document.getElementById('chatSidebar');
         if (!chatSidebar.classList.contains('open')) {
             unreadMessages++;
@@ -201,25 +198,38 @@ function initSocket() {
         }
     });
 
+    socket.on('user-media-state', ({ userId, audio, video }) => {
+        const micStatus = document.querySelector(`#video-${userId} .mic-status`);
+        const videoStatus = document.querySelector(`#video-${userId} .video-status`);
+        if (micStatus) micStatus.textContent = audio ? '🎤' : '🔇';
+        if (videoStatus) videoStatus.textContent = video ? '📹' : '📵';
+    });
+
     socket.on('disconnect', () => {
         console.log('Disconnected from signaling server');
+    });
+
+    socket.on('error', (err) => {
+        console.error('Socket error:', err);
     });
 }
 
 // Create WebRTC peer connection
 async function createPeerConnection(userId, isInitiator) {
+    if (peers[userId]) {
+        peers[userId].close();
+    }
+
     const peerConnection = new RTCPeerConnection(rtcConfig);
     peers[userId] = peerConnection;
 
-    // Add local stream tracks
+    // Add local tracks
     localStream.getTracks().forEach(track => {
         peerConnection.addTrack(track, localStream);
     });
 
     // Handle incoming tracks
     peerConnection.ontrack = (event) => {
-        console.log('Received track from:', userId);
-        
         const [remoteStream] = event.streams;
         addRemoteVideo(userId, remoteStream);
     };
@@ -234,21 +244,18 @@ async function createPeerConnection(userId, isInitiator) {
         }
     };
 
-    // Handle connection state changes
+    // Handle connection state
     peerConnection.onconnectionstatechange = () => {
         console.log(`Connection state with ${userId}:`, peerConnection.connectionState);
-        
-        if (peerConnection.connectionState === 'disconnected' || 
+        if (peerConnection.connectionState === 'disconnected' ||
             peerConnection.connectionState === 'failed') {
             if (peers[userId]) {
                 peers[userId].close();
                 delete peers[userId];
             }
-            
             const videoContainer = document.getElementById(`video-${userId}`);
-            if (videoContainer) {
-                videoContainer.remove();
-            }
+            if (videoContainer) videoContainer.remove();
+            updateParticipantCount();
         }
     };
 
@@ -256,22 +263,17 @@ async function createPeerConnection(userId, isInitiator) {
     if (isInitiator) {
         const offer = await peerConnection.createOffer();
         await peerConnection.setLocalDescription(offer);
-        
         socket.emit('offer', { to: userId, offer });
     }
 
     return peerConnection;
 }
 
-// Add remote video to grid
+// Add remote video
 function addRemoteVideo(userId, stream) {
-    // Remove existing video if any
     let videoContainer = document.getElementById(`video-${userId}`);
-    if (videoContainer) {
-        videoContainer.remove();
-    }
+    if (videoContainer) videoContainer.remove();
 
-    // Create new video container
     videoContainer = document.createElement('div');
     videoContainer.id = `video-${userId}`;
     videoContainer.className = 'video-container';
@@ -284,139 +286,99 @@ function addRemoteVideo(userId, stream) {
     const overlay = document.createElement('div');
     overlay.className = 'video-overlay';
     overlay.innerHTML = `
-        <span class="participant-name">Participant ${userId.substring(0, 8)}</span>
+        <span class="participant-name">User ${userId}</span>
         <div class="participant-status">
-            <span class="status-icon active">🎤</span>
-            <span class="status-icon active">📹</span>
+            <span class="status-icon active mic-status">🎤</span>
+            <span class="status-icon active video-status">📹</span>
         </div>
     `;
 
     videoContainer.appendChild(video);
     videoContainer.appendChild(overlay);
-
     document.getElementById('videoGrid').appendChild(videoContainer);
-    
     updateParticipantCount();
 }
 
 // Setup event listeners
 function setupEventListeners() {
-    // Toggle microphone
     document.getElementById('toggleMic').addEventListener('click', toggleMicrophone);
-
-    // Toggle video
     document.getElementById('toggleVideo').addEventListener('click', toggleCamera);
-
-    // Toggle screen share
     document.getElementById('toggleScreen').addEventListener('click', toggleScreenShare);
-
-    // Toggle participants sidebar
-    document.getElementById('toggleParticipants').addEventListener('click', () => {
-        toggleSidebar('participants');
-    });
-
-    // Toggle chat sidebar
+    document.getElementById('toggleParticipants').addEventListener('click', () => toggleSidebar('participants'));
     document.getElementById('toggleChat').addEventListener('click', () => {
         toggleSidebar('chat');
         unreadMessages = 0;
         updateChatBadge();
     });
-
-    // Leave conference
     document.getElementById('leaveBtn').addEventListener('click', leaveConference);
-
-    // Chat input - send on Enter
     document.getElementById('chatInput').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            sendMessage();
-        }
+        if (e.key === 'Enter') sendMessage();
     });
 }
 
 // Toggle microphone
 function toggleMicrophone() {
     isAudioEnabled = !isAudioEnabled;
-    
     const audioTrack = localStream.getAudioTracks()[0];
-    if (audioTrack) {
-        audioTrack.enabled = isAudioEnabled;
-    }
+    if (audioTrack) audioTrack.enabled = isAudioEnabled;
 
     const btn = document.getElementById('toggleMic');
     const status = document.getElementById('localMicStatus');
-    
-    if (isAudioEnabled) {
-        btn.classList.remove('muted');
-        status.classList.remove('muted');
-        status.classList.add('active');
-        status.textContent = '🎤';
-    } else {
-        btn.classList.add('muted');
-        status.classList.add('muted');
-        status.classList.remove('active');
-        status.textContent = '🔇';
-    }
+    btn.classList.toggle('muted', !isAudioEnabled);
+    status.textContent = isAudioEnabled ? '🎤' : '🔇';
+
+    socket?.emit('media-state-change', {
+        conferenceId,
+        audio: isAudioEnabled,
+        video: isVideoEnabled
+    });
 }
 
 // Toggle camera
 function toggleCamera() {
     isVideoEnabled = !isVideoEnabled;
-    
     const videoTrack = localStream.getVideoTracks()[0];
-    if (videoTrack) {
-        videoTrack.enabled = isVideoEnabled;
-    }
+    if (videoTrack) videoTrack.enabled = isVideoEnabled;
 
     const btn = document.getElementById('toggleVideo');
     const status = document.getElementById('localVideoStatus');
-    
-    if (isVideoEnabled) {
-        btn.classList.remove('off');
-        status.classList.remove('muted');
-        status.classList.add('active');
-        status.textContent = '📹';
-    } else {
-        btn.classList.add('off');
-        status.classList.add('muted');
-        status.classList.remove('active');
-        status.textContent = '📵';
-    }
+    btn.classList.toggle('off', !isVideoEnabled);
+    status.textContent = isVideoEnabled ? '📹' : '📵';
+
+    socket?.emit('media-state-change', {
+        conferenceId,
+        audio: isAudioEnabled,
+        video: isVideoEnabled
+    });
 }
 
 // Toggle screen share
 async function toggleScreenShare() {
     const btn = document.getElementById('toggleScreen');
-    
+
     if (!isScreenSharing) {
         try {
             screenStream = await navigator.mediaDevices.getDisplayMedia({
-                video: {
-                    cursor: 'always'
-                },
+                video: { cursor: 'always' },
                 audio: false
             });
 
             const screenTrack = screenStream.getVideoTracks()[0];
-            
-            // Replace video track in all peer connections
+
             Object.values(peers).forEach(peer => {
                 const sender = peer.getSenders().find(s => s.track?.kind === 'video');
-                if (sender) {
-                    sender.replaceTrack(screenTrack);
-                }
+                if (sender) sender.replaceTrack(screenTrack);
             });
 
-            // Update local video
             document.getElementById('localVideo').srcObject = screenStream;
 
-            // Handle screen share stop
-            screenTrack.onended = () => {
-                stopScreenShare();
-            };
+            screenTrack.onended = () => stopScreenShare();
 
             isScreenSharing = true;
             btn.classList.add('sharing');
             btn.textContent = '⏹️';
+
+            socket?.emit('screen-share-start', { conferenceId });
 
         } catch (error) {
             console.error('Screen share error:', error);
@@ -434,31 +396,29 @@ function stopScreenShare() {
         screenStream = null;
     }
 
-    // Restore camera track
     const videoTrack = localStream.getVideoTracks()[0];
     Object.values(peers).forEach(peer => {
         const sender = peer.getSenders().find(s => s.track?.kind === 'video');
-        if (sender) {
-            sender.replaceTrack(videoTrack);
-        }
+        if (sender) sender.replaceTrack(videoTrack);
     });
 
     document.getElementById('localVideo').srcObject = localStream;
-
     isScreenSharing = false;
     document.getElementById('toggleScreen').classList.remove('sharing');
     document.getElementById('toggleScreen').textContent = '🖥️';
+
+    socket?.emit('screen-share-stop', { conferenceId });
 }
 
 // Toggle sidebar
 function toggleSidebar(type) {
     const participantsSidebar = document.getElementById('participantsSidebar');
     const chatSidebar = document.getElementById('chatSidebar');
-    
+
     if (type === 'participants') {
         chatSidebar.classList.remove('open');
         participantsSidebar.classList.toggle('open');
-    } else if (type === 'chat') {
+    } else {
         participantsSidebar.classList.remove('open');
         chatSidebar.classList.toggle('open');
     }
@@ -468,7 +428,7 @@ function toggleSidebar(type) {
 function closeSidebar(type) {
     if (type === 'participants') {
         document.getElementById('participantsSidebar').classList.remove('open');
-    } else if (type === 'chat') {
+    } else {
         document.getElementById('chatSidebar').classList.remove('open');
     }
 }
@@ -477,18 +437,13 @@ function closeSidebar(type) {
 async function loadParticipants() {
     try {
         const response = await fetch(`${API_BASE}/api/conferences/${conferenceId}/participants`, {
-            method: 'GET',
             credentials: 'include'
         });
 
-        if (!response.ok) {
-            throw new Error('Failed to load participants');
-        }
+        if (!response.ok) throw new Error('Failed to load participants');
 
         const data = await response.json();
-        const participants = data.participants || [];
-
-        renderParticipants(participants);
+        renderParticipants(data.participants || []);
         updateParticipantCount();
 
     } catch (error) {
@@ -496,25 +451,24 @@ async function loadParticipants() {
     }
 }
 
-// Render participants list
+// Render participants
 function renderParticipants(participants) {
     const participantsList = document.getElementById('participantsList');
-    
+
     if (participants.length === 0) {
         participantsList.innerHTML = '<p style="color: rgba(255,255,255,0.5); text-align: center;">No participants yet</p>';
         return;
     }
 
     participantsList.innerHTML = participants.map(p => {
-        const initials = (p.userName || p.username || 'U').substring(0, 2).toUpperCase();
-        const hostBadge = p.isHost || p.is_host ? ' 👑' : '';
-        
+        const initials = (p.username || p.userName || 'U').substring(0, 2).toUpperCase();
+        const hostBadge = p.is_host || p.isHost ? ' 👑' : '';
         return `
             <div class="participant-item">
                 <div class="participant-avatar">${initials}</div>
                 <div class="participant-info">
-                    <strong>${escapeHtml(p.userName || p.username || 'Unknown')}${hostBadge}</strong>
-                    <small>Joined ${formatJoinTime(p.joinedAt || p.joined_at)}</small>
+                    <strong>${escapeHtml(p.username || p.userName || 'Unknown')}${hostBadge}</strong>
+                    <small>Joined ${formatJoinTime(p.joined_at || p.joinedAt)}</small>
                 </div>
             </div>
         `;
@@ -524,16 +478,11 @@ function renderParticipants(participants) {
 // Format join time
 function formatJoinTime(timestamp) {
     if (!timestamp) return 'recently';
-    
     const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / 60000);
-    
+    const diffMins = Math.floor((Date.now() - date) / 60000);
     if (diffMins < 1) return 'just now';
     if (diffMins === 1) return '1 minute ago';
     if (diffMins < 60) return `${diffMins} minutes ago`;
-    
     const diffHours = Math.floor(diffMins / 60);
     if (diffHours === 1) return '1 hour ago';
     return `${diffHours} hours ago`;
@@ -541,7 +490,7 @@ function formatJoinTime(timestamp) {
 
 // Update participant count
 function updateParticipantCount() {
-    const count = Object.keys(peers).length + 1; // +1 for local user
+    const count = Object.keys(peers).length + 1;
     document.getElementById('participantCount').textContent = count;
 }
 
@@ -549,37 +498,33 @@ function updateParticipantCount() {
 function sendMessage() {
     const input = document.getElementById('chatInput');
     const message = input.value.trim();
-    
-    if (!message) return;
-    
-    // Send via socket
+    if (!message || !socket) return;
+
     socket.emit('chat-message', {
         conferenceId,
         message,
         timestamp: new Date().toISOString()
     });
-    
-    // Clear input
+
     input.value = '';
 }
 
 // Add chat message
 function addChatMessage(userName, message, timestamp) {
     const chatMessages = document.getElementById('chatMessages');
-    
     const messageEl = document.createElement('div');
     messageEl.className = 'chat-message';
-    
-    const time = timestamp ? new Date(timestamp).toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
+
+    const time = timestamp ? new Date(timestamp).toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit'
     }) : '';
-    
+
     messageEl.innerHTML = `
         <strong>${escapeHtml(userName)} <span style="color: rgba(255,255,255,0.5); font-size: 0.85rem; font-weight: normal;">${time}</span></strong>
         <p>${escapeHtml(message)}</p>
     `;
-    
+
     chatMessages.appendChild(messageEl);
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
@@ -587,7 +532,6 @@ function addChatMessage(userName, message, timestamp) {
 // Update chat badge
 function updateChatBadge() {
     const badge = document.getElementById('chatBadge');
-    
     if (unreadMessages > 0) {
         badge.textContent = unreadMessages > 99 ? '99+' : unreadMessages;
         badge.style.display = 'flex';
@@ -599,76 +543,45 @@ function updateChatBadge() {
 // Start room timer
 function startRoomTimer() {
     startTime = Date.now();
-    
     roomTimer = setInterval(() => {
         const elapsed = Date.now() - startTime;
         const minutes = Math.floor(elapsed / 60000);
         const seconds = Math.floor((elapsed % 60000) / 1000);
-        
-        document.getElementById('roomTimer').textContent = 
+        document.getElementById('roomTimer').textContent =
             `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     }, 1000);
 }
 
 // Leave conference
 async function leaveConference() {
-    if (!confirm('Are you sure you want to leave this conference?')) {
-        return;
+    if (!confirm('Are you sure you want to leave this conference?')) return;
+
+    if (roomTimer) clearInterval(roomTimer);
+    if (localStream) localStream.getTracks().forEach(track => track.stop());
+    if (screenStream) screenStream.getTracks().forEach(track => track.stop());
+
+    Object.values(peers).forEach(peer => peer.close());
+    peers = {};
+
+    if (socket) {
+        socket.emit('leave-conference', { conferenceId });
+        socket.disconnect();
     }
 
-    try {
-        // Stop timer
-        if (roomTimer) {
-            clearInterval(roomTimer);
-        }
+    await fetch(`${API_BASE}/api/conferences/${conferenceId}/leave`, {
+        method: 'POST',
+        credentials: 'include'
+    }).catch(() => {});
 
-        // Stop all media tracks
-        if (localStream) {
-            localStream.getTracks().forEach(track => track.stop());
-        }
-        
-        if (screenStream) {
-            screenStream.getTracks().forEach(track => track.stop());
-        }
-
-        // Close all peer connections
-        Object.values(peers).forEach(peer => peer.close());
-        peers = {};
-
-        // Disconnect socket
-        if (socket) {
-            socket.emit('leave-conference', { conferenceId });
-            socket.disconnect();
-        }
-
-        // Call API to leave
-        await fetch(`${API_BASE}/api/conferences/${conferenceId}/leave`, {
-            method: 'POST',
-            credentials: 'include'
-        });
-
-        // Redirect
-        window.location.href = 'conf.html';
-
-    } catch (error) {
-        console.error('Leave conference error:', error);
-        // Redirect anyway
-        window.location.href = 'conf.html';
-    }
-}
-
-// Escape HTML to prevent XSS
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+    window.location.href = 'conf.html';
 }
 
 // Handle page unload
-window.addEventListener('beforeunload', (e) => {
-    leaveConference();
+window.addEventListener('beforeunload', () => {
+    navigator.sendBeacon(`${API_BASE}/api/conferences/${conferenceId}/leave`);
+    if (socket) socket.disconnect();
 });
 
-// Make functions globally accessible
+// Global functions
 window.closeSidebar = closeSidebar;
 window.sendMessage = sendMessage;

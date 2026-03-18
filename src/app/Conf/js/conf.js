@@ -43,8 +43,8 @@ async function checkAuth() {
         }
 
         const data = await response.json();
-        if (data.authenticated && data.user) {
-            document.getElementById('userName').textContent = data.user.name || data.user.email;
+        if (data.user) {
+            document.getElementById('userName').textContent = data.user.username || data.user.email;
         }
     } catch (error) {
         console.error('Auth check error:', error);
@@ -317,11 +317,9 @@ async function joinConference(conferenceId) {
 
         const data = await response.json();
 
-        if (response.status === 200) {
+        if (response.ok) {
             alert(data.message || 'Successfully joined!');
-            // Redirect to conference room (implement later)
-            // window.location.href = `conf_room.html?id=${conferenceId}`;
-            loadConferences(); // Reload list
+            window.location.href = `conf_room.html?id=${conferenceId}`;
         } else if (response.status === 400 && data.requiresPassword) {
             // Redirect to join page for password input
             window.location.href = `conf_join.html?id=${conferenceId}`;

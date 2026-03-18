@@ -25,19 +25,17 @@ function showError(message, input = null) {
 // Checking if user is authenticated
 async function checkAuthentication() {
     try {
-        const res = await fetch(`${API_BASE}/api/auth/me`, {
+        const response = await fetch(`${API_BASE}/api/auth/me`, {
             method: 'GET',
             credentials: 'include'
         });
-        
-        if (res.ok) {
-            const data = await res.json();
-            if (data.authenticated) {
-                window.location.href = '/Conf/pages/conf.html';
-            }
+
+        if (response.ok) {
+            window.location.href = '/Conf/pages/conf.html';
         }
-    } catch (err) {
-        console.log('User not authenticated:', err.message);
+
+    } catch (error) {
+        console.error('Auth check failed:', error);
     }
 }
 checkAuthentication();
