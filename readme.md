@@ -1,190 +1,283 @@
 # Meetify 🎥
 
-**Meetify** - A modern web-based video conferencing platform with WebRTC, built using cutting-edge web technologies. A full-featured solution for online meetings with real-time communication support.
+**Meetify** — A web-based video conferencing platform built with WebRTC, Node.js, and Socket.IO. Deployed via Docker with Nginx as a reverse proxy.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D14.0.0-brightgreen)](https://nodejs.org/)
 [![MySQL](https://img.shields.io/badge/MySQL-8.0%2B-blue)](https://www.mysql.com/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-blue)](https://www.docker.com/)
 
-## ✨ Key Features
+## ✨ Features
 
 ### 🎬 Video Conferencing
-- **WebRTC video/audio communication** - High-quality real-time transmission
-- **Dynamic video grid** - Automatic adaptation based on participant count
-- **Screen sharing** - Desktop sharing with system audio support
-- **Media controls** - Mute/unmute microphone and turn camera on/off
+- **WebRTC peer-to-peer** — real-time video/audio between participants
+- **Dynamic video grid** — adapts based on participant count
+- **Screen sharing** — replace camera track mid-call without renegotiation
+- **Media controls** — mute/unmute microphone, turn camera on/off
 
 ### 💬 Communication
-- **Real-time chat** - Instant messaging via Socket.IO
-- **Participant list** - Display all connected users
-- **Participant status** - Microphone/camera state indicators
-- **User roles** - Host and participants with different permissions
+- **Real-time chat** — via Socket.IO with unread message badge
+- **Participant list** — shows all connected users with join time
+- **Media state indicators** — mic/camera status per participant
+- **User roles** — host and participant with different permissions
 
 ### 🔐 Security
-- **JWT authentication** - Secure login system
-- **Password encryption** - bcrypt hashing
-- **Private conferences** - Password protection
-- **Rate limiting** - DDoS attack protection
+- **JWT authentication** — stored in `httpOnly` cookies (not localStorage)
+- **bcrypt hashing** — for user passwords (10 rounds)
+- **Rate limiting** — on HTTP endpoints via express-rate-limit
+- **CORS** — configured for allowed origins
+- **Input validation** — on all API endpoints
+- **XSS protection** — HTML escaping on client side
 
 ### ⚙️ Conference Management
-- **Create conferences** - Flexible parameter configuration
-- **Scheduling** - Set start/end times
-- **Participant limits** - Control connection count
-- **History tracking** - Monitor past meetings
+- **Create/delete conferences** — with name, description, schedule, participant limit
+- **Password-protected conferences** — optional per-conference password
+- **Join/leave** — with participant tracking in DB
+- **Scheduling** — optional start/end times with status detection (Scheduled/Ongoing/Ended/Active)
 
 ## 🛠️ Technology Stack
 
 ### Backend
-- **Node.js** - Server platform
-- **Express.js** - Web framework
-- **Socket.IO** - WebSocket communication for WebRTC signaling
-- **MySQL/MariaDB** - Relational database
-- **JWT** - Token-based authentication
-- **bcrypt** - Cryptographic hashing
+- **Node.js + Express.js** — REST API server
+- **Socket.IO** — WebRTC signaling and real-time chat
+- **mysql2** — MySQL/MariaDB database driver with connection pooling
+- **JWT + cookie-parser** — token-based auth via httpOnly cookies
+- **bcrypt** — password hashing
+- **express-rate-limit** — rate limiting (with `trust proxy` enabled for Nginx)
 
 ### Frontend
-- **HTML5** - Semantic markup
-- **CSS3** - Modern styles (Flexbox, Grid, Animations)
-- **JavaScript ES6+** - Client-side logic
-- **WebRTC API** - Peer-to-peer video/audio
-- **Socket.IO Client** - Real-time communication
+- **Vanilla HTML/CSS/JS** — no framework, served as static files
+- **WebRTC API** — peer-to-peer video/audio
+- **Socket.IO client** — signaling and chat
+- **Nginx** — static file server and reverse proxy to backend
 
-### Architecture
-- **MVC Pattern** - Separation of concerns
-- **RESTful API** - Standardized endpoints
-- **Component-based UI** - Reusable components
-- **Service Layer** - Business logic
+### Infrastructure
+- **Docker Compose** — orchestrates db, backend, frontend containers
+- **Nginx** — reverse proxy for `/api/`, `/socket.io/`, `/check-status`
+- **MySQL 8.0** — persistent data via Docker volume
+
+## ⚠️ Known Limitations
+
+- **Participant cap ~6–8 users** — full-mesh WebRTC topology means every peer connects to every other peer (N×(N-1)/2 connections). Advertising 50 participants is not realistic without an SFU (e.g. mediasoup, LiveKit).
+- **TURN server required** for connections across NAT (not included by default — coturn config is commented out in docker-compose.yml)
+- **WebRTC requires HTTPS in production** — works on localhost without it
+- **No conference recording**
+- **Socket.IO JWT auth is TODO** — middleware exists but verification is commented out
 
 ## 📁 Project Structure
 
 ```
 meetify/
 ├── src/
-│   ├── server_js/                    # Backend
-│   │   ├── config/                   # Configuration
-│   │   │   ├── config.js             # Main settings
-│   │   │   ├── database.js           # DB connection
-│   │   │   └── webrtc.js             # WebRTC settings
-│   │   ├── controllers/              # Controllers
-│   │   │   ├── authController.js     # Authentication
-│   │   │   ├── userController.js     # Users
-│   │   │   └── conferenceController.js  # Conferences
-│   │   ├── middleware/               # Middleware
-│   │   │   ├── auth.js               # JWT verification
-│   │   │   └── webrtc.js             # WebRTC validation
-│   │   ├── models/                   # Database models
-│   │   │   ├── User.js               # User model
-│   │   │   └── Conference.js         # Conference model
-│   │   ├── routes/                   # API routes
+│   ├── server_js/                    # Backend (Node.js)
+│   │   ├── config/
+│   │   │   ├── config.js             # Env-based config
+│   │   │   └── database.js           # mysql2 connection pool
+│   │   ├── controllers/
+│   │   │   ├── authController.js     # Register, login (sets httpOnly cookie), logout
+│   │   │   ├── userController.js     # User profile
+│   │   │   └── conferenceController.js
+│   │   ├── middleware/
+│   │   │   └── auth.js               # JWT middleware (checks header + cookie)
+│   │   ├── models/
+│   │   │   ├── User.js               # findByEmail, findById, create
+│   │   │   └── Conference.js
+│   │   ├── routes/
 │   │   │   ├── authRoutes.js         # /api/auth/*
 │   │   │   ├── userRoutes.js         # /api/users/*
 │   │   │   ├── conferenceRoutes.js   # /api/conferences/*
-│   │   │   └── healthRoutes.js       # Health check
-│   │   ├── services/                 # Business logic
-│   │   │   ├── conferenceService.js  # Conference logic
-│   │   │   └── webrtcService.js      # WebRTC utilities
-│   │   ├── sockets/                  # Socket.IO handlers
-│   │   │   └── conferenceSocket.js   # WebRTC signaling
-│   │   ├── app.js                    # Express application
-│   │   └── index.js                  # Entry point
+│   │   │   ├── healthRoutes.js
+│   │   │   └── logRoutes.js          # /api/logs/* (error logger)
+│   │   ├── services/
+│   │   │   ├── authService.js
+│   │   │   └── userService.js
+│   │   ├── sockets/
+│   │   │   └── conferenceSocket.js   # WebRTC signaling, chat, media state
+│   │   ├── app.js                    # Express app + Socket.IO setup
+│   │   └── index.js                  # Entry point, starts server on 0.0.0.0
 │   │
-│   └── client/                       # Frontend
-│       ├── auth/                     # Authentication
-│       │   ├── Auth.html             # Login page
-│       │   ├── Reg.html              # Registration
-│       │   ├── auth.js               # Login logic
-│       │   ├── reg.js                # Registration logic
-│       │   └── auth_reg.css          # Styles
-│       ├── Conf/                     # Conferences
+│   └── app/                          # Frontend (static files served by Nginx)
+│       ├── auth/
+│       │   ├── Auth.html
+│       │   ├── Reg.html
+│       │   ├── auth.js               # Login → redirects to conf.html if already authed
+│       │   ├── reg.js                # Registration
+│       │   └── auth_reg.css
+│       ├── Conf/
 │       │   ├── pages/
-│       │   │   ├── conf.html         # Conference list
-│       │   │   ├── conf_create.html  # Create conference
-│       │   │   ├── conf_join.html    # Join conference
-│       │   │   └── conf_room.html    # Conference room
+│       │   │   ├── conf.html
+│       │   │   ├── conf_create.html
+│       │   │   ├── conf_join.html
+│       │   │   └── conf_room.html
 │       │   ├── js/
-│       │   │   ├── conf.js           # List logic
-│       │   │   ├── conf_create.js    # Create logic
-│       │   │   ├── conf_join.js      # Join logic
-│       │   │   ├── conf_room.js      # WebRTC logic
-│       │   │   └── conf_utils.js     # Utilities
-│       │   ├── components/           # UI components
-│       │   │   ├── video-grid.js     # Video grid
-│       │   │   ├── chat.js           # Chat
-│       │   │   ├── controls.js       # Control buttons
-│       │   │   └── participants.js   # Participant list
-│       │   └── conf.css              # Styles
-│       ├── index.html                # Landing page
-│       └── styles.css                # Global styles
+│       │   │   ├── conf.js
+│       │   │   ├── conf_create.js
+│       │   │   ├── conf_join.js
+│       │   │   ├── conf_room.js      # WebRTC logic, socket, media controls
+│       │   │   └── conf_utils.js     # Shared utilities
+│       │   └── conf.css
+│       ├── err/
+│       │   ├── error-logger.js       # Client-side error reporting to /api/logs
+│       │   └── 404.html
+│       ├── index.html
+│       └── styles.css
 │
-├── .env                              # Environment variables
-├── .gitignore
-├── package.json
+├── src/server_js/Dockerfile
+├── src/app/Dockerfile
+├── src/app/nginx.conf
+├── docker-compose.yml
+├── .env
+├── .env.example
 └── README.md
 ```
 
-## 🚀 Installation and Setup
+## 🚀 Quick Start
 
 ### Requirements
+- **Docker** + **Docker Compose**
 
-- **Node.js** >= 14.0.0
-- **MySQL** >= 8.0 or **MariaDB** >= 10.5
-- **npm** >= 6.0.0
-
-### Step 1: Clone the Repository
-
+### 1. Clone
 ```bash
 git clone https://github.com/axl214v/meetify.git
 cd meetify
 ```
 
-### Step 2: Install Dependencies
-
+### 2. Configure environment
 ```bash
-npm install
+cp .env.example .env
 ```
 
-**Main dependencies:**
+Edit `.env`:
+```env
+NODE_ENV=production
+PORT=3000
+HOST=0.0.0.0
+
+DB_HOST=db
+DB_USER=meetify_user
+DB_PASSWORD=your_db_password
+DB_NAME=meetify
+DB_PORT=3306
+
+JWT_SECRET=generate_with_node_-e_require_crypto_randomBytes_64_toString_hex
+JWT_EXPIRES_IN=24h
+
+SERVER_URL=http://localhost:3000
+CLIENT_URL=http://localhost
+```
+
+Generate a secure JWT secret:
+```bash
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+```
+
+### 3. Run
+```bash
+docker compose up -d --build
+```
+
+App will be available at: **http://localhost**
+
+### 4. Check status
+```bash
+docker compose ps
+docker compose logs backend
+curl http://localhost/check-status
+```
+
+## 📚 API Reference
+
+### Authentication
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/register` | Register new user |
+| POST | `/api/auth/login` | Login, sets `httpOnly` cookie |
+| POST | `/api/auth/logout` | Logout |
+| GET | `/api/auth/me` | Get current user (requires auth) |
+| POST | `/api/auth/change-password` | Change password (requires auth) |
+
+**Register request:**
 ```json
-{
-  "express": "^4.18.2",
-  "socket.io": "^4.5.4",
-  "mysql2": "^3.0.0",
-  "jsonwebtoken": "^9.0.0",
-  "bcrypt": "^5.1.0",
-  "cors": "^2.8.5",
-  "cookie-parser": "^1.4.6",
-  "express-rate-limit": "^6.0.0"
-}
+{ "name": "John Doe", "email": "john@example.com", "password": "password123" }
 ```
 
-### Step 3: Database Setup
+**Login response:** sets `token` cookie + returns user object.
 
-**Create database:**
-```sql
-CREATE DATABASE meetify CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE meetify;
-```
+### Conferences
 
-**Create tables:**
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/conferences` | List conferences (paginated, searchable) |
+| POST | `/api/conferences` | Create conference |
+| GET | `/api/conferences/:id` | Get conference details |
+| PUT | `/api/conferences/:id` | Update conference (host only) |
+| DELETE | `/api/conferences/:id` | Delete conference (host only) |
+| POST | `/api/conferences/:id/join` | Join conference |
+| POST | `/api/conferences/:id/leave` | Leave conference |
+| GET | `/api/conferences/:id/participants` | Get participants |
+| GET | `/api/conferences/user/my` | Get user's conferences |
+
+**Query params for GET `/api/conferences`:**
+- `limit` (default: 20, max: 100)
+- `offset` (default: 0)
+- `search` — search by name
+- `status` — `upcoming` / `ongoing` / `ended`
+- `isPublic` — `true` / `false`
+
+### Other
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/check-status` | Health check with socket connection count |
+| POST | `/api/logs` | Client-side error reporting |
+
+### WebSocket Events (Socket.IO)
+
+**Client → Server:**
+| Event | Payload | Description |
+|-------|---------|-------------|
+| `join-conference` | `{ conferenceId, userId, userName }` | Join room |
+| `leave-conference` | `{ conferenceId }` | Leave room |
+| `offer` | `{ to, offer }` | WebRTC offer |
+| `answer` | `{ to, answer }` | WebRTC answer |
+| `ice-candidate` | `{ to, candidate }` | ICE candidate |
+| `chat-message` | `{ conferenceId, message, timestamp }` | Send message |
+| `media-state-change` | `{ conferenceId, audio, video }` | Toggle mic/cam |
+| `screen-share-start` | `{ conferenceId }` | Start screen share |
+| `screen-share-stop` | `{ conferenceId }` | Stop screen share |
+
+**Server → Client:**
+| Event | Description |
+|-------|-------------|
+| `room-participants` | Existing participants on join |
+| `user-connected` | New participant joined |
+| `user-disconnected` | Participant left |
+| `offer` / `answer` / `ice-candidate` | WebRTC signaling |
+| `chat-message` | New chat message |
+| `user-media-state` | Participant toggled mic/cam |
+| `user-screen-share-start/stop` | Screen share state |
+| `force-disconnect` | Kicked from conference |
+
+## 🗄️ Database Schema
+
 ```sql
--- Users table
 CREATE TABLE users (
     id INT PRIMARY KEY AUTO_INCREMENT,
     email VARCHAR(255) UNIQUE NOT NULL,
     username VARCHAR(100) NOT NULL,
-    password VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL,        -- bcrypt hashed
     avatar_url VARCHAR(500),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_email (email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Conferences table
 CREATE TABLE conferences (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(255) NOT NULL,
     host_id INT NOT NULL,
-    password VARCHAR(255),
+    password VARCHAR(255),                 -- plain text (TODO: hash with bcrypt)
     max_participants INT DEFAULT 50,
     is_public BOOLEAN DEFAULT TRUE,
     description TEXT,
@@ -194,10 +287,11 @@ CREATE TABLE conferences (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (host_id) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_host (host_id),
-    INDEX idx_created (created_at)
+    INDEX idx_created (created_at),
+    INDEX idx_name (name),                 -- for search
+    INDEX idx_times (start_time, end_time) -- for status filtering
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Conference members table
 CREATE TABLE conference_members (
     id INT PRIMARY KEY AUTO_INCREMENT,
     conference_id INT NOT NULL,
@@ -205,296 +299,89 @@ CREATE TABLE conference_members (
     joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (conference_id) REFERENCES conferences(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_member (conference_id, user_id),
-    INDEX idx_conference (conference_id),
-    INDEX idx_user (user_id)
+    UNIQUE KEY unique_member (conference_id, user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
 
-### Step 4: Environment Configuration
+## 🐳 Docker
 
-Create `.env` file in the root directory:
-
-```env
-# Server
-NODE_ENV=development
-PORT=3000
-HOST=localhost
-SERVER_URL=http://localhost:3000
-
-# Database
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=your_password
-DB_NAME=meetify
-DB_PORT=3306
-
-# JWT
-JWT_SECRET=your_secret_key_minimum_32_characters_for_security
-JWT_EXPIRES_IN=24h
-
-# Client
-CLIENT_URL=http://localhost:3000
-
-# WebRTC (optional)
-TURN_USERNAME=
-TURN_PASSWORD=
-TURN_SERVER=
-
-# Limits
-MAX_CONFERENCE_PARTICIPANTS=50
-MAX_FILE_SIZE=5242880
-
-# Logging
-LOG_LEVEL=info
+```yaml
+services:
+  db:       # MySQL 8.0, port 3306
+  backend:  # Node.js, port 3000 (internal), 0.0.0.0 bind
+  frontend: # Nginx, ports 80/443
 ```
 
-### Step 5: Run Application
-
-**Development mode (with auto-reload):**
+**Useful commands:**
 ```bash
-npm run dev
+# Rebuild single service
+docker compose build --no-cache backend
+docker compose up -d backend
+
+# Full rebuild
+docker compose down
+docker compose up -d --build
+
+# Logs
+docker compose logs -f backend
+docker compose logs --tail=50 frontend
+
+# Shell into container
+docker exec -it meetify-backend sh
+docker exec -it meetify-frontend sh
+
+# ⚠️ Nuclear — deletes DB data
+docker compose down -v
 ```
 
-**Production mode:**
-```bash
-npm start
-```
+## 🔒 Security Notes
 
-**Server will start at:** `http://localhost:3000`
-
-## 📚 API Documentation
-
-### Authentication
-
-#### POST `/api/auth/register`
-Register a new user
-
-**Request:**
-```json
-{
-  "name": "John Doe",
-  "email": "john@example.com",
-  "password": "securePassword123"
-}
-```
-
-**Response:**
-```json
-{
-  "message": "Registration successful! Please login.",
-  "user": {
-    "id": 1,
-    "email": "john@example.com",
-    "username": "John Doe"
-  }
-}
-```
-
-#### POST `/api/auth/login`
-User login
-
-**Request:**
-```json
-{
-  "email": "john@example.com",
-  "password": "securePassword123"
-}
-```
-
-**Response:**
-```json
-{
-  "message": "Login successful",
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "user": {
-    "userId": 1,
-    "email": "john@example.com",
-    "username": "John Doe"
-  }
-}
-```
-
-### Conferences
-
-#### POST `/api/conferences`
-Create a new conference
-
-**Headers:**
-```
-Authorization: Bearer <JWT_TOKEN>
-```
-
-**Request:**
-```json
-{
-  "name": "Team Meeting",
-  "description": "Weekly sync",
-  "maxParticipants": 10,
-  "isPublic": true,
-  "password": "optional_password",
-  "startTime": "2026-01-20T10:00:00Z",
-  "endTime": "2026-01-20T11:00:00Z"
-}
-```
-
-**Response:**
-```json
-{
-  "message": "Conference created successfully",
-  "conference": {
-    "id": 1,
-    "name": "Team Meeting",
-    "host_id": 1,
-    "max_participants": 10
-  }
-}
-```
-
-#### GET `/api/conferences`
-Get list of conferences
-
-**Query params:**
-- `limit` (default: 20)
-- `offset` (default: 0)
-- `search` - search by name
-- `status` - upcoming/ongoing/ended
-
-#### GET `/api/conferences/:id`
-Get conference details
-
-#### POST `/api/conferences/:id/join`
-Join a conference
-
-**Request:**
-```json
-{
-  "password": "optional_password"
-}
-```
-
-#### POST `/api/conferences/:id/leave`
-Leave a conference
-
-#### DELETE `/api/conferences/:id`
-Delete a conference (host only)
-
-### WebSocket Events (Socket.IO)
-
-**Client → Server:**
-- `join-conference` - Join a conference
-- `leave-conference` - Leave a conference
-- `offer` - WebRTC offer
-- `answer` - WebRTC answer
-- `ice-candidate` - ICE candidate
-- `chat-message` - Chat message
-- `media-state-change` - Media state change
-
-**Server → Client:**
-- `user-connected` - New participant connected
-- `user-disconnected` - Participant disconnected
-- `offer` - Received WebRTC offer
-- `answer` - Received WebRTC answer
-- `ice-candidate` - Received ICE candidate
-- `chat-message` - New chat message
-- `user-media-state` - Participant media state changed
-
-## 🔒 Security
-
-### Implemented Measures
-
-- ✅ **JWT tokens** with short expiration
-- ✅ **bcrypt hashing** for passwords (10 rounds)
-- ✅ **CORS protection** with domain whitelist
-- ✅ **Rate limiting** on critical endpoints
-- ✅ **SQL injection protection** via prepared statements
-- ✅ **XSS protection** through HTML escaping
-- ✅ **HTTPS ready** for production
-- ✅ **Input validation** on all endpoints
-
-### Production Recommendations
-
-1. Use HTTPS
-2. Configure TURN server for NAT traversal
-3. Enable logging
-4. Set up monitoring (Prometheus/Grafana)
-5. Use reverse proxy (Nginx)
-6. Enable database backups
-
-## 🧪 Testing
-
-### Run Tests
-```bash
-npm test
-```
-
-### Manual Testing
-
-1. **Start the server:**
-   ```bash
-   npm run dev
-   ```
-
-2. **Open two browsers** (or incognito tabs)
-
-3. **Browser 1:**
-   - Register as user 1
-   - Create a conference
-   - Enter the room
-
-4. **Browser 2:**
-   - Register as user 2
-   - Join conference by ID
-   - Test video/audio connection
-
-### Feature Checklist
-
-- [ ] Registration and login
-- [ ] Create conference
-- [ ] Join conference
-- [ ] Video/audio communication (WebRTC)
-- [ ] Mute microphone/turn off camera
-- [ ] Screen sharing
-- [ ] Real-time chat
-- [ ] Participant list
-- [ ] Leave conference
-
-## 📊 Performance
-
-- **Support up to 50 participants** per conference
-- **WebRTC peer-to-peer** for optimal performance
-- **Socket.IO clustering** for horizontal scaling
-- **Database connection pooling** (10 connections)
-
-## 🐛 Known Limitations
-
-- WebRTC only works in supported browsers (Chrome, Firefox, Safari, Edge)
-- TURN server required for NAT traversal
-- Maximum participant count limited by bandwidth
+- JWT tokens stored in `httpOnly; Secure; SameSite=Strict` cookies
+- Socket.IO JWT verification is **not yet implemented** (TODO)
+- Conference passwords are stored **unhashed** (TODO: bcrypt)
+- Rate limiting covers HTTP routes only — Socket.IO events are unprotected
+- CSP headers configured in Nginx — `unsafe-inline` required for current frontend
 
 ## 🗺️ Roadmap
 
+- [ ] Socket.IO JWT authentication middleware
+- [ ] Hash conference passwords with bcrypt
+- [ ] Switch from mesh to SFU (mediasoup/LiveKit) for >6 participants
+- [ ] TURN server setup (coturn config included, commented out)
+- [ ] HTTPS / SSL termination in Nginx
 - [ ] Conference recording
 - [ ] Virtual backgrounds
-- [ ] Reactions (emoji)
 - [ ] Breakout rooms
-- [ ] Moderation (kick/ban)
-- [ ] Conference scheduling
+- [ ] Kick/ban moderation
 - [ ] Email notifications
+- [ ] Redis for Socket.IO clustering
 - [ ] Mobile application
-- [ ] Integrations (Google Calendar, Slack)
 
-## 🤝 Contributing
+## 🧪 Testing
 
-Pull requests are welcome! For major changes, please open an issue first.
+1. Start the stack: `docker compose up -d --build`
+2. Open two browsers (or incognito tabs)
+3. Register two users
+4. User 1: create a conference
+5. User 2: join the conference
+6. Test video/audio, chat, screen sharing, leave
 
-### Development Process
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Open Pull Request
+**Feature status:**
+- [x] Registration and login
+- [x] JWT auth via httpOnly cookie
+- [x] Create / delete conference
+- [x] Join / leave conference
+- [x] Conference list with search and pagination
+- [x] Video/audio (WebRTC)
+- [x] Mute mic / turn off camera
+- [x] Screen sharing
+- [x] Real-time chat
+- [x] Participant list
+- [x] Room timer
+- [x] Error logging (client-side)
+- [ ] Socket.IO authentication
+- [ ] Conference password hashing
+- [ ] SFU for large rooms
 
 ## 👨‍💻 Author
 
@@ -503,36 +390,4 @@ Pull requests are welcome! For major changes, please open an issue first.
 
 ## 📄 License
 
-MIT License
-
-Copyright (c) 2025 axl214
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
----
-
-## 📞 Support
-
-If you have questions or issues:
-- Open an [Issue](https://github.com/axl214v/meetify/issues)
-- Write in [Discussions](https://github.com/axl214v/meetify/discussions)
-
----
-
-**⭐ If this project was helpful, give it a star!**
+MIT License — see [LICENSE](LICENSE) for details.
