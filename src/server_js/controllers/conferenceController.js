@@ -113,7 +113,8 @@ const getConference = async (req, res) => {
       ...conferenceData,
       participantCount,
       isHost,
-      isParticipant
+      isParticipant,
+      hasPassword: conference.password
     };
 
     res.json({ conference: responseData });

@@ -1,15 +1,5 @@
 // js/conf_join.js
 const API_BASE = window.location.origin;
-const serviceStatus = require('./checkStatus/index.js');
-
-
-// Initialize check on page load
-checkServiceStatus(err => {
-    console.error('Service status check failed:', err);
-    showError('Service temporarily unavailable. Please try again later.');
-    // redirect to error page 
-    window.location.href = './err/err.html';
-});
 
 let currentConference = null;
 
@@ -94,7 +84,7 @@ async function checkConference() {
         displayConferencePreview(currentConference);
         
         // Show password field if required
-        if (currentConference.password) {
+        if (currentConference.hasPassword) {
             passwordField.style.display = 'block';
         }
         
@@ -171,7 +161,7 @@ document.getElementById('joinConferenceForm')?.addEventListener('submit', async 
     const password = passwordInput?.value.trim();
     
     // Validate password if required
-    if (currentConference.password && !password) {
+    if (currentConference.hasPassword && !password) {
         showError('Please enter the conference password');
         passwordInput.classList.add('error');
         return;
@@ -210,7 +200,6 @@ document.getElementById('joinConferenceForm')?.addEventListener('submit', async 
             setTimeout(() => {
                 // TODO: Redirect to conference room (On work)
                 window.location.href = `conf_room.html?id=${currentConference.id}`;
-                return conferenceId;
             }, 1500);
             
         } else if (response.status === 403) {
