@@ -86,6 +86,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
+chat = new Chat('chatMessages', 'chatInput', 'sendBtn');
+
+chat.setCurrentUser({
+    userId: currentUser.id,
+    userName: currentUser.username || currentUser.email
+});
+
+chat.onSend((messageData) => {
+    socket.emit('chat-message', {
+        conferenceId,
+        message: messageData.message,
+        timestamp: messageData.timestamp
+    });
+});
+
 // Load conference details
 async function loadConferenceDetails() {
     try {
@@ -192,11 +207,10 @@ function initSocket() {
     });
 
     socket.on('chat-message', ({ userId, userName, message, timestamp }) => {
-        addChatMessage(userName, message, timestamp);
-        const chatSidebar = document.getElementById('chatSidebar');
-        if (!chatSidebar.classList.contains('open')) {
-            unreadMessages++;
-            updateChatBadge();
+        const isOwn = userId === currentUser.id;
+        chat.addMessage({ message, userName, timestamp }, isOwn);
+        if (!document.getElementById('chatSidebar').classList.contains('open')) {
+            updateChatBadge(chat.getUnreadCount());
         }
     });
 
@@ -309,8 +323,8 @@ function setupEventListeners() {
     document.getElementById('toggleParticipants').addEventListener('click', () => toggleSidebar('participants'));
     document.getElementById('toggleChat').addEventListener('click', () => {
         toggleSidebar('chat');
-        unreadMessages = 0;
-        updateChatBadge();
+        chat.setVisibility(true);
+        updateChatBadge(0);
     });
     document.getElementById('leaveBtn').addEventListener('click', leaveConference);
     document.getElementById('chatInput').addEventListener('keypress', (e) => {
