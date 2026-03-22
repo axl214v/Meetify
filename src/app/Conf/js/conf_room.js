@@ -14,6 +14,7 @@ let isScreenSharing = false;
 let roomTimer = null;
 let startTime = null;
 let unreadMessages = 0;
+let joinedConference = false;
 
 // WebRTC Configuration
 const rtcConfig = {
@@ -135,6 +136,7 @@ function initSocket() {
 
     socket.on('connect', () => {
         console.log('Connected to signaling server');
+        joinedConference = true;
         socket.emit('join-conference', {
             conferenceId,
             userId: currentUser.id,
@@ -578,7 +580,9 @@ async function leaveConference() {
 
 // Handle page unload
 window.addEventListener('beforeunload', () => {
-    navigator.sendBeacon(`${API_BASE}/api/conferences/${conferenceId}/leave`);
+    if (joinedConference && conferenceId) {
+        navigator.sendBeacon(`${API_BASE}/api/conferences/${conferenceId}/leave`);
+    }
     if (socket) socket.disconnect();
 });
 
