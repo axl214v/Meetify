@@ -81,6 +81,11 @@ router.post('/refresh', refreshLimiter, refreshToken);
 
 router.post('/logout', authenticateToken, logout);
 router.get('/me', authenticateToken, getCurrentUser);
+router.get('/token', authenticateToken, (req, res) => {
+    const token = req.cookies.token;
+    if (!token) return res.status(401).json({ message: 'No token' });
+    res.json({ token });
+});
 router.put('/change-password', authenticateToken, passwordChangeLimiter, changePassword);
 
 // Обработка несуществующих маршрутов

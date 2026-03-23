@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await initLocalMedia();
 
         // Connect to signaling server
-        initSocket();
+        await initSocket();
 
         // Setup event listeners
         setupEventListeners();
@@ -143,10 +143,15 @@ async function initLocalMedia() {
 }
 
 // Initialize Socket.IO
-function initSocket() {
+async function initSocket() {
+    const tokenRes = await fetch(`${API_BASE}/api/auth/token`, {
+        credentials: 'include'
+    });
+    const tokenData = await tokenRes.json();
+    const token = tokenData.token || null;    
     socket = io(SOCKET_URL, {
         transports: ['websocket', 'polling'],
-        auth: { token: getCookie('token') }
+        auth: { token }
     });
 
     socket.on('connect', () => {

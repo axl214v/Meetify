@@ -10,12 +10,8 @@ const socketUsers = new Map(); // socket ID -> { userId, userName, conferenceId 
  * @param {SocketIO.Server} io - Socket.IO server instance
  */
 function initializeConferenceSocket(io) {
-  io.use((socket, next) => {
-  const token = socket.handshake.auth.token;
-  try {
-    socket.user = jwt.verify(token, process.env.JWT_SECRET);
-    next();
-  } catch { next(new Error('Unauthorized')); }
+  io.on('error', (error) => {
+    console.error('[Socket] Socket.IO error:', error);
 });
 
   io.on('connection', (socket) => {
@@ -24,7 +20,7 @@ function initializeConferenceSocket(io) {
     // Join Conference
     socket.on('join-conference', async ({ conferenceId, userId, userName }) => {
       try {
-        console.log(`[Socket] User ${userId} joining conference ${conferenceId}`);
+        console.log(`[Socket] join-conference received: userId=${userId}, conf=${conferenceId}`);
 
         // Validate conference exists
         const conference = await Conference.findById(conferenceId);

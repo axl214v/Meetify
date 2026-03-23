@@ -4,6 +4,7 @@ const socketIO = require('socket.io');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const path = require('path');
+const jwt = require('jsonwebtoken');
 const config = require('./config/config');
 
 // Сервисы и роуты
@@ -117,20 +118,24 @@ app.get('*', (req, res, next) => {
 
 // Socket.IO Authentication Middleware (опционально)
 io.use((socket, next) => {
-  const token = socket.handshake.auth.token || socket.handshake.query.token;
-  
-  // TODO: Добавить проверку JWT токена
-  // if (!token) {
-  //   return next(new Error('Authentication error'));
-  // }
-  
-  // const decoded = jwt.verify(token, config.jwt.secret);
-  // socket.userId = decoded.userId;
-  
-  console.log(`[Socket.IO] New connection attempt: ${socket.id}`);
-  next();
+    const token = socket.handshake.auth.token;
+    console.log('[Socket.IO] Auth token:', token ? 'present' : 'missing');
+    
+    if (!token) {
+        console.log('[Socket.IO] Rejected: no token');
+        return next(new Error('Unauthorized'));
+    }
+    
+    try {
+        const decoded = jwt.verify(token, config.jwt.secret);
+        socket.user = decoded;
+        console.log('[Socket.IO] Auth success:', decoded.userId);
+        next();
+    } catch (err) {
+        console.log('[Socket.IO] Auth failed:', err.message);
+        return next(new Error('Unauthorized'));
+    }
 });
-
 // Инициализация Socket.IO обработчиков для конференций
 initializeConferenceSocket(io);
 
