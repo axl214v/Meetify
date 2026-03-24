@@ -175,7 +175,7 @@ async function initSocket() {
 
     socket.on('user-connected', async ({ userId, userName }) => {
         console.log('User connected:', userId, userName);
-        await createPeerConnection(userId, true);
+        await createPeerConnection(userId, true, userName);
     });
 
     socket.on('user-disconnected', ({ userId }) => {
@@ -189,9 +189,9 @@ async function initSocket() {
         updateParticipantCount();
     });
 
-    socket.on('offer', async ({ userId, offer }) => {
+    socket.on('offer', async ({ userId, offer, userName }) => {
         console.log('Received offer from:', userId);
-        await createPeerConnection(userId, false);
+        await createPeerConnection(userId, false, userName);
         await peers[userId].setRemoteDescription(new RTCSessionDescription(offer));
         const answer = await peers[userId].createAnswer();
         await peers[userId].setLocalDescription(answer);
@@ -236,7 +236,7 @@ async function initSocket() {
 }
 
 // Create WebRTC peer connection
-async function createPeerConnection(userId, isInitiator) {
+async function createPeerConnection(userId, isInitiator, userName = 'Unknown') {
     if (peers[userId]) {
         peers[userId].close();
     }
@@ -252,7 +252,7 @@ async function createPeerConnection(userId, isInitiator) {
     // Handle incoming tracks
     peerConnection.ontrack = (event) => {
         const [remoteStream] = event.streams;
-        addRemoteVideo(userId, remoteStream);
+        addRemoteVideo(userId, remoteStream, userName);
     };
 
     // Handle ICE candidates
@@ -291,7 +291,7 @@ async function createPeerConnection(userId, isInitiator) {
 }
 
 // Add remote video
-function addRemoteVideo(userId, stream) {
+function addRemoteVideo(userId, stream, userName = 'Unknown') {
     let videoContainer = document.getElementById(`video-${userId}`);
     if (videoContainer) videoContainer.remove();
 
@@ -307,7 +307,7 @@ function addRemoteVideo(userId, stream) {
     const overlay = document.createElement('div');
     overlay.className = 'video-overlay';
     overlay.innerHTML = `
-        <span class="participant-name">User ${userId}</span>
+        <span class="participant-name">${escapeHtml(userName)}</span>
         <div class="participant-status">
             <span class="status-icon active mic-status">🎤</span>
             <span class="status-icon active video-status">📹</span>
