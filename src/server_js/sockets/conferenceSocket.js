@@ -4,6 +4,7 @@ const Conference = require('../models/Conference');
 const conferenceRooms = new Map(); // conferenceId -> Set of socket IDs
 const userSockets = new Map(); // userId -> socket ID
 const socketUsers = new Map(); // socket ID -> { userId, userName, conferenceId }
+const userMediaState = new Map(); // userId -> { audio, video }
 
 /**
  * Initialize Socket.IO for conference signaling
@@ -155,18 +156,18 @@ function initializeConferenceSocket(io) {
 
     // Media State Updates (mic/camera toggle)
     socket.on('media-state-change', ({ conferenceId, audio, video }) => {
-      const user = socketUsers.get(socket.id);
-      
-      if (!user) return;
+        const user = socketUsers.get(socket.id);
+        if (!user) return;
+        
 
-      // Notify others about media state change
-      socket.to(`conference-${conferenceId}`).emit('user-media-state', {
-        userId: user.userId,
-        audio,
-        video
-      });
+        userMediaState.set(user.userId, { audio, video });
+        
+        socket.to(`conference-${conferenceId}`).emit('user-media-state', {
+            userId: user.userId,
+            audio,
+            video
 
-      console.log(`[Socket] Media state changed for ${user.userId}: audio=${audio}, video=${video}`);
+        });
     });
 
     // Screen Share Start

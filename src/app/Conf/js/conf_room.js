@@ -8,6 +8,7 @@ let screenStream = null;
 let peers = {};
 let conferenceId = null;
 let currentUser = null;
+let chat = null;
 let isAudioEnabled = true;
 let isVideoEnabled = true;
 let isScreenSharing = false;
@@ -15,6 +16,7 @@ let roomTimer = null;
 let startTime = null;
 let unreadMessages = 0;
 let joinedConference = false;
+const remoteMediaStates = {};
 
 // WebRTC Configuration
 const rtcConfig = {
@@ -24,7 +26,6 @@ const rtcConfig = {
     ]
 };
 
-// Get cookie helper
 function getCookie(name) {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
@@ -32,14 +33,17 @@ function getCookie(name) {
     return null;
 }
 
-// Escape HTML to prevent XSS
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
 }
 
-// Initialize
+// Initialize application when DOM is loaded
+// - validate conference ID from query
+// - load user and conference data
+// - initialize camera/microphone and socket
+// - set up UI event handlers and timer
 document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
     conferenceId = urlParams.get('id');
@@ -51,7 +55,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     try {
-        // Load current user first
         const meRes = await fetch(`${API_BASE}/api/auth/me`, {
             credentials: 'include'
         });
@@ -64,19 +67,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         const meData = await meRes.json();
         currentUser = meData.user;
 
-        // Load conference details
+        // Init chat after currentUser is loaded
+        chat = new Chat('chatMessages', 'chatInput', 'sendBtn');
+        chat.setCurrentUser({
+            userId: currentUser.id,
+            userName: currentUser.username || currentUser.email
+        });
+        chat.onSend((messageData) => {
+            socket?.emit('chat-message', {
+                conferenceId,
+                message: messageData.message,
+                timestamp: messageData.timestamp
+            });
+        });
+
         await loadConferenceDetails();
-
-        // Initialize local media
         await initLocalMedia();
-
-        // Connect to signaling server
         await initSocket();
-
-        // Setup event listeners
         setupEventListeners();
-
-        // Start room timer
         startRoomTimer();
 
     } catch (error) {
@@ -86,22 +94,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-chat = new Chat('chatMessages', 'chatInput', 'sendBtn');
-
-chat.setCurrentUser({
-    userId: currentUser.id,
-    userName: currentUser.username || currentUser.email
-});
-
-chat.onSend((messageData) => {
-    socket.emit('chat-message', {
-        conferenceId,
-        message: messageData.message,
-        timestamp: messageData.timestamp
-    });
-});
-
-// Load conference details
 async function loadConferenceDetails() {
     try {
         const response = await fetch(`${API_BASE}/api/conferences/${conferenceId}`, {
@@ -121,7 +113,19 @@ async function loadConferenceDetails() {
     }
 }
 
-// Initialize local media
+function updateRemoteMediaState(userId, audio, video) {
+    remoteMediaStates[userId] = { audio, video };
+
+    const micStatus = document.querySelector(`#video-${userId} .mic-status`);
+    const videoStatus = document.querySelector(`#video-${userId} .video-status`);
+    if (micStatus) micStatus.textContent = audio ? '🎤' : '🔇';
+    if (videoStatus) videoStatus.textContent = video ? '📹' : '📵';
+}
+
+/**
+ * Request camera/microphone access and attach stream to local preview.
+ * We request ideal HD constraints and common audio enhancements.
+ */
 async function initLocalMedia() {
     try {
         localStream = await navigator.mediaDevices.getUserMedia({
@@ -142,13 +146,19 @@ async function initLocalMedia() {
     }
 }
 
-// Initialize Socket.IO
+/**
+ * Initialize Socket.IO connection and configure signaling events.
+ * - fetch token from API for authenticated signaling
+ * - join conference after connect
+ * - handle participants, offers/answers, ICE candidates, and messages
+ */
 async function initSocket() {
     const tokenRes = await fetch(`${API_BASE}/api/auth/token`, {
         credentials: 'include'
     });
     const tokenData = await tokenRes.json();
-    const token = tokenData.token || null;    
+    const token = tokenData.token || null;
+
     socket = io(SOCKET_URL, {
         transports: ['websocket', 'polling'],
         auth: { token }
@@ -164,20 +174,26 @@ async function initSocket() {
         });
     });
 
-    socket.on('room-participants', ({ participants }) => {
-        console.log('Existing participants:', participants);
-        participants.forEach(async (p) => {
+    // Existing participants — new user is initiator
+    socket.on('room-participants', async ({ participants }) => {
+        console.log('room-participants received:', JSON.stringify(participants));
+        for (const p of participants) {
             if (p.userId !== currentUser.id) {
-                await createPeerConnection(p.userId, true);
+                await createPeerConnection(p.userId, true, p.userName);
+                if (p.mediaState) {
+                    updateRemoteMediaState(p.userId, p.mediaState.audio, p.mediaState.video);
+                }
             }
-        });
+        }
     });
 
+    // New user joined — existing user is NOT initiator, waits for offer
     socket.on('user-connected', async ({ userId, userName }) => {
         console.log('User connected:', userId, userName);
-        await createPeerConnection(userId, true, userName);
+        await createPeerConnection(userId, false, userName);
     });
 
+    // Peer left the conference, clean up local RTCPeerConnection and UI
     socket.on('user-disconnected', ({ userId }) => {
         console.log('User disconnected:', userId);
         if (peers[userId]) {
@@ -219,13 +235,12 @@ async function initSocket() {
         }
     });
 
+    // Keep remote media mute/camera status in sync across participants
     socket.on('user-media-state', ({ userId, audio, video }) => {
-        const micStatus = document.querySelector(`#video-${userId} .mic-status`);
-        const videoStatus = document.querySelector(`#video-${userId} .video-status`);
-        if (micStatus) micStatus.textContent = audio ? '🎤' : '🔇';
-        if (videoStatus) videoStatus.textContent = video ? '📹' : '📵';
+        updateRemoteMediaState(userId, audio, video);
     });
 
+    // Handle signaling socket disconnect (network, server down etc.)
     socket.on('disconnect', () => {
         console.log('Disconnected from signaling server');
     });
@@ -235,7 +250,12 @@ async function initSocket() {
     });
 }
 
-// Create WebRTC peer connection
+/**
+ * Create a new RTCPeerConnection for a remote participant.
+ * @param {string} userId Peer user ID
+ * @param {boolean} isInitiator True when this client starts the offer
+ * @param {string} userName Display name for UI
+ */
 async function createPeerConnection(userId, isInitiator, userName = 'Unknown') {
     if (peers[userId]) {
         peers[userId].close();
@@ -244,18 +264,17 @@ async function createPeerConnection(userId, isInitiator, userName = 'Unknown') {
     const peerConnection = new RTCPeerConnection(rtcConfig);
     peers[userId] = peerConnection;
 
-    // Add local tracks
     localStream.getTracks().forEach(track => {
         peerConnection.addTrack(track, localStream);
     });
 
-    // Handle incoming tracks
+    // When remote user publishes tracks, attach to a new video tile
     peerConnection.ontrack = (event) => {
         const [remoteStream] = event.streams;
         addRemoteVideo(userId, remoteStream, userName);
     };
 
-    // Handle ICE candidates
+    // Forward local ICE candidates to remote peer via signaling
     peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
             socket.emit('ice-candidate', {
@@ -265,7 +284,6 @@ async function createPeerConnection(userId, isInitiator, userName = 'Unknown') {
         }
     };
 
-    // Handle connection state
     peerConnection.onconnectionstatechange = () => {
         console.log(`Connection state with ${userId}:`, peerConnection.connectionState);
         if (peerConnection.connectionState === 'disconnected' ||
@@ -280,7 +298,6 @@ async function createPeerConnection(userId, isInitiator, userName = 'Unknown') {
         }
     };
 
-    // If initiator, create and send offer
     if (isInitiator) {
         const offer = await peerConnection.createOffer();
         await peerConnection.setLocalDescription(offer);
@@ -290,7 +307,6 @@ async function createPeerConnection(userId, isInitiator, userName = 'Unknown') {
     return peerConnection;
 }
 
-// Add remote video
 function addRemoteVideo(userId, stream, userName = 'Unknown') {
     let videoContainer = document.getElementById(`video-${userId}`);
     if (videoContainer) videoContainer.remove();
@@ -317,10 +333,18 @@ function addRemoteVideo(userId, stream, userName = 'Unknown') {
     videoContainer.appendChild(video);
     videoContainer.appendChild(overlay);
     document.getElementById('videoGrid').appendChild(videoContainer);
+
+    if (remoteMediaStates[userId]) {
+        const { audio, video: videoEnabled } = remoteMediaStates[userId];
+        const micStatus = videoContainer.querySelector('.mic-status');
+        const videoStatus = videoContainer.querySelector('.video-status');
+        if (micStatus) micStatus.textContent = audio ? '🎤' : '🔇';
+        if (videoStatus) videoStatus.textContent = videoEnabled ? '📹' : '📵';
+    }
+
     updateParticipantCount();
 }
 
-// Setup event listeners
 function setupEventListeners() {
     document.getElementById('toggleMic').addEventListener('click', toggleMicrophone);
     document.getElementById('toggleVideo').addEventListener('click', toggleCamera);
@@ -332,13 +356,10 @@ function setupEventListeners() {
         updateChatBadge(0);
     });
     document.getElementById('leaveBtn').addEventListener('click', leaveConference);
-    document.getElementById('chatInput').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendMessage();
-    });
 }
 
-// Toggle microphone
 function toggleMicrophone() {
+    // Mute/unmute local microphone and broadcast state to peers
     isAudioEnabled = !isAudioEnabled;
     const audioTrack = localStream.getAudioTracks()[0];
     if (audioTrack) audioTrack.enabled = isAudioEnabled;
@@ -355,8 +376,8 @@ function toggleMicrophone() {
     });
 }
 
-// Toggle camera
 function toggleCamera() {
+    // Enable/disable local video and broadcast state to peers
     isVideoEnabled = !isVideoEnabled;
     const videoTrack = localStream.getVideoTracks()[0];
     if (videoTrack) videoTrack.enabled = isVideoEnabled;
@@ -373,7 +394,6 @@ function toggleCamera() {
     });
 }
 
-// Toggle screen share
 async function toggleScreenShare() {
     const btn = document.getElementById('toggleScreen');
 
@@ -392,13 +412,11 @@ async function toggleScreenShare() {
             });
 
             document.getElementById('localVideo').srcObject = screenStream;
-
             screenTrack.onended = () => stopScreenShare();
 
             isScreenSharing = true;
             btn.classList.add('sharing');
             btn.textContent = '⏹️';
-
             socket?.emit('screen-share-start', { conferenceId });
 
         } catch (error) {
@@ -410,7 +428,6 @@ async function toggleScreenShare() {
     }
 }
 
-// Stop screen share
 function stopScreenShare() {
     if (screenStream) {
         screenStream.getTracks().forEach(track => track.stop());
@@ -427,11 +444,9 @@ function stopScreenShare() {
     isScreenSharing = false;
     document.getElementById('toggleScreen').classList.remove('sharing');
     document.getElementById('toggleScreen').textContent = '🖥️';
-
     socket?.emit('screen-share-stop', { conferenceId });
 }
 
-// Toggle sidebar
 function toggleSidebar(type) {
     const participantsSidebar = document.getElementById('participantsSidebar');
     const chatSidebar = document.getElementById('chatSidebar');
@@ -445,7 +460,6 @@ function toggleSidebar(type) {
     }
 }
 
-// Close sidebar
 function closeSidebar(type) {
     if (type === 'participants') {
         document.getElementById('participantsSidebar').classList.remove('open');
@@ -454,7 +468,6 @@ function closeSidebar(type) {
     }
 }
 
-// Load participants
 async function loadParticipants() {
     try {
         const response = await fetch(`${API_BASE}/api/conferences/${conferenceId}/participants`, {
@@ -472,7 +485,6 @@ async function loadParticipants() {
     }
 }
 
-// Render participants
 function renderParticipants(participants) {
     const participantsList = document.getElementById('participantsList');
 
@@ -496,7 +508,6 @@ function renderParticipants(participants) {
     }).join('');
 }
 
-// Format join time
 function formatJoinTime(timestamp) {
     if (!timestamp) return 'recently';
     const date = new Date(timestamp);
@@ -509,13 +520,11 @@ function formatJoinTime(timestamp) {
     return `${diffHours} hours ago`;
 }
 
-// Update participant count
 function updateParticipantCount() {
     const count = Object.keys(peers).length + 1;
     document.getElementById('participantCount').textContent = count;
 }
 
-// Send chat message
 function sendMessage() {
     const input = document.getElementById('chatInput');
     const message = input.value.trim();
@@ -530,38 +539,16 @@ function sendMessage() {
     input.value = '';
 }
 
-// Add chat message
-function addChatMessage(userName, message, timestamp) {
-    const chatMessages = document.getElementById('chatMessages');
-    const messageEl = document.createElement('div');
-    messageEl.className = 'chat-message';
-
-    const time = timestamp ? new Date(timestamp).toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit'
-    }) : '';
-
-    messageEl.innerHTML = `
-        <strong>${escapeHtml(userName)} <span style="color: rgba(255,255,255,0.5); font-size: 0.85rem; font-weight: normal;">${time}</span></strong>
-        <p>${escapeHtml(message)}</p>
-    `;
-
-    chatMessages.appendChild(messageEl);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-// Update chat badge
-function updateChatBadge() {
+function updateChatBadge(count) {
     const badge = document.getElementById('chatBadge');
-    if (unreadMessages > 0) {
-        badge.textContent = unreadMessages > 99 ? '99+' : unreadMessages;
+    if (count > 0) {
+        badge.textContent = count > 99 ? '99+' : count;
         badge.style.display = 'flex';
     } else {
         badge.style.display = 'none';
     }
 }
 
-// Start room timer
 function startRoomTimer() {
     startTime = Date.now();
     roomTimer = setInterval(() => {
@@ -573,7 +560,6 @@ function startRoomTimer() {
     }, 1000);
 }
 
-// Leave conference
 async function leaveConference() {
     if (!confirm('Are you sure you want to leave this conference?')) return;
 
@@ -597,7 +583,6 @@ async function leaveConference() {
     window.location.href = 'conf.html';
 }
 
-// Handle page unload
 window.addEventListener('beforeunload', () => {
     if (joinedConference && conferenceId) {
         navigator.sendBeacon(`${API_BASE}/api/conferences/${conferenceId}/leave`);
@@ -605,6 +590,5 @@ window.addEventListener('beforeunload', () => {
     if (socket) socket.disconnect();
 });
 
-// Global functions
 window.closeSidebar = closeSidebar;
 window.sendMessage = sendMessage;
