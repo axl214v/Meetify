@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Meetify</title>
+    <link rel="stylesheet" href="/styles/styles.css">
+    <link rel="stylesheet" href="/styles/profile.css">
+    <link rel="icon" href="/assets/logo.png">
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="profile-header">
+        <div class="header-left">
+            <button class="back-btn" id="backBtn">← Back</button>
+            <h1 class="header-title">Profile</h1>
+        </div>
+        <div class="header-right">
+            <span class="header-email" id="headerEmail">—</span>
+        </div>
+    </header>
+
+    <main class="profile-main">
+
+        <!-- Left column: avatar + quick stats -->
+        <aside class="profile-sidebar">
+
+            <!-- Avatar block -->
+            <section class="profile-card avatar-card">
+                <div class="avatar-wrapper" id="avatarWrapper">
+                    <div class="avatar-initials" id="avatarInitials">??</div>
+                    <img class="avatar-img hidden" id="avatarImg" src="" alt="Avatar">
+                    <label class="avatar-overlay" for="avatarInput" title="Change photo">
+                        <span>📷</span>
+                    </label>
+                    <input type="file" id="avatarInput" accept="image/jpeg,image/png,image/webp" hidden>
+                </div>
+                <div class="avatar-meta">
+                    <strong id="profileName">Loading...</strong>
+                    <span id="profileEmail">—</span>
+                </div>
+                <button class="btn-ghost danger-ghost" id="removeAvatarBtn" style="display:none;">
+                    Remove photo
+                </button>
+            </section>
+
+            <!-- Stats block -->
+            <section class="profile-card stats-card">
+                <h4 class="card-label">Activity</h4>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-value" id="statHosted">—</span>
+                        <span class="stat-label">Hosted</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="statAttended">—</span>
+                        <span class="stat-label">Attended</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="statTotal">—</span>
+                        <span class="stat-label">Total</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="statSince">—</span>
+                        <span class="stat-label">Member since</span>
+                    </div>
+                </div>
+            </section>
+
+        </aside>
+
+        <!-- Right column: forms + history -->
+        <div class="profile-content">
+
+            <!-- Edit profile -->
+            <section class="profile-card">
+                <h3 class="card-title">Personal Info</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="inputName">Display name</label>
+                        <input type="text" id="inputName" placeholder="Your name" maxlength="100">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="text" id="inputEmail" disabled>
+                        <span class="input-hint">Email cannot be changed</span>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button id="saveProfileBtn">Save changes</button>
+                </div>
+                <div id="profileMsg" class="form-msg hidden"></div>
+            </section>
+
+            <!-- Change password -->
+            <section class="profile-card">
+                <h3 class="card-title">Change Password</h3>
+                <div class="form-group">
+                    <label for="currentPassword">Current password</label>
+                    <input type="password" id="currentPassword" placeholder="••••••••">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="newPassword">New password</label>
+                        <input type="password" id="newPassword" placeholder="Min 8 characters">
+                        <div class="password-strength" id="passwordStrength"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm new password</label>
+                        <input type="password" id="confirmPassword" placeholder="Repeat password">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button id="changePasswordBtn">Change password</button>
+                </div>
+                <div id="passwordMsg" class="form-msg hidden"></div>
+            </section>
+
+            <!-- Conference history -->
+            <section class="profile-card">
+                <div class="card-header-row">
+                    <h3 class="card-title">Conference History</h3>
+                    <div class="history-filters">
+                        <button class="filter-pill active" data-role="all">All</button>
+                        <button class="filter-pill" data-role="host">Hosted</button>
+                        <button class="filter-pill" data-role="participant">Attended</button>
+                    </div>
+                </div>
+                <div id="historyList" class="history-list">
+                    <div class="history-empty">Loading...</div>
+                </div>
+            </section>
+
+            <!-- Danger zone -->
+            <section class="profile-card danger-zone">
+                <h3 class="card-title danger-title">Danger Zone</h3>
+                <p>Permanently delete your account and all associated data. This action cannot be undone.</p>
+                <button class="btn-danger" id="deleteAccountBtn">Delete my account</button>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Delete account modal -->
+    <div class="modal-overlay hidden" id="deleteModal">
+        <div class="modal">
+            <h3>Delete Account</h3>
+            <p>Enter your password to confirm. All your conferences and data will be permanently deleted.</p>
+            <input type="password" id="deletePassword" placeholder="Your password">
+            <div class="modal-actions">
+                <button class="btn-danger" id="confirmDeleteBtn">Delete permanently</button>
+                <button class="secondary" id="cancelDeleteBtn">Cancel</button>
+            </div>
+            <div id="deleteMsg" class="form-msg hidden"></div>
+        </div>
+    </div>
+
+    <script src="/err/error-logger.js"></script>
+    <script src="/profile/profile.js"></script>
+</body>
+</html>
