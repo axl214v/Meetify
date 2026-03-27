@@ -81,6 +81,8 @@ class UserService {
       return {
         id: user.id,
         email: user.email,
+        username: user.username,
+        avatar_url: user.avatar_url,  
         createdAt: user.created_at,
         updatedAt: user.updated_at
       };
