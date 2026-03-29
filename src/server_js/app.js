@@ -5,6 +5,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 const jwt = require('jsonwebtoken');
+const fs = require('fs');
 const config = require('./config/config');
 
 // Сервисы и роуты
@@ -23,6 +24,10 @@ const app = express();
 
 // Доверяем прокси (важно для правильной работы в production, особенно если сервер за Nginx)
 app.set('trust proxy', 1);
+
+// Убедимся, что папка для аватаров существует
+fs.mkdirSync('/app/uploads/avatars', { recursive: true });
+console.log('[Init] Upload directories ready');
 
 // IMPORTANT: Создаём HTTP server (оборачиваем Express)
 const server = http.createServer(app);
@@ -86,6 +91,9 @@ app.get('/check-status', (req, res) => {
 
 // Статические файлы
 app.use(express.static(path.join(__dirname, '../client')));
+
+// Serve uploaded files
+app.use('/uploads', express.static('/app/uploads'));
 
 // Маршруты для SPA (это ВАЖНО!)
 app.get('/meetify/src/client/auth/:page', (req, res) => {

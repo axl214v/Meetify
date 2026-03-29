@@ -31,6 +31,11 @@ COPY . .
 RUN mkdir -p /app/logs && \
     chmod 755 /app/logs
 
+# Create uploads directory with proper permissions
+RUN mkdir -p uploads/avatars \
+    && chmod -R 775 uploads \
+    && chown -R node:node uploads
+
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001 && \
