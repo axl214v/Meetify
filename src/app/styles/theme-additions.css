@@ -1,0 +1,87 @@
+/* ============================================ */
+/* Light Theme Overrides                        */
+/* Add this at the END of conf.css              */
+/* ============================================ */
+
+[data-theme="light"] {
+  --bg:           #f0f4f8;
+  --bg-2:         #ffffff;
+  --bg-3:         #f8fafc;
+  --surface:      #ffffff;
+  --surface-2:    #f1f5f9;
+  --border:       rgba(0,0,0,0.08);
+  --border-hover: rgba(0,0,0,0.15);
+
+  --text:         #0f172a;
+  --text-2:       #475569;
+  --text-3:       #94a3b8;
+
+  --shadow:       0 4px 24px rgba(0,0,0,0.07);
+  --shadow-lg:    0 12px 48px rgba(0,0,0,0.12);
+}
+
+/* Light theme — body background */
+[data-theme="light"] body {
+  background: var(--bg);
+}
+
+/* Light theme — grid lines lighter */
+[data-theme="light"] body::before {
+  background-image:
+    linear-gradient(rgba(59,130,246,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59,130,246,0.05) 1px, transparent 1px);
+}
+
+/* Light theme — inputs */
+[data-theme="light"] input,
+[data-theme="light"] textarea,
+[data-theme="light"] select {
+  background: #ffffff;
+  color: var(--text);
+  border-color: #e2e8f0;
+}
+
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder {
+  color: var(--text-3);
+}
+
+/* Light theme — scrollbar */
+[data-theme="light"] ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* ============================================ */
+/* Theme Toggle Button                          */
+/* ============================================ */
+
+#themeToggleBtn {
+  background: var(--surface-2);
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  width: 40px;
+  height: 40px;
+  min-height: auto;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+
+#themeToggleBtn:hover {
+  border-color: var(--border-hover);
+  transform: rotate(20deg) scale(1.1);
+  box-shadow: none;
+}
