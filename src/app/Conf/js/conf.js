@@ -1,19 +1,5 @@
 // js/conf.js
 const API_BASE = window.location.origin;
-//const serviceStatus = require('./checkStatus/index.js');
-
-
-// Initialize check on page load
-// async () => {
-//    try {
-//        await checkServiceStatus();
-//        // инициализация остальных модулей
-//    } catch (err) {
-//        console.error('Service check failed', err);
-//        showError('Service temporarily unavailable. Please try again later.');
-//        window.location.href = '../err';
-//    }
-//}
 
 // State
 let currentFilter = 'all'; // 'all', 'host', 'participant'
