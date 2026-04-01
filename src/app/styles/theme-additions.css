@@ -1,9 +1,8 @@
 /* ============================================ */
-/* Light Theme Overrides                        */
-/* Add this at the END of conf.css              */
+/* Light Theme                                  */
 /* ============================================ */
 
-[data-theme="light"] {
+html[data-theme="light"] {
   --bg:           #f0f4f8;
   --bg-2:         #ffffff;
   --bg-3:         #f8fafc;
@@ -11,53 +10,61 @@
   --surface-2:    #f1f5f9;
   --border:       rgba(0,0,0,0.08);
   --border-hover: rgba(0,0,0,0.15);
-
   --text:         #0f172a;
   --text-2:       #475569;
   --text-3:       #94a3b8;
-
   --shadow:       0 4px 24px rgba(0,0,0,0.07);
   --shadow-lg:    0 12px 48px rgba(0,0,0,0.12);
+  --accent-glow:  rgba(59,130,246,0.2);
 }
 
-/* Light theme — body background */
-[data-theme="light"] body {
-  background: var(--bg);
-}
-
-/* Light theme — grid lines lighter */
-[data-theme="light"] body::before {
+html[data-theme="light"] body::before {
   background-image:
-    linear-gradient(rgba(59,130,246,0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(59,130,246,0.05) 1px, transparent 1px);
+    linear-gradient(rgba(59,130,246,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59,130,246,0.04) 1px, transparent 1px);
 }
 
-/* Light theme — inputs */
-[data-theme="light"] input,
-[data-theme="light"] textarea,
-[data-theme="light"] select {
-  background: #ffffff;
-  color: var(--text);
-  border-color: #e2e8f0;
+/* Badges adapt in light mode */
+html[data-theme="light"] .status-badge.active,
+html[data-theme="light"] .status-badge.ongoing {
+  background: rgba(16,185,129,0.1);
+  color: #059669;
+  border-color: rgba(16,185,129,0.3);
 }
 
-[data-theme="light"] input::placeholder,
-[data-theme="light"] textarea::placeholder {
-  color: var(--text-3);
+html[data-theme="light"] .status-badge.scheduled {
+  background: rgba(59,130,246,0.1);
+  color: #2563eb;
+  border-color: rgba(59,130,246,0.3);
 }
 
-/* Light theme — scrollbar */
-[data-theme="light"] ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+html[data-theme="light"] .status-badge.ended {
+  background: rgba(100,116,139,0.1);
+  color: #64748b;
+  border-color: rgba(100,116,139,0.2);
 }
 
-[data-theme="light"] ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+html[data-theme="light"] .host-badge {
+  background: rgba(245,158,11,0.1);
+  color: #d97706;
+  border-color: rgba(245,158,11,0.3);
 }
 
-[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+html[data-theme="light"] a { color: #2563eb; }
+html[data-theme="light"] a:hover { color: #1d4ed8; }
+
+html[data-theme="light"] .quick-join-btn {
+  background: rgba(59,130,246,0.08);
+  color: #2563eb;
+  border-color: rgba(59,130,246,0.2);
 }
+
+html[data-theme="light"] .error-message { color: #dc2626; }
+html[data-theme="light"] .success-message,
+html[data-theme="light"] .info-message { color: #059669; }
+
+html[data-theme="light"] ::-webkit-scrollbar-thumb { background: #cbd5e1; }
+html[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
 /* ============================================ */
 /* Theme Toggle Button                          */
@@ -73,11 +80,7 @@
   padding: 0;
   border-radius: 50%;
   font-size: 1.1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   flex-shrink: 0;
-  transition: var(--transition);
 }
 
 #themeToggleBtn:hover {
