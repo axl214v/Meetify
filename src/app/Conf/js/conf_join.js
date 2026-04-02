@@ -148,7 +148,7 @@ function getConferenceStatus(conf) {
 }
 
 // Handle join form submission
-document.getElementById('joinBtn')?.addEventListener('click', async function() {
+document.getElementById('joinBtn')?.addEventListener('click', async function(e) {
     e.preventDefault();
     
     if (!currentConference) {
