@@ -543,4 +543,316 @@ textarea:focus {
     .pagination {
         gap: 1rem;
     }
+    .navbar {
+        padding: 0.75rem 1rem;
+        margin-bottom: 2rem;
+  }
+
+  .nav-name { display: none; }
+
+  .hero { padding: 2.5rem 1rem 3rem; }
+
+  .hero-actions { flex-direction: column; align-items: center; }
+
+  .hero-cta,
+  .hero-secondary { width: 100%; max-width: 280px; }
+
+  .features { grid-template-columns: 1fr; }
 }
+
+/* ============================================ */
+/* Add these styles to the END of styles.css    */
+/* Landing page — navbar, hero, features        */
+/* ============================================ */
+
+/* ============================================ */
+/* Navbar                                       */
+/* ============================================ */
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  margin-bottom: 3rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+}
+
+.nav-logo { font-size: 1.4rem; }
+
+.nav-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #2c3e50;
+  letter-spacing: -0.3px;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.nav-guest,
+.nav-user {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.hidden { display: none !important; }
+
+/* Nav buttons — compact */
+.nav-actions button {
+  padding: 0.5rem 1.1rem;
+  font-size: 0.88rem;
+  min-height: 38px;
+}
+
+/* Profile link in nav */
+.nav-profile {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.9rem 0.4rem 0.4rem;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 40px;
+  text-decoration: none;
+  transition: all 0.2s;
+  color: #2c3e50;
+}
+
+.nav-profile:hover {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.18);
+  transform: translateY(-1px);
+}
+
+.nav-profile:hover::after { display: none; }
+
+.nav-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+}
+
+.nav-profile span {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #2c3e50;
+  max-width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Theme toggle in nav */
+#themeToggleBtn {
+  width: 38px;
+  height: 38px;
+  min-height: auto;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 1rem;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #2c3e50;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#themeToggleBtn:hover {
+  transform: rotate(20deg) scale(1.1);
+  box-shadow: none;
+  background: rgba(255,255,255,0.12);
+}
+
+/* ============================================ */
+/* Hero                                         */
+/* ============================================ */
+
+.hero {
+  text-align: center;
+  padding: 4rem 2rem 5rem;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.hero-badge {
+  display: inline-block;
+  background: rgba(102,126,234,0.1);
+  border: 1px solid rgba(102,126,234,0.25);
+  color: #667eea;
+  padding: 0.35rem 1rem;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.3px;
+}
+
+.hero-title {
+  font-size: clamp(2.4rem, 6vw, 4rem);
+  font-weight: 700;
+  line-height: 1.15;
+  color: #2c3e50;
+  margin-bottom: 1.2rem;
+  letter-spacing: -1px;
+  background: none;
+  -webkit-text-fill-color: #2c3e50;
+}
+
+.hero-sub {
+  font-size: 1.1rem;
+  color: #64748b;
+  line-height: 1.7;
+  margin-bottom: 2.5rem;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.hero-cta {
+  padding: 0.9rem 2.2rem;
+  font-size: 1rem;
+  min-height: 50px;
+  box-shadow: 0 8px 24px rgba(102,126,234,0.35);
+}
+
+.hero-cta:hover {
+  box-shadow: 0 12px 32px rgba(102,126,234,0.45);
+  transform: translateY(-3px);
+}
+
+.hero-secondary {
+  padding: 0.9rem 2rem;
+  font-size: 1rem;
+  min-height: 50px;
+}
+
+/* ============================================ */
+/* Features                                     */
+/* ============================================ */
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
+  max-width: 1000px;
+  margin: 0 auto 4rem;
+  padding: 0 1rem;
+}
+
+.feature-card {
+  background: rgba(255,255,255,0.7);
+  border: 1px solid rgba(255,255,255,0.5);
+  border-radius: 16px;
+  padding: 1.75rem;
+  backdrop-filter: blur(8px);
+  transition: all 0.25s;
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+  border-color: rgba(102,126,234,0.2);
+}
+
+.feature-icon {
+  font-size: 2rem;
+  margin-bottom: 0.9rem;
+}
+
+.feature-card h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.feature-card p {
+  font-size: 0.9rem;
+  color: #64748b;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ============================================ */
+/* Footer                                       */
+/* ============================================ */
+
+.site-footer {
+  text-align: center;
+  padding: 2rem;
+  color: #94a3b8;
+  font-size: 0.88rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.site-footer a {
+  color: #667eea;
+  font-weight: 500;
+}
+
+.footer-sep { opacity: 0.4; }
+
+/* ============================================ */
+/* Light/Dark theme adjustments for landing     */
+/* ============================================ */
+
+html[data-theme="dark"] .navbar {
+  background: rgba(0,0,0,0.2);
+  border-color: rgba(255,255,255,0.06);
+}
+
+html[data-theme="dark"] .nav-name,
+html[data-theme="dark"] .nav-profile span,
+html[data-theme="dark"] #themeToggleBtn { color: #f1f5f9; }
+
+html[data-theme="dark"] .hero-title {
+  color: #f1f5f9;
+  -webkit-text-fill-color: #f1f5f9;
+}
+
+html[data-theme="dark"] .hero-sub { color: #94a3b8; }
+
+html[data-theme="dark"] .feature-card {
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.07);
+}
+
+html[data-theme="dark"] .feature-card h3 { color: #f1f5f9; }
+html[data-theme="dark"] .feature-card p  { color: #94a3b8; }
+
+html[data-theme="dark"] .site-footer { color: #475569; }               

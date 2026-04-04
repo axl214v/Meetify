@@ -8,45 +8,104 @@
     <link rel="icon" href="/assets/logo.png">
 </head>
 <body>
-    <header>
-        <h1>Meetify - Free Online Conferences</h1>
-    </header>
-    
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <span class="nav-logo">🎥</span>
+            <span class="nav-name">Meetify</span>
+        </div>
+        <div class="nav-actions">
+            <button id="themeToggleBtn" title="Switch theme">☀️</button>
+
+            <!-- Shown when NOT logged in -->
+            <div id="navGuest" class="nav-guest hidden">
+                <button class="secondary" onclick="window.location.href='/auth/Auth.html'">
+                    Log in
+                </button>
+                <button onclick="window.location.href='/auth/Reg.html'">
+                    Sign up
+                </button>
+            </div>
+
+            <!-- Shown when logged in -->
+            <div id="navUser" class="nav-user hidden">
+                <button class="secondary" onclick="window.location.href='/Conf/pages/conf.html'">
+                    📋 My Conferences
+                </button>
+                <a class="nav-profile" id="navProfileLink" href="/profile/profile.html">
+                    <div class="nav-avatar" id="navAvatar">?</div>
+                    <span id="navUserName">Loading...</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
     <main>
-        <div class="hero">
-            <h2>Forward to Online Conferences</h2>
-            <p>Best free online conferences for your business</p>
-        </div>
-        
-        <div class="button-container">
-            <button onclick="window.location.href='/auth/Auth.html'">
-                Create Conference
-            </button>
-        </div>
-        
-        <div class="features">
-            <div class="feature">
-                <h3>Free</h3>
-                <p>Full access to features without payment</p>
+        <section class="hero">
+            <div class="hero-badge">✨ Free &amp; Open Source</div>
+            <h1 class="hero-title">Video Conferences<br>Made Simple</h1>
+            <p class="hero-sub">
+                Connect with anyone, anywhere. High-quality video, real-time chat,
+                screen sharing — all in your browser.
+            </p>
+            <div class="hero-actions">
+                <button class="hero-cta" id="heroCta">
+                    🚀 Get Started
+                </button>
+                <button class="secondary hero-secondary" onclick="window.location.href='/auth/Auth.html'">
+                    Log in
+                </button>
             </div>
-            <div class="feature">
-                <h3>Easy to Use</h3>
-                <p>Intuitive interface for all users</p>
+        </section>
+
+        <!-- Features -->
+        <section class="features">
+            <div class="feature-card">
+                <div class="feature-icon">🎥</div>
+                <h3>HD Video</h3>
+                <p>Crystal-clear WebRTC peer-to-peer video and audio with no plugins required.</p>
             </div>
-            <div class="feature">
-                <h3>Reliable</h3>
-                <p>Stable platform for your meetings</p>
+            <div class="feature-card">
+                <div class="feature-icon">💬</div>
+                <h3>Real-time Chat</h3>
+                <p>Instant messaging during your conferences, with unread message badges.</p>
             </div>
-        </div>
+            <div class="feature-card">
+                <div class="feature-icon">🖥️</div>
+                <h3>Screen Sharing</h3>
+                <p>Share your screen mid-call without restarting the connection.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔐</div>
+                <h3>Secure</h3>
+                <p>JWT authentication, bcrypt passwords, and rate limiting out of the box.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3>Fast</h3>
+                <p>Lightweight frontend, connection pooling, and optimized signaling server.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🆓</div>
+                <h3>Free Forever</h3>
+                <p>No subscriptions, no limits, no ads. Host it yourself with Docker.</p>
+            </div>
+        </section>
     </main>
-    
-    <footer>
-        <p>&copy; 2024 Meetify. All rights reserved.</p>
+
+    <footer class="site-footer">
+        <span>© 2025 Meetify</span>
+        <span class="footer-sep">·</span>
+        <a href="/profile/profile.html">Profile</a>
+        <span class="footer-sep">·</span>
+        <a href="https://github.com/axl214v/meetify" target="_blank">GitHub</a>
     </footer>
-    
+
+    <script src="/js/theme.js"></script>
     <script src="/err/error-logger.js"></script>
     <script src="/js/index.js"></script>
     <noscript>Sorry, your browser does not support JavaScript.</noscript>
 </body>
 </html>
-

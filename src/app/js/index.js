@@ -1,61 +1,79 @@
-// index.js - Main page script
-const API_BASE = window.location.origin; // Use current host
+// ============================================
+// index.js — Landing page logic
+// ============================================
 
-// Check backend health
-fetch(`${API_BASE}/check-status`, {
-    method: 'GET'
-})
-.then(res => {
-    if (res.ok) {
-        return res.json();
-    } else {
-        console.warn('Backend not responding');
-    }
-})
-.then(data => {
-    if (data) {
-        console.log('Backend status:', data.status);
-    }
-})
-.catch(err => {
-    console.warn('Backend check failed:', err.message);
-});
+const API_BASE = window.location.origin;
 
-// Check if user is authenticated
-fetch(`${API_BASE}/api/auth/me`, {
-    method: 'GET',
-    credentials: 'include'
-})
-.then(res => {
-    if (res.ok) {
-        return res.json();
-    }
-    throw new Error('Not authenticated');
-})
-.then(data => {
-    if (data.authenticated) {
-        // User is logged in, could redirect to dashboard
-        console.log('User authenticated:', data.user);
-    }
-})
-.catch(err => {
-    console.log('User not authenticated');
-});
+document.addEventListener('DOMContentLoaded', async () => {
 
-// Navigation handlers
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('Meetify v1.0 - Ready!');
-    
-    // Smooth scroll for anchor links
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth'
-                });
-            }
+    // Check auth and update nav accordingly
+    try {
+        const res = await fetch(`${API_BASE}/api/auth/me`, {
+            credentials: 'include'
         });
-    });
+
+        if (res.ok) {
+            const data = await res.json();
+            const user = data.user;
+
+            // Show logged-in nav
+            document.getElementById('navGuest').classList.add('hidden');
+            document.getElementById('navUser').classList.remove('hidden');
+
+            // Fill user name and avatar initials
+            document.getElementById('navUserName').textContent =
+                user.username || user.email;
+
+            const initials = getInitials(user.username || user.email);
+            document.getElementById('navAvatar').textContent = initials;
+
+            // If user has avatar — show image instead
+            if (user.avatar_url) {
+                const avatar = document.getElementById('navAvatar');
+                avatar.style.backgroundImage = `url(${user.avatar_url})`;
+                avatar.style.backgroundSize = 'cover';
+                avatar.style.backgroundPosition = 'center';
+                avatar.textContent = '';
+            }
+
+            // CTA goes to conferences when logged in
+            document.getElementById('heroCta').addEventListener('click', () => {
+                window.location.href = '/Conf/pages/conf.html';
+            });
+
+            // Hide login button in hero since user is logged in
+            document.querySelector('.hero-secondary').style.display = 'none';
+
+        } else {
+            // Not logged in — show guest nav
+            document.getElementById('navGuest').classList.remove('hidden');
+            document.getElementById('navUser').classList.add('hidden');
+
+            // CTA goes to register
+            document.getElementById('heroCta').addEventListener('click', () => {
+                window.location.href = '/auth/Reg.html';
+            });
+        }
+    } catch (err) {
+        console.warn('Auth check failed:', err.message);
+
+        // Show guest nav on error
+        document.getElementById('navGuest').classList.remove('hidden');
+        document.getElementById('navUser').classList.add('hidden');
+
+        document.getElementById('heroCta').addEventListener('click', () => {
+            window.location.href = '/auth/Reg.html';
+        });
+    }
 });
+
+// ============================================
+// Helpers
+// ============================================
+
+function getInitials(name) {
+    if (!name) return '?';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
