@@ -489,19 +489,28 @@ function renderParticipants(participants) {
     const participantsList = document.getElementById('participantsList');
 
     if (participants.length === 0) {
-        participantsList.innerHTML = '<p style="color: rgba(255,255,255,0.5); text-align: center;">No participants yet</p>';
+        participantsList.innerHTML = '<p style="color:var(--room-muted);text-align:center;padding:2rem;font-size:0.88rem;">No participants yet</p>';
         return;
     }
 
     participantsList.innerHTML = participants.map(p => {
-        const initials = (p.username || p.userName || 'U').substring(0, 2).toUpperCase();
+        const name = p.username || p.userName || 'Unknown';
+        const initials = getInitials(name);
         const hostBadge = p.is_host || p.isHost ? ' 👑' : '';
+        const avatarHtml = p.avatar_url
+            ? `<img class="participant-avatar-img" src="${p.avatar_url}" alt="${escapeHtml(name)}">`
+            : `<div class="participant-avatar-initials" style="background:${stringToColor(name)}">${initials}</div>`;
+
         return `
             <div class="participant-item">
-                <div class="participant-avatar">${initials}</div>
+                <div class="participant-avatar">${avatarHtml}</div>
                 <div class="participant-info">
-                    <strong>${escapeHtml(p.username || p.userName || 'Unknown')}${hostBadge}</strong>
+                    <strong>${escapeHtml(name)}${hostBadge}</strong>
                     <small>Joined ${formatJoinTime(p.joined_at || p.joinedAt)}</small>
+                </div>
+                <div class="participant-media">
+                    <div class="media-icon">🎤</div>
+                    <div class="media-icon">📹</div>
                 </div>
             </div>
         `;
