@@ -14,6 +14,9 @@
         <h1>My Conferences</h1>
         <div class="header-actions">
             <button id="themeToggleBtn" title="Switch theme">☀️</button>
+            <button class="secondary" onclick="window.location.href='/'">
+                ← Home
+            </button>
             <button onclick="window.location.href='conf_create.html'">
                 ➕ Create Conference
             </button>
@@ -27,7 +30,11 @@
         <!-- User Info -->
         <div class="user-info" id="userInfo">
             <div class="status-indicator"></div>
-            <span id="userName">Loading...</span>
+                <span id="userName">Loading...</span>
+                <a href="/profile/profile.html" style="margin-left:auto;font-size:0.82rem;">
+                    ⚙️ Profile
+                </a>
+            </div>
         </div>
 
         <!-- Filters -->
