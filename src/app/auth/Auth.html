@@ -1,54 +1,86 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Meetify - Authorization</title>
-  <link rel="stylesheet" href="/styles/auth_reg.css">
-  <link rel="icon" href="/assets/logo.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In — Meetify</title>
+    <link rel="stylesheet" href="/styles/auth_reg.css">
+    <link rel="icon" href="/assets/logo.png">
 </head>
 <body>
-  <header>
-    <h1>Authorization</h1>
-  </header>
-  
-  <main>
-    <section>
-      <h2>Authorization Form</h2>
-      <form id="auth-form">
-        <div>
-          <label for="email">Email:</label>
-          <input type="email" maxlength="36" name="email" id="email" required>
+
+    <!-- Back to home -->
+    <a class="auth-back" href="/">← Home</a>
+
+    <!-- Theme toggle -->
+    <button class="auth-theme-toggle" id="themeToggleBtn" title="Switch theme">☀️</button>
+
+    <div class="auth-page">
+
+        <!-- Brand -->
+        <div class="auth-brand">
+            <span class="auth-brand-logo">🎥</span>
+            <span class="auth-brand-name">Meetify</span>
         </div>
-        <div>
-          <label for="password">Password:</label>
-          <input type="password" maxlength="36" name="password" id="password" required>
+
+        <!-- Card -->
+        <div class="auth-card">
+            <h1 class="auth-card-title">Welcome back</h1>
+            <p class="auth-card-sub">Sign in to your account to continue</p>
+
+            <div class="auth-form">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        placeholder="you@example.com"
+                        maxlength="100"
+                        autocomplete="email"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="••••••••"
+                        maxlength="100"
+                        autocomplete="current-password"
+                        required
+                    >
+                </div>
+
+                <button class="auth-submit" id="submit">Sign In</button>
+
+                <!-- Inline error message instead of alert() -->
+                <div class="auth-message" id="authMessage"></div>
+            </div>
+
+            <!-- Footer links -->
+            <div class="auth-footer">
+                <div class="auth-footer-row">
+                    <span>Don't have an account?</span>
+                    <button class="auth-footer-btn" id="authb">Create account</button>
+                </div>
+                <div class="auth-footer-row">
+                    <a href="/auth/resetpass.html">Forgot password?</a>
+                </div>
+            </div>
         </div>
-        <div>
-          <button type="submit" id="submit">Authorize</button>
+
+        <div class="page-footer">
+            <p>© 2025 Meetify · <a href="/">Home</a></p>
         </div>
-      </form>
-    </section>
-    
-    <section class="auth-links">
-      <div>
-        <a href="/auth/Reg.html">Not registered?</a>
-        <button id="authb">Register!</button>
-      </div>
-      <div>
-        <a href="/auth/resetpass.html">Forgot password?</a>
-        <button id="reset">Reset it!</button>
-      </div>
-    </section>
-  </main>
-  
-  <footer>
-    <p>&copy; 2024 Meetify. All rights reserved.</p>
-  </footer>
-  
-  <script src="/js/auth.js"></script>
-  <script src="/err/error-logger.js"></script>
-  <noscript>Sorry, your browser does not support JavaScript.</noscript>
+
+    </div>
+
+    <script src="/js/theme.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/err/error-logger.js"></script>
 </body>
 </html>
-

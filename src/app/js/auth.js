@@ -1,130 +1,131 @@
-// Const of api
-const API_BASE = window.location.origin;;
-// const serviceStatus = require('./checkStatus/index.js');
+// ============================================
+// auth.js — Login page logic
+// ============================================
 
+const API_BASE = window.location.origin;
 
-// Initialize check on page load
-//async () => {
-//    try {
-//        await checkServiceStatus();
-//        // инициализация остальных модулей
-//    } catch (err) {
-//        console.error('Service check failed', err);
-//        showError('Service temporarily unavailable. Please try again later.');
-//        window.location.href = '../err';
-//    }
-//}
+// ============================================
+// Show inline message instead of alert()
+// ============================================
 
-// Utility function for showing user-friendly errors
-function showError(message, input = null) {
-    alert(message);
-    if (input) {
-        input.classList.add('error');
-    }
+function showMsg(message, type = 'error') {
+    const el = document.getElementById('authMessage');
+    if (!el) return;
+    el.textContent = message;
+    el.className = `auth-message ${type}`;
 }
-// Checking if user is authenticated
+
+function clearMsg() {
+    const el = document.getElementById('authMessage');
+    if (el) el.className = 'auth-message';
+}
+
+// ============================================
+// Redirect if already logged in
+// ============================================
+
 async function checkAuthentication() {
     try {
         const response = await fetch(`${API_BASE}/api/auth/me`, {
             method: 'GET',
             credentials: 'include'
         });
-
         if (response.ok) {
             window.location.href = '/Conf/pages/conf.html';
         }
-
     } catch (error) {
         console.error('Auth check failed:', error);
     }
 }
+
 checkAuthentication();
 
-
+// ============================================
 // Login form handler
+// ============================================
+
 document.getElementById('submit')?.addEventListener('click', async function (e) {
     e.preventDefault();
-    
+    clearMsg();
+
     const submitButton = document.getElementById('submit');
-    const emailInput = document.getElementById('email');
+    const emailInput    = document.getElementById('email');
     const passwordInput = document.getElementById('password');
-    
-    const email = emailInput.value.trim();
+
+    const email    = emailInput.value.trim();
     const password = passwordInput.value.trim();
-    
-    // Reset previous error states
+
+    // Reset states
     emailInput.classList.remove('error', 'success');
     passwordInput.classList.remove('error', 'success');
-    
+
     // Validation
     if (!email || !password) {
-        showError('Please fill in all required fields.');
-        if (!email) emailInput.classList.add('error');
+        showMsg('Please fill in all required fields.');
+        if (!email)    emailInput.classList.add('error');
         if (!password) passwordInput.classList.add('error');
         return;
     }
-    
-    // Email format validation
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-        showError('Please enter a valid email address.', emailInput);
+        showMsg('Please enter a valid email address.');
+        emailInput.classList.add('error');
         return;
     }
-    
-    // Disable button and show loading state
+
+    // Loading state
     submitButton.disabled = true;
     submitButton.classList.add('loading');
     const originalText = submitButton.textContent;
-    submitButton.textContent = 'Logging in...';
-    
+    submitButton.textContent = 'Signing in...';
+
     try {
         const response = await fetch(`${API_BASE}/api/auth/login`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include', 
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({ email, password })
         });
-        
+
         if (response.status === 200) {
             emailInput.classList.add('success');
             passwordInput.classList.add('success');
-            
-            // Small delay for visual feedback
+            showMsg('Success! Redirecting...', 'success');
+
             setTimeout(() => {
-                window.location.href = '../Conf/pages/conf.html';
-            }, 300);
-        } else if (response.status === 401) {     
-            showError('Invalid email or password.', passwordInput);
+                window.location.href = '/Conf/pages/conf.html';
+            }, 400);
+
+        } else if (response.status === 401) {
+            showMsg('Invalid email or password.');
+            passwordInput.classList.add('error');
         } else {
-            const errorText = await response.text();
-            console.error('Login error:', errorText);
-            showError('Server error. Please try again later.');
+            showMsg('Server error. Please try again later.');
         }
+
     } catch (err) {
         console.error('Login request failed:', err);
-        showError('Network error. Please check your connection and try again.');
+        showMsg('Network error. Please check your connection.');
     } finally {
-        // Restore button state
         submitButton.disabled = false;
         submitButton.classList.remove('loading');
         submitButton.textContent = originalText;
     }
 });
 
-// Handle navigation buttons
-document.getElementById('authb')?.addEventListener('click', function() {
-    window.location.href = 'Reg.html';
+// ============================================
+// Navigation
+// ============================================
+
+document.getElementById('authb')?.addEventListener('click', () => {
+    window.location.href = '/auth/Reg.html';
 });
 
-document.getElementById('reset')?.addEventListener('click', function() {
-    window.location.href = 'resetpass.html';
+document.getElementById('reset')?.addEventListener('click', () => {
+    window.location.href = '/auth/resetpass.html';
 });
 
-// Optional: Add Enter key support for login
-document.getElementById('password')?.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        document.getElementById('submit')?.click();
-    }
+document.getElementById('password')?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') document.getElementById('submit')?.click();
 });
