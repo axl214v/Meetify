@@ -234,45 +234,161 @@ async function copyToClipboard(text) {
 }
 
 /**
- * Show notification toast
- * @param {string} message - Message to show
- * @param {string} type - 'success', 'error', 'info', 'warning'
- * @param {number} duration - Duration in ms (default 3000)
+ * Show toast notification
+ * @param {string} message
+ * @param {string} type - 'success' | 'error' | 'info' | 'warning'
+ * @param {number} duration - ms (default 3500)
  */
-function showNotification(message, type = 'info', duration = 3000) {
+function showNotification(message, type = 'info', duration = 3500) {
     // Remove existing toasts
-    const existing = document.querySelectorAll('.notification-toast');
-    existing.forEach(el => el.remove());
-    
-    // Create toast
+    document.querySelectorAll('.notification-toast').forEach(el => el.remove());
+ 
+    const colors = {
+        success: { bg: 'rgba(16,185,129,0.12)',  border: 'rgba(16,185,129,0.3)',  text: '#6ee7b7', icon: '✓' },
+        error:   { bg: 'rgba(239,68,68,0.12)',   border: 'rgba(239,68,68,0.3)',   text: '#fca5a5', icon: '✕' },
+        warning: { bg: 'rgba(245,158,11,0.12)',  border: 'rgba(245,158,11,0.3)',  text: '#fcd34d', icon: '⚠' },
+        info:    { bg: 'rgba(59,130,246,0.12)',  border: 'rgba(59,130,246,0.3)',  text: '#93c5fd', icon: 'ℹ' },
+    };
+ 
+    const c = colors[type] || colors.info;
+ 
     const toast = document.createElement('div');
-    toast.className = `notification-toast notification-${type}`;
-    toast.textContent = message;
-    
-    // Styles
+    toast.className = 'notification-toast';
+    toast.innerHTML = `<span class="toast-icon">${c.icon}</span><span class="toast-text">${message}</span>`;
+ 
     toast.style.cssText = `
         position: fixed;
         top: 20px;
         right: 20px;
-        background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : type === 'warning' ? '#f59e0b' : '#3b82f6'};
-        color: white;
-        padding: 1rem 1.5rem;
-        border-radius: 12px;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-        z-index: 10000;
-        animation: slideIn 0.3s ease-out;
-        font-weight: 600;
-        max-width: 350px;
-        word-wrap: break-word;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #1a1f2e;
+        border: 1px solid ${c.border};
+        color: ${c.text};
+        padding: 0.8rem 1.2rem;
+        border-radius: 10px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        z-index: 99999;
+        font-family: 'Outfit', sans-serif;
+        font-size: 0.9rem;
+        font-weight: 500;
+        max-width: 360px;
+        word-break: break-word;
+        animation: toastIn 0.25s cubic-bezier(0.4,0,0.2,1) both;
+        backdrop-filter: blur(12px);
     `;
-    
+ 
+    // Inject keyframes once
+    if (!document.getElementById('toast-styles')) {
+        const style = document.createElement('style');
+        style.id = 'toast-styles';
+        style.textContent = `
+            @keyframes toastIn {
+                from { opacity: 0; transform: translateX(20px) translateY(-4px); }
+                to   { opacity: 1; transform: translateX(0) translateY(0); }
+            }
+            @keyframes toastOut {
+                from { opacity: 1; transform: translateX(0); }
+                to   { opacity: 0; transform: translateX(20px); }
+            }
+            .toast-icon { font-size: 0.85rem; flex-shrink: 0; }
+        `;
+        document.head.appendChild(style);
+    }
+ 
     document.body.appendChild(toast);
-    
-    // Remove after duration
+ 
     setTimeout(() => {
-        toast.style.animation = 'slideOut 0.3s ease-out';
-        setTimeout(() => toast.remove(), 300);
+        toast.style.animation = 'toastOut 0.2s ease forwards';
+        setTimeout(() => toast.remove(), 200);
     }, duration);
+}
+
+/**
+ * Show an inline confirm dialog (replaces native confirm())
+ * Returns a Promise<boolean>
+ * @param {string} message
+ * @param {string} confirmLabel - label for confirm button (default 'Confirm')
+ * @param {string} type - 'danger' | 'default'
+ */
+function showConfirm(message, confirmLabel = 'Confirm', type = 'danger') {
+    return new Promise((resolve) => {
+        // Remove existing
+        document.querySelectorAll('.confirm-overlay').forEach(el => el.remove());
+ 
+        const overlay = document.createElement('div');
+        overlay.className = 'confirm-overlay';
+        overlay.style.cssText = `
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            z-index: 99998;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: toastIn 0.15s ease both;
+        `;
+ 
+        const btnColor = type === 'danger'
+            ? 'background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);'
+            : 'background:rgba(59,130,246,0.15);color:#93c5fd;border:1px solid rgba(59,130,246,0.3);';
+ 
+        overlay.innerHTML = `
+            <div style="
+                background:#161d2e;
+                border:1px solid rgba(255,255,255,0.08);
+                border-radius:14px;
+                padding:1.75rem 2rem;
+                max-width:380px;
+                width:90%;
+                box-shadow:0 20px 60px rgba(0,0,0,0.5);
+                font-family:'Outfit',sans-serif;
+            ">
+                <p style="color:#e2e8f0;font-size:0.95rem;line-height:1.6;margin-bottom:1.5rem;">${message}</p>
+                <div style="display:flex;gap:0.75rem;justify-content:flex-end;">
+                    <button id="confirmCancel" style="
+                        background:rgba(255,255,255,0.05);
+                        color:#94a3b8;
+                        border:1px solid rgba(255,255,255,0.08);
+                        padding:0.55rem 1.2rem;
+                        border-radius:8px;
+                        cursor:pointer;
+                        font-family:'Outfit',sans-serif;
+                        font-size:0.88rem;
+                        font-weight:500;
+                    ">Cancel</button>
+                    <button id="confirmOk" style="
+                        ${btnColor}
+                        padding:0.55rem 1.2rem;
+                        border-radius:8px;
+                        cursor:pointer;
+                        font-family:'Outfit',sans-serif;
+                        font-size:0.88rem;
+                        font-weight:600;
+                    ">${confirmLabel}</button>
+                </div>
+            </div>
+        `;
+ 
+        document.body.appendChild(overlay);
+ 
+        overlay.querySelector('#confirmOk').addEventListener('click', () => {
+            overlay.remove();
+            resolve(true);
+        });
+ 
+        overlay.querySelector('#confirmCancel').addEventListener('click', () => {
+            overlay.remove();
+            resolve(false);
+        });
+ 
+        // Close on backdrop click
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) { overlay.remove(); resolve(false); }
+        });
+    });
 }
 
 /**

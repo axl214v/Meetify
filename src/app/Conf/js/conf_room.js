@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     conferenceId = urlParams.get('id');
 
     if (!conferenceId) {
-        alert('No conference ID provided');
+        showNotification('No conference ID provided', 'error');
         window.location.href = 'conf.html';
         return;
     }
@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     } catch (error) {
         console.error('Initialization error:', error);
-        alert('Failed to join conference. Please check your camera/microphone permissions.');
+        showNotification('Failed to join conference. Check camera/microphone permissions.', 'error');
         window.location.href = 'conf.html';
     }
 });
@@ -421,7 +421,7 @@ async function toggleScreenShare() {
 
         } catch (error) {
             console.error('Screen share error:', error);
-            alert('Failed to share screen');
+            showNotification('Failed to share screen', 'error');
         }
     } else {
         stopScreenShare();
@@ -570,7 +570,8 @@ function startRoomTimer() {
 }
 
 async function leaveConference() {
-    if (!confirm('Are you sure you want to leave this conference?')) return;
+    const confirmed = await showConfirm('Leave this conference?', 'Leave', 'danger');
+    if (!confirmed) return;
 
     if (roomTimer) clearInterval(roomTimer);
     if (localStream) localStream.getTracks().forEach(track => track.stop());

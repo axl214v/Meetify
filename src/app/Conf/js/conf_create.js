@@ -1,3 +1,7 @@
+// ============================================
+// conf_create.js — Create conference page
+// ============================================
+
 const API_BASE = window.location.origin;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -8,29 +12,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const minDateTime = now.toISOString().slice(0, 16);
 
     const startTimeInput = document.getElementById('startTime');
-    const endTimeInput = document.getElementById('endTime');
+    const endTimeInput   = document.getElementById('endTime');
 
     if (startTimeInput) startTimeInput.min = minDateTime;
-    if (endTimeInput) endTimeInput.min = minDateTime;
+    if (endTimeInput)   endTimeInput.min   = minDateTime;
 
     startTimeInput?.addEventListener('change', function() {
-        if (endTimeInput && this.value) {
-            endTimeInput.min = this.value;
-        }
+        if (endTimeInput && this.value) endTimeInput.min = this.value;
     });
 
-    // Toggle password field
+    // Toggle password field visibility
     document.getElementById('requirePassword')?.addEventListener('change', function() {
         const passwordField = document.getElementById('passwordField');
         if (passwordField) {
             passwordField.style.display = this.checked ? 'block' : 'none';
-            if (!this.checked) {
-                document.getElementById('password').value = '';
-            }
+            if (!this.checked) document.getElementById('password').value = '';
         }
     });
 
-    // Back button
     document.getElementById('backBtn')?.addEventListener('click', () => {
         window.location.href = 'conf.html';
     });
@@ -39,31 +38,30 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = 'conf.html';
     });
 
-    // Copy ID button
     document.getElementById('copyBtn')?.addEventListener('click', copyConferenceId);
 
     // Create conference form handler
     document.getElementById('createConferenceForm')?.addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        const submitBtn = document.getElementById('submitBtn');
-        const nameInput = document.getElementById('name');
-        const descriptionInput = document.getElementById('description');
+        const submitBtn            = document.getElementById('submitBtn');
+        const nameInput            = document.getElementById('name');
+        const descriptionInput     = document.getElementById('description');
         const maxParticipantsInput = document.getElementById('maxParticipants');
-        const isPublicInput = document.getElementById('isPublic');
+        const isPublicInput        = document.getElementById('isPublic');
         const requirePasswordInput = document.getElementById('requirePassword');
-        const passwordInput = document.getElementById('password');
-        const startTimeInput = document.getElementById('startTime');
-        const endTimeInput = document.getElementById('endTime');
+        const passwordInput        = document.getElementById('password');
+        const startTimeInput       = document.getElementById('startTime');
+        const endTimeInput         = document.getElementById('endTime');
 
-        const name = nameInput.value.trim();
-        const description = descriptionInput.value.trim();
+        const name            = nameInput.value.trim();
+        const description     = descriptionInput.value.trim();
         const maxParticipants = maxParticipantsInput.value ? parseInt(maxParticipantsInput.value) : null;
-        const isPublic = isPublicInput.checked;
+        const isPublic        = isPublicInput.checked;
         const requirePassword = requirePasswordInput.checked;
-        const password = requirePassword ? passwordInput.value.trim() : null;
-        const startTime = startTimeInput.value || null;
-        const endTime = endTimeInput.value || null;
+        const password        = requirePassword ? passwordInput.value.trim() : null;
+        const startTime       = startTimeInput.value || null;
+        const endTime         = endTimeInput.value || null;
 
         // Reset errors
         nameInput.classList.remove('error', 'success');
@@ -71,46 +69,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Validation
         if (!name) {
-            alert('Please enter a conference name');
+            showNotification('Please enter a conference name', 'error');
             nameInput.classList.add('error');
+            nameInput.focus();
             return;
         }
 
         if (name.length > 255) {
-            alert('Name must be less than 255 characters');
+            showNotification('Name must be less than 255 characters', 'error');
             nameInput.classList.add('error');
             return;
         }
 
         if (description && description.length > 1000) {
-            alert('Description must be less than 1000 characters');
+            showNotification('Description must be less than 1000 characters', 'error');
             descriptionInput.classList.add('error');
             return;
         }
 
         if (requirePassword && !password) {
-            alert('Please enter a password');
+            showNotification('Please enter a conference password', 'error');
             passwordInput.classList.add('error');
             return;
         }
 
         if (maxParticipants !== null && (maxParticipants < 2 || maxParticipants > 1000)) {
-            alert('Max participants must be between 2 and 1000');
+            showNotification('Max participants must be between 2 and 1000', 'error');
             maxParticipantsInput.classList.add('error');
             return;
         }
 
-        if (startTime && endTime) {
-            const start = new Date(startTime);
-            const end = new Date(endTime);
-            if (start >= end) {
-                alert('End time must be after start time');
-                endTimeInput.classList.add('error');
-                return;
-            }
+        if (startTime && endTime && new Date(startTime) >= new Date(endTime)) {
+            showNotification('End time must be after start time', 'error');
+            endTimeInput.classList.add('error');
+            return;
         }
 
-        // Show loading
+        // Loading
         submitBtn.disabled = true;
         submitBtn.classList.add('loading');
         const originalText = submitBtn.textContent;
@@ -121,15 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
-                body: JSON.stringify({
-                    name,
-                    description: description || undefined,
-                    maxParticipants,
-                    isPublic,
-                    password,
-                    startTime,
-                    endTime
-                })
+                body: JSON.stringify({ name, description: description || undefined, maxParticipants, isPublic, password, startTime, endTime })
             });
 
             const data = await response.json();
@@ -145,7 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     conferenceInfo.style.display = 'block';
                 }
 
-                alert(`Conference created successfully!\nID: ${data.conference.id}`);
+                showNotification(`Conference created! ID: ${data.conference.id}`, 'success', 4000);
 
                 setTimeout(() => {
                     window.location.href = 'conf.html';
@@ -153,14 +140,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             } else if (response.status === 400) {
                 const errors = data.errors || [data.message];
-                alert('Validation failed:\n' + errors.join('\n'));
+                showNotification(errors.join(' · '), 'error');
             } else {
-                alert(data.message || 'Failed to create conference');
+                showNotification(data.message || 'Failed to create conference', 'error');
             }
 
         } catch (error) {
             console.error('Create conference error:', error);
-            alert('Network error. Please check your connection.');
+            showNotification('Network error. Please check your connection.', 'error');
         } finally {
             submitBtn.disabled = false;
             submitBtn.classList.remove('loading');
@@ -171,18 +158,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function copyConferenceId() {
     const conferenceId = document.getElementById('conferenceId')?.textContent;
+    if (!conferenceId) return;
 
-    if (conferenceId) {
-        navigator.clipboard.writeText(conferenceId).then(() => {
-            alert('Conference ID copied to clipboard!');
-        }).catch(() => {
+    navigator.clipboard.writeText(conferenceId)
+        .then(() => showNotification('Conference ID copied!', 'success', 2000))
+        .catch(() => {
             const input = document.createElement('input');
             input.value = conferenceId;
             document.body.appendChild(input);
             input.select();
             document.execCommand('copy');
             document.body.removeChild(input);
-            alert('Conference ID copied to clipboard!');
+            showNotification('Conference ID copied!', 'success', 2000);
         });
-    }
 }

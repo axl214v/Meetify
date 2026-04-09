@@ -1,8 +1,11 @@
-// js/conf.js
+// ============================================
+// conf.js — Conference list page
+// ============================================
+
 const API_BASE = window.location.origin;
 
 // State
-let currentFilter = 'all'; // 'all', 'host', 'participant'
+let currentFilter = 'all';
 let currentPage = 1;
 let conferences = [];
 let totalConferences = 0;
@@ -40,21 +43,16 @@ async function checkAuth() {
 
 // Setup event listeners
 function setupEventListeners() {
-    // Filter tabs
     document.querySelectorAll('.filter-tab').forEach(tab => {
         tab.addEventListener('click', function() {
-            // Update active tab
             document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
             this.classList.add('active');
-            
-            // Update filter
             currentFilter = this.dataset.filter;
             currentPage = 1;
             loadConferences();
         });
     });
 
-    // Search
     const searchInput = document.getElementById('searchInput');
     let searchTimeout;
     searchInput?.addEventListener('input', function() {
@@ -65,78 +63,54 @@ function setupEventListeners() {
         }, 500);
     });
 
-    // Pagination
     document.getElementById('prevPage')?.addEventListener('click', () => {
-        if (currentPage > 1) {
-            currentPage--;
-            loadConferences();
-        }
+        if (currentPage > 1) { currentPage--; loadConferences(); }
     });
 
     document.getElementById('nextPage')?.addEventListener('click', () => {
         const maxPage = Math.ceil(totalConferences / ITEMS_PER_PAGE);
-        if (currentPage < maxPage) {
-            currentPage++;
-            loadConferences();
-        }
+        if (currentPage < maxPage) { currentPage++; loadConferences(); }
     });
 }
 
 // Load conferences
 async function loadConferences() {
     const loadingIndicator = document.getElementById('loadingIndicator');
-    const conferencesList = document.getElementById('conferencesList');
-    const emptyState = document.getElementById('emptyState');
-    const pagination = document.getElementById('pagination');
+    const conferencesList   = document.getElementById('conferencesList');
+    const emptyState        = document.getElementById('emptyState');
+    const pagination        = document.getElementById('pagination');
 
-    // Show loading
     loadingIndicator.style.display = 'flex';
     conferencesList.innerHTML = '';
     emptyState.style.display = 'none';
     pagination.style.display = 'none';
 
     try {
-        let url;
         const searchQuery = document.getElementById('searchInput')?.value.trim();
         const offset = (currentPage - 1) * ITEMS_PER_PAGE;
+        let url;
 
-        // Choose endpoint based on filter
         if (currentFilter === 'all') {
             url = `${API_BASE}/api/conferences?limit=${ITEMS_PER_PAGE}&offset=${offset}`;
-            if (searchQuery) {
-                url += `&search=${encodeURIComponent(searchQuery)}`;
-            }
+            if (searchQuery) url += `&search=${encodeURIComponent(searchQuery)}`;
         } else {
-            // Get user's conferences with role filter
-            url = `${API_BASE}/api/conferences/user/my`;
-            if (currentFilter !== 'all') {
-                url += `?role=${currentFilter}`;
-            }
+            url = `${API_BASE}/api/conferences/user/my?role=${currentFilter}`;
         }
 
-        const response = await fetch(url, {
-            method: 'GET',
-            credentials: 'include'
-        });
+        const response = await fetch(url, { credentials: 'include' });
 
-        if (!response.ok) {
-            throw new Error('Failed to load conferences');
-        }
+        if (!response.ok) throw new Error('Failed to load conferences');
 
         const data = await response.json();
-        conferences = data.conferences || [];
+        conferences    = data.conferences || [];
         totalConferences = data.total || conferences.length;
 
-        // Hide loading
         loadingIndicator.style.display = 'none';
 
-        // Show results or empty state
         if (conferences.length === 0) {
             emptyState.style.display = 'block';
         } else {
             renderConferences(conferences);
-            
-            // Show pagination if needed
             const maxPage = Math.ceil(totalConferences / ITEMS_PER_PAGE);
             if (maxPage > 1 && currentFilter === 'all') {
                 pagination.style.display = 'flex';
@@ -148,38 +122,27 @@ async function loadConferences() {
         console.error('Load conferences error:', error);
         loadingIndicator.style.display = 'none';
         emptyState.style.display = 'block';
-        alert('Failed to load conferences. Please try again.');
+        showNotification('Failed to load conferences. Please try again.', 'error');
     }
 }
 
 // Render conferences
-function renderConferences(conferences) {
+function renderConferences(list) {
     const conferencesList = document.getElementById('conferencesList');
     conferencesList.innerHTML = '';
-
-    conferences.forEach(conf => {
-        const card = createConferenceCard(conf);
-        conferencesList.appendChild(card);
-    });
+    list.forEach(conf => conferencesList.appendChild(createConferenceCard(conf)));
 }
 
 // Create conference card
 function createConferenceCard(conf) {
     const card = document.createElement('div');
     card.className = 'conference-card';
-    
-    // Status badge
-    const status = getConferenceStatus(conf);
-    const statusClass = status.toLowerCase().replace(' ', '-');
-    
-    // Participant count
-    const participantCount = conf.participant_count || 0;
-    const maxParticipants = conf.max_participants;
-    const participantText = maxParticipants 
-        ? `${participantCount}/${maxParticipants}` 
-        : participantCount;
 
-    // Host badge
+    const status      = getConferenceStatus(conf);
+    const statusClass = status.toLowerCase().replace(' ', '-');
+    const participantCount = conf.participant_count || 0;
+    const maxParticipants  = conf.max_participants;
+    const participantText  = maxParticipants ? `${participantCount}/${maxParticipants}` : participantCount;
     const isHost = conf.is_host === 1 || conf.is_host === true;
     const hostBadge = isHost ? '<span class="host-badge">👑 Host</span>' : '';
 
@@ -188,9 +151,7 @@ function createConferenceCard(conf) {
             <h3>${escapeHtml(conf.name)}</h3>
             <span class="status-badge ${statusClass}">${status}</span>
         </div>
-        
         ${conf.description ? `<p class="card-description">${escapeHtml(conf.description)}</p>` : ''}
-        
         <div class="card-info">
             <div class="info-item">
                 <span class="info-label">Host:</span>
@@ -204,23 +165,15 @@ function createConferenceCard(conf) {
                 <div class="info-item">
                     <span class="info-label">Start:</span>
                     <span>📅 ${formatDate(conf.start_time)}</span>
-                </div>
-            ` : ''}
+                </div>` : ''}
         </div>
-        
         <div class="card-actions">
             ${hostBadge}
             ${isHost ? `
-                <button onclick="editConference(${conf.id})" class="secondary">
-                    ✏️ Edit
-                </button>
-                <button onclick="deleteConference(${conf.id})" class="danger">
-                    🗑️ Delete
-                </button>
+                <button onclick="editConference(${conf.id})" class="secondary">✏️ Edit</button>
+                <button onclick="deleteConference(${conf.id})" class="danger">🗑️ Delete</button>
             ` : `
-                <button onclick="joinConference(${conf.id})">
-                    🚀 Join
-                </button>
+                <button onclick="joinConference(${conf.id})">🚀 Join</button>
             `}
         </div>
     `;
@@ -231,43 +184,27 @@ function createConferenceCard(conf) {
 // Get conference status
 function getConferenceStatus(conf) {
     const now = new Date();
-    
-    if (conf.end_time && new Date(conf.end_time) < now) {
-        return 'Ended';
-    }
-    
+    if (conf.end_time && new Date(conf.end_time) < now) return 'Ended';
     if (conf.start_time) {
         const start = new Date(conf.start_time);
-        if (start > now) {
-            return 'Scheduled';
-        } else if (start <= now && (!conf.end_time || new Date(conf.end_time) >= now)) {
-            return 'Ongoing';
-        }
+        if (start > now) return 'Scheduled';
+        if (start <= now && (!conf.end_time || new Date(conf.end_time) >= now)) return 'Ongoing';
     }
-    
     return 'Active';
 }
 
 // Format date
 function formatDate(dateString) {
     const date = new Date(dateString);
-    const now = new Date();
-    
-    // If today, show time only
-    if (date.toDateString() === now.toDateString()) {
+    const now  = new Date();
+    if (date.toDateString() === now.toDateString())
         return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    }
-    
-    // If this year, show month and day
-    if (date.getFullYear() === now.getFullYear()) {
+    if (date.getFullYear() === now.getFullYear())
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-    }
-    
-    // Otherwise, show full date
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
-// Escape HTML to prevent XSS
+// Escape HTML
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
@@ -276,27 +213,17 @@ function escapeHtml(text) {
 
 // Update pagination
 function updatePagination(maxPage) {
-    const prevBtn = document.getElementById('prevPage');
-    const nextBtn = document.getElementById('nextPage');
-    const pageInfo = document.getElementById('pageInfo');
-
-    prevBtn.disabled = currentPage === 1;
-    nextBtn.disabled = currentPage === maxPage;
-    pageInfo.textContent = `Page ${currentPage} of ${maxPage}`;
+    document.getElementById('prevPage').disabled = currentPage === 1;
+    document.getElementById('nextPage').disabled = currentPage === maxPage;
+    document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${maxPage}`;
 }
 
 // Join conference
 async function joinConference(conferenceId) {
-    if (!confirm('Do you want to join this conference?')) {
-        return;
-    }
-
     try {
         const response = await fetch(`${API_BASE}/api/conferences/${conferenceId}/join`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
             body: JSON.stringify({})
         });
@@ -304,34 +231,28 @@ async function joinConference(conferenceId) {
         const data = await response.json();
 
         if (response.ok) {
-            alert(data.message || 'Successfully joined!');
             window.location.href = `conf_room.html?id=${conferenceId}`;
-        } else if (response.status === 400 && data.requiresPassword) {
-            // Redirect to join page for password input
-            window.location.href = `conf_join.html?id=${conferenceId}`;
         } else if (data.requiresPassword) {
-            window.location.href = `conf_join.html?id=${conferenceId}`;            
+            window.location.href = `conf_join.html?id=${conferenceId}`;
         } else {
-            alert(data.message || 'Failed to join conference');
+            showNotification(data.message || 'Failed to join conference', 'error');
         }
-
     } catch (error) {
         console.error('Join conference error:', error);
-        alert('Network error. Please try again.');
+        showNotification('Network error. Please try again.', 'error');
     }
 }
 
-// Edit conference (placeholder)
+// Edit conference
 function editConference(conferenceId) {
-    alert(`Edit functionality coming soon for conference #${conferenceId}`);
-    // TODO: Implement edit page
+    showNotification('Edit functionality coming soon!', 'info');
 }
 
 // Delete conference
 async function deleteConference(conferenceId) {
-    if (!confirm('Are you sure you want to delete this conference? This action cannot be undone.')) {
-        return;
-    }
+    // Custom confirm toast — show inline confirm instead of native dialog
+    const confirmed = await showConfirm('Delete this conference? This cannot be undone.');
+    if (!confirmed) return;
 
     try {
         const response = await fetch(`${API_BASE}/api/conferences/${conferenceId}`, {
@@ -342,14 +263,13 @@ async function deleteConference(conferenceId) {
         const data = await response.json();
 
         if (response.ok) {
-            alert(data.message || 'Conference deleted successfully');
-            loadConferences(); // Reload list
+            showNotification(data.message || 'Conference deleted', 'success');
+            loadConferences();
         } else {
-            alert(data.message || 'Failed to delete conference');
+            showNotification(data.message || 'Failed to delete conference', 'error');
         }
-
     } catch (error) {
         console.error('Delete conference error:', error);
-        alert('Network error. Please try again.');
+        showNotification('Network error. Please try again.', 'error');
     }
 }
