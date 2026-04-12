@@ -3,39 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meetify - Online Conferences</title>
-    <link rel="stylesheet" href="/styles/styles.css">
+    <title>Meetify — Video Conferences Made Simple</title>
+    <link rel="stylesheet" href="/styles/index.css">
     <link rel="icon" href="/assets/logo.png">
 </head>
 <body>
 
-    <!-- Navigation -->
+    <!-- Navbar -->
     <nav class="navbar">
         <div class="nav-brand">
             <span class="nav-logo">🎥</span>
             <span class="nav-name">Meetify</span>
         </div>
         <div class="nav-actions">
-            <button id="themeToggleBtn" title="Switch theme">☀️</button>
+            <button class="nav-theme-btn" id="themeToggleBtn" title="Switch theme">☀️</button>
 
-            <!-- Shown when NOT logged in -->
+            <!-- Guest -->
             <div id="navGuest" class="nav-guest hidden">
-                <button class="secondary" onclick="window.location.href='/auth/Auth.html'">
+                <button class="nav-btn nav-btn-ghost" onclick="window.location.href='/auth/Auth.html'">
                     Log in
                 </button>
-                <button onclick="window.location.href='/auth/Reg.html'">
+                <button class="nav-btn nav-btn-primary" onclick="window.location.href='/auth/Reg.html'">
                     Sign up
                 </button>
             </div>
 
-            <!-- Shown when logged in -->
+            <!-- Logged in -->
             <div id="navUser" class="nav-user hidden">
-                <button class="secondary" onclick="window.location.href='/Conf/pages/conf.html'">
+                <button class="nav-btn nav-btn-ghost" onclick="window.location.href='/Conf/pages/conf.html'">
                     📋 My Conferences
                 </button>
-                <a class="nav-profile" id="navProfileLink" href="/profile/profile.html">
+                <a class="nav-profile" href="/profile/profile.html">
                     <div class="nav-avatar" id="navAvatar">?</div>
-                    <span id="navUserName">Loading...</span>
+                    <span class="nav-profile-name" id="navUserName">—</span>
                 </a>
             </div>
         </div>
@@ -48,13 +48,11 @@
             <h1 class="hero-title">Video Conferences<br>Made Simple</h1>
             <p class="hero-sub">
                 Connect with anyone, anywhere. High-quality video, real-time chat,
-                screen sharing — all in your browser.
+                screen sharing — all in your browser. No plugins, no fees.
             </p>
             <div class="hero-actions">
-                <button class="hero-cta" id="heroCta">
-                    🚀 Get Started
-                </button>
-                <button class="secondary hero-secondary" onclick="window.location.href='/auth/Auth.html'">
+                <button class="hero-cta" id="heroCta">🚀 Get Started</button>
+                <button class="hero-secondary" id="heroLogin" onclick="window.location.href='/auth/Auth.html'">
                     Log in
                 </button>
             </div>
@@ -63,34 +61,34 @@
         <!-- Features -->
         <section class="features">
             <div class="feature-card">
-                <div class="feature-icon">🎥</div>
+                <span class="feature-icon">🎥</span>
                 <h3>HD Video</h3>
-                <p>Crystal-clear WebRTC peer-to-peer video and audio with no plugins required.</p>
+                <p>Crystal-clear WebRTC peer-to-peer video and audio. No plugins required.</p>
             </div>
             <div class="feature-card">
-                <div class="feature-icon">💬</div>
+                <span class="feature-icon">💬</span>
                 <h3>Real-time Chat</h3>
-                <p>Instant messaging during your conferences, with unread message badges.</p>
+                <p>Instant messaging during conferences with unread message badges.</p>
             </div>
             <div class="feature-card">
-                <div class="feature-icon">🖥️</div>
+                <span class="feature-icon">🖥️</span>
                 <h3>Screen Sharing</h3>
                 <p>Share your screen mid-call without restarting the connection.</p>
             </div>
             <div class="feature-card">
-                <div class="feature-icon">🔐</div>
+                <span class="feature-icon">🔐</span>
                 <h3>Secure</h3>
-                <p>JWT authentication, bcrypt passwords, and rate limiting out of the box.</p>
+                <p>JWT auth, bcrypt passwords, rate limiting and CORS protection.</p>
             </div>
             <div class="feature-card">
-                <div class="feature-icon">⚡</div>
+                <span class="feature-icon">⚡</span>
                 <h3>Fast</h3>
-                <p>Lightweight frontend, connection pooling, and optimized signaling server.</p>
+                <p>Lightweight frontend, connection pooling, optimized signaling.</p>
             </div>
             <div class="feature-card">
-                <div class="feature-icon">🆓</div>
+                <span class="feature-icon">🆓</span>
                 <h3>Free Forever</h3>
-                <p>No subscriptions, no limits, no ads. Host it yourself with Docker.</p>
+                <p>No subscriptions, no ads. Self-host with Docker in minutes.</p>
             </div>
         </section>
     </main>
@@ -106,6 +104,5 @@
     <script src="/js/theme.js"></script>
     <script src="/err/error-logger.js"></script>
     <script src="/js/index.js"></script>
-    <noscript>Sorry, your browser does not support JavaScript.</noscript>
 </body>
 </html>
