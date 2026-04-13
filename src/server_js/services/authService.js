@@ -176,6 +176,36 @@ class AuthService {
     }
   }
 
+  static async resetPassword(name, email) {
+    // Find user by email
+    const user = await User.findByEmail(email);
+ 
+    if (!user) {
+        throw new Error('User not found');
+    }
+ 
+    // Check name matches (case-insensitive)
+    const nameMatches = user.username &&
+        user.username.toLowerCase() === name.toLowerCase();
+ 
+    if (!nameMatches) {
+        throw new Error('User not found');
+    }
+ 
+    // Generate temporary password — 12 chars, readable
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    let tempPassword = '';
+    for (let i = 0; i < 12; i++) {
+        tempPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+ 
+    // Hash and save
+    const hashedPassword = await bcrypt.hash(tempPassword, 10);
+    await User.update(user.id, { password: hashedPassword });
+ 
+    return { tempPassword };
+  }
+
   // Валидация данных для регистрации
   static validateRegistrationData(userData) {
     const errors = [];

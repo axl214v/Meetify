@@ -104,6 +104,33 @@ const refreshToken = async (req, res) => {
 };
 
 
+const resetPassword = async (req, res) => {
+    try {
+        const { name, email } = req.body;
+ 
+        if (!name || !email) {
+            return res.status(400).json({ message: 'Name and email are required' });
+        }
+ 
+        const result = await AuthService.resetPassword(name.trim(), email.trim());
+ 
+        res.json({
+            message: 'Password reset successfully',
+            tempPassword: result.tempPassword
+        });
+ 
+    } catch (error) {
+        console.error('Reset password error:', error.message);
+ 
+        if (error.message.includes('not found')) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+ 
+        res.status(500).json({ message: 'Error resetting password' });
+    }
+};
+
+
 // Выход пользователя
 
 const logout = async (req, res) => {
@@ -189,6 +216,7 @@ const changePassword = async (req, res) => {
 module.exports = {
   register,
   login,
+  resetPassword,
   refreshToken,
   logout,
   getCurrentUser,

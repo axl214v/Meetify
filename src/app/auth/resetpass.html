@@ -1,27 +1,187 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Meetify - Сброс пароля</title>
-  <link rel="stylesheet" href="/styles/auth_reg.css">
-  <link rel="icon" href="/asseets/logo.png">
-  <h1>Сброс пароля</h1>
-  <h2>Форма</h2>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Password — Meetify</title>
+    <script>
+        (function() {
+            const t = localStorage.getItem('meetify-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
+    <link rel="stylesheet" href="/styles/auth_reg.css">
+    <link rel="icon" href="/assets/logo.png">
 </head>
 <body>
-  <footer>
-    <p>Имя:</p>
-    <input maxleght="36" name="name" required>
-    <p>Почта:</p>
-    <input maxleght="36" name="email" required>
-    <button id="submit">Сбросить пароль</button>
-  </footer>
-  <div id = "auth">
-    <a>Вспомнили пароль?</a>
-    <button id = "authb"><a href = '/auth/Auth.html'>Авторизуйтесь!</a></button>
-  </div>
-  <script src = .js></script>
-  <script src="/err/error-logger.js"></script>
-  <noscript>Извините, ваш браузер не поддерживает JavaScript.</noscript>
+
+    <a class="auth-back" href="/auth/Auth.html">← Sign in</a>
+    <button class="auth-theme-toggle" id="themeToggleBtn" title="Switch theme">☀️</button>
+
+    <div class="auth-page">
+
+        <div class="auth-brand">
+            <span class="auth-brand-logo">🎥</span>
+            <span class="auth-brand-name">Meetify</span>
+        </div>
+
+        <div class="auth-card" id="resetCard">
+            <h1 class="auth-card-title">Reset password</h1>
+            <p class="auth-card-sub">Enter your name and email to receive a temporary password</p>
+
+            <div class="auth-form">
+                <div class="form-group">
+                    <label for="name">Display name</label>
+                    <input
+                        type="text"
+                        id="name"
+                        placeholder="Ivan Petrov"
+                        maxlength="100"
+                        autocomplete="name"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input
+                        type="email"
+                        id="email"
+                        placeholder="you@example.com"
+                        maxlength="100"
+                        autocomplete="email"
+                        required
+                    >
+                </div>
+
+                <button class="auth-submit" id="submitBtn">Reset Password</button>
+
+                <div class="auth-message" id="resetMessage"></div>
+            </div>
+
+            <!-- Success state — shown after reset -->
+            <div id="successBlock" style="display:none;">
+                <div class="reset-success">
+                    <div class="reset-success-icon">✓</div>
+                    <h3>Temporary password generated</h3>
+                    <p>Use this password to sign in, then change it in your profile settings.</p>
+                    <div class="temp-password-block">
+                        <span class="temp-password-label">Temporary password</span>
+                        <div class="temp-password-value" id="tempPassword">—</div>
+                        <button class="copy-btn" id="copyBtn">Copy</button>
+                    </div>
+                    <p class="reset-warning">⚠️ Save this password — it won't be shown again.</p>
+                </div>
+            </div>
+
+            <div class="auth-footer">
+                <div class="auth-footer-row">
+                    <span>Remembered your password?</span>
+                    <button class="auth-footer-btn" onclick="window.location.href='/auth/Auth.html'">Sign in</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="page-footer">
+            <p>© 2025 Meetify · <a href="/">Home</a></p>
+        </div>
+
+    </div>
+
+    <style>
+        /* Reset-specific styles */
+        .reset-success {
+            text-align: center;
+            padding: 0.5rem 0;
+        }
+
+        .reset-success-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(16,185,129,0.12);
+            border: 1px solid rgba(16,185,129,0.3);
+            color: #34d399;
+            font-size: 1.3rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+        }
+
+        .reset-success h3 {
+            color: var(--text);
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .reset-success > p {
+            font-size: 0.85rem;
+            color: var(--text-2);
+            margin-bottom: 1.25rem;
+        }
+
+        .temp-password-block {
+            background: var(--bg-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .temp-password-label {
+            display: block;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-3);
+            margin-bottom: 0.5rem;
+            font-family: var(--font-mono);
+        }
+
+        .temp-password-value {
+            font-family: var(--font-mono);
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #60a5fa;
+            letter-spacing: 2px;
+            margin-bottom: 0.75rem;
+            word-break: break-all;
+        }
+
+        .copy-btn {
+            width: 100%;
+            padding: 0.55rem;
+            font-size: 0.85rem;
+            min-height: auto;
+            background: rgba(59,130,246,0.12);
+            color: #60a5fa;
+            border: 1px solid rgba(59,130,246,0.25);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-family: var(--font);
+            font-weight: 600;
+            transition: all 0.15s;
+        }
+
+        .copy-btn:hover {
+            background: rgba(59,130,246,0.2);
+            transform: none;
+            box-shadow: none;
+        }
+
+        .reset-warning {
+            font-size: 0.78rem !important;
+            color: #fbbf24 !important;
+            margin: 0 !important;
+        }
+    </style>
+
+    <script src="/js/theme.js"></script>
+    <script src="/js/resetpass.js"></script>
+    <script src="/err/error-logger.js"></script>
 </body>
 </html>
