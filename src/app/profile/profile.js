@@ -1,11 +1,100 @@
-const API_BASE = window.location.origin;
+// ============================================
+// profile.js — Profile page logic
+// ============================================
 
-// ============================================
-// State
-// ============================================
+const API_BASE = window.location.origin;
 
 let currentUser = null;
 let currentHistoryRole = 'all';
+
+// ============================================
+// Toast notification (no alert dependency)
+// ============================================
+
+function showToast(message, type = 'info', duration = 3500) {
+    document.querySelectorAll('.profile-toast').forEach(el => el.remove());
+
+    const colors = {
+        success: { border: 'rgba(16,185,129,0.3)',  text: '#6ee7b7', icon: '✓' },
+        error:   { border: 'rgba(239,68,68,0.3)',   text: '#fca5a5', icon: '✕' },
+        warning: { border: 'rgba(245,158,11,0.3)',  text: '#fcd34d', icon: '⚠' },
+        info:    { border: 'rgba(59,130,246,0.3)',  text: '#93c5fd', icon: 'ℹ' },
+    };
+
+    const c = colors[type] || colors.info;
+    const toast = document.createElement('div');
+    toast.className = 'profile-toast';
+    toast.innerHTML = `<span>${c.icon}</span><span>${message}</span>`;
+    toast.style.cssText = `
+        position:fixed;top:20px;right:20px;
+        display:flex;align-items:center;gap:10px;
+        background:#1a1f2e;border:1px solid ${c.border};
+        color:${c.text};padding:0.8rem 1.2rem;
+        border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,0.4);
+        z-index:99999;font-family:'Outfit',sans-serif;
+        font-size:0.9rem;font-weight:500;max-width:360px;
+        animation:toastIn 0.25s ease both;backdrop-filter:blur(12px);
+    `;
+
+    if (!document.getElementById('profile-toast-styles')) {
+        const s = document.createElement('style');
+        s.id = 'profile-toast-styles';
+        s.textContent = `
+            @keyframes toastIn  { from{opacity:0;transform:translateX(16px)} to{opacity:1;transform:translateX(0)} }
+            @keyframes toastOut { from{opacity:1;transform:translateX(0)}    to{opacity:0;transform:translateX(16px)} }
+        `;
+        document.head.appendChild(s);
+    }
+
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.style.animation = 'toastOut 0.2s ease forwards';
+        setTimeout(() => toast.remove(), 200);
+    }, duration);
+}
+
+// ============================================
+// Confirm dialog (replaces native confirm())
+// ============================================
+
+function showConfirm(message, confirmLabel = 'Confirm', type = 'danger') {
+    return new Promise((resolve) => {
+        document.querySelectorAll('.profile-confirm').forEach(el => el.remove());
+
+        const overlay = document.createElement('div');
+        overlay.className = 'profile-confirm';
+        overlay.style.cssText = `
+            position:fixed;inset:0;background:rgba(0,0,0,0.6);
+            backdrop-filter:blur(4px);z-index:99998;
+            display:flex;align-items:center;justify-content:center;
+        `;
+
+        const btnStyle = type === 'danger'
+            ? 'background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);'
+            : 'background:rgba(59,130,246,0.15);color:#93c5fd;border:1px solid rgba(59,130,246,0.3);';
+
+        overlay.innerHTML = `
+            <div style="background:#161d2e;border:1px solid rgba(255,255,255,0.08);
+                border-radius:14px;padding:1.75rem 2rem;max-width:380px;width:90%;
+                box-shadow:0 20px 60px rgba(0,0,0,0.5);font-family:'Outfit',sans-serif;">
+                <p style="color:#e2e8f0;font-size:0.95rem;line-height:1.6;margin-bottom:1.5rem;">${message}</p>
+                <div style="display:flex;gap:0.75rem;justify-content:flex-end;">
+                    <button id="pc-cancel" style="background:rgba(255,255,255,0.05);color:#94a3b8;
+                        border:1px solid rgba(255,255,255,0.08);padding:0.55rem 1.2rem;
+                        border-radius:8px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:0.88rem;">Cancel</button>
+                    <button id="pc-ok" style="${btnStyle}padding:0.55rem 1.2rem;
+                        border-radius:8px;cursor:pointer;font-family:'Outfit',sans-serif;
+                        font-size:0.88rem;font-weight:600;">${confirmLabel}</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+        overlay.querySelector('#pc-ok').addEventListener('click', () => { overlay.remove(); resolve(true); });
+        overlay.querySelector('#pc-cancel').addEventListener('click', () => { overlay.remove(); resolve(false); });
+        overlay.addEventListener('click', e => { if (e.target === overlay) { overlay.remove(); resolve(false); } });
+    });
+}
 
 // ============================================
 // Init
@@ -28,31 +117,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ============================================
 
 async function loadProfile() {
-    const res = await fetch(`${API_BASE}/api/users/profile`, {
-        credentials: 'include'
-    });
-
+    const res = await fetch(`${API_BASE}/api/users/profile`, { credentials: 'include' });
     if (!res.ok) throw new Error('Not authenticated');
 
     const data = await res.json();
     currentUser = data.user;
 
-    // Fill header
-    document.getElementById('headerEmail').textContent = currentUser.email;
-
-    // Fill avatar card
-    document.getElementById('profileName').textContent = currentUser.username || '—';
-    document.getElementById('profileEmail').textContent = currentUser.email;
+    document.getElementById('headerEmail').textContent   = currentUser.email;
+    document.getElementById('profileName').textContent   = currentUser.username || '—';
+    document.getElementById('profileEmail').textContent  = currentUser.email;
     document.getElementById('avatarInitials').textContent = getInitials(currentUser.username || currentUser.email);
-
-    // Show avatar image if exists
-    if (currentUser.avatar_url) {
-        showAvatarImage(currentUser.avatar_url);
-    }
-
-    // Fill form fields
-    document.getElementById('inputName').value = currentUser.username || '';
+    document.getElementById('inputName').value  = currentUser.username || '';
     document.getElementById('inputEmail').value = currentUser.email;
+
+    if (currentUser.avatar_url) showAvatarImage(currentUser.avatar_url);
 }
 
 // ============================================
@@ -60,15 +138,10 @@ async function loadProfile() {
 // ============================================
 
 async function loadStats() {
-    const res = await fetch(`${API_BASE}/api/users/stats`, {
-        credentials: 'include'
-    });
-
+    const res = await fetch(`${API_BASE}/api/users/stats`, { credentials: 'include' });
     if (!res.ok) return;
 
-    const data = await res.json();
-    const s = data.stats;
-
+    const { stats: s } = await res.json();
     document.getElementById('statHosted').textContent   = s.conferencesHosted;
     document.getElementById('statAttended').textContent = s.conferencesAttended;
     document.getElementById('statTotal').textContent    = s.totalConferences;
@@ -78,7 +151,7 @@ async function loadStats() {
 }
 
 // ============================================
-// Load conference history
+// Load history
 // ============================================
 
 async function loadHistory() {
@@ -87,14 +160,10 @@ async function loadHistory() {
 
     try {
         const role = currentHistoryRole === 'all' ? '' : `?role=${currentHistoryRole}`;
-        const res = await fetch(`${API_BASE}/api/conferences/user/my${role}`, {
-            credentials: 'include'
-        });
+        const res  = await fetch(`${API_BASE}/api/conferences/user/my${role}`, { credentials: 'include' });
+        if (!res.ok) throw new Error('Failed');
 
-        if (!res.ok) throw new Error('Failed to load history');
-
-        const data = await res.json();
-        const conferences = data.conferences || [];
+        const { conferences = [] } = await res.json();
 
         if (conferences.length === 0) {
             list.innerHTML = '<div class="history-empty">No conferences yet</div>';
@@ -103,10 +172,10 @@ async function loadHistory() {
 
         list.innerHTML = conferences.map(conf => {
             const isHost = conf.host_id === currentUser.id;
-            const statusClass = getStatusClass(conf);
-            const date = conf.created_at
+            const date   = conf.created_at
                 ? new Date(conf.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
                 : '—';
+            const status = getStatus(conf);
 
             return `
                 <div class="history-item">
@@ -116,47 +185,40 @@ async function loadHistory() {
                     </div>
                     <div class="history-item-badges">
                         ${isHost ? '<span class="status-badge" style="background:rgba(245,158,11,0.12);color:#fbbf24;border:1px solid rgba(245,158,11,0.25)">Host</span>' : ''}
-                        <span class="status-badge ${statusClass}">${getStatus(conf)}</span>
+                        <span class="status-badge ${status.toLowerCase()}">${status}</span>
                     </div>
                 </div>
             `;
         }).join('');
 
-    } catch (error) {
-        console.error('Load history error:', error);
+    } catch (err) {
         list.innerHTML = '<div class="history-empty">Failed to load history</div>';
     }
 }
 
 // ============================================
-// Setup event listeners
+// Event listeners
 // ============================================
 
 function setupEventListeners() {
-
-    // Back button
     document.getElementById('backBtn').addEventListener('click', () => {
         window.location.href = '/Conf/pages/conf.html';
     });
 
-    // Save profile
     document.getElementById('saveProfileBtn').addEventListener('click', saveProfile);
-
-    // Change password
     document.getElementById('changePasswordBtn').addEventListener('click', changePassword);
 
-    // Password strength indicator
     document.getElementById('newPassword').addEventListener('input', function () {
         updatePasswordStrength(this.value);
     });
 
-    // Avatar upload
     document.getElementById('avatarInput').addEventListener('change', uploadAvatar);
 
-    // Remove avatar
-    document.getElementById('removeAvatarBtn').addEventListener('click', removeAvatar);
+    document.getElementById('removeAvatarBtn').addEventListener('click', async () => {
+        const confirmed = await showConfirm('Remove your profile photo?', 'Remove', 'danger');
+        if (confirmed) removeAvatar();
+    });
 
-    // History filters
     document.querySelectorAll('.filter-pill').forEach(btn => {
         btn.addEventListener('click', function () {
             document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
@@ -166,70 +228,57 @@ function setupEventListeners() {
         });
     });
 
-    // Delete account — open modal
     document.getElementById('deleteAccountBtn').addEventListener('click', () => {
         document.getElementById('deleteModal').classList.remove('hidden');
         document.getElementById('deletePassword').focus();
     });
 
-    // Delete account — cancel
     document.getElementById('cancelDeleteBtn').addEventListener('click', () => {
         document.getElementById('deleteModal').classList.add('hidden');
         document.getElementById('deletePassword').value = '';
         hideMsg('deleteMsg');
     });
 
-    // Delete account — confirm
     document.getElementById('confirmDeleteBtn').addEventListener('click', deleteAccount);
 
-    // Close modal on overlay click
     document.getElementById('deleteModal').addEventListener('click', function (e) {
-        if (e.target === this) {
-            this.classList.add('hidden');
-        }
+        if (e.target === this) this.classList.add('hidden');
     });
 }
 
 // ============================================
-// Save profile name
+// Save profile
 // ============================================
 
 async function saveProfile() {
     const username = document.getElementById('inputName').value.trim();
     const btn = document.getElementById('saveProfileBtn');
 
-    if (!username) {
-        showMsg('profileMsg', 'Name cannot be empty', 'error');
-        return;
-    }
+    if (!username) { showMsg('profileMsg', 'Name cannot be empty', 'error'); return; }
 
     btn.disabled = true;
     btn.textContent = 'Saving...';
 
     try {
-        const res = await fetch(`${API_BASE}/api/users/profile`, {
+        const res  = await fetch(`${API_BASE}/api/users/profile`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
             body: JSON.stringify({ username })
         });
-
         const data = await res.json();
 
         if (res.ok) {
             currentUser.username = data.user.username;
-            document.getElementById('profileName').textContent = data.user.username;
+            document.getElementById('profileName').textContent    = data.user.username;
             document.getElementById('avatarInitials').textContent = getInitials(data.user.username);
-            showMsg('profileMsg', 'Profile updated successfully', 'success');
+            showMsg('profileMsg', 'Profile updated', 'success');
+            showToast('Profile updated', 'success', 2500);
         } else {
-            showMsg('profileMsg', data.message || 'Failed to update profile', 'error');
+            showMsg('profileMsg', data.message || 'Failed to update', 'error');
         }
-    } catch (error) {
-        showMsg('profileMsg', 'Network error. Please try again.', 'error');
-    } finally {
-        btn.disabled = false;
-        btn.textContent = 'Save changes';
-    }
+    } catch { showMsg('profileMsg', 'Network error', 'error'); }
+    finally  { btn.disabled = false; btn.textContent = 'Save changes'; }
 }
 
 // ============================================
@@ -243,48 +292,37 @@ async function changePassword() {
     const btn             = document.getElementById('changePasswordBtn');
 
     if (!currentPassword || !newPassword || !confirmPassword) {
-        showMsg('passwordMsg', 'Please fill in all password fields', 'error');
-        return;
+        showMsg('passwordMsg', 'Please fill in all fields', 'error'); return;
     }
-
     if (newPassword.length < 8) {
-        showMsg('passwordMsg', 'New password must be at least 8 characters', 'error');
-        return;
+        showMsg('passwordMsg', 'New password must be at least 8 characters', 'error'); return;
     }
-
     if (newPassword !== confirmPassword) {
-        showMsg('passwordMsg', 'Passwords do not match', 'error');
-        return;
+        showMsg('passwordMsg', 'Passwords do not match', 'error'); return;
     }
 
     btn.disabled = true;
     btn.textContent = 'Changing...';
 
     try {
-        const res = await fetch(`${API_BASE}/api/auth/change-password`, {
+        const res  = await fetch(`${API_BASE}/api/auth/change-password`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
             body: JSON.stringify({ currentPassword, newPassword })
         });
-
         const data = await res.json();
 
         if (res.ok) {
-            document.getElementById('currentPassword').value = '';
-            document.getElementById('newPassword').value = '';
-            document.getElementById('confirmPassword').value = '';
+            ['currentPassword','newPassword','confirmPassword'].forEach(id => document.getElementById(id).value = '');
             document.getElementById('passwordStrength').textContent = '';
-            showMsg('passwordMsg', 'Password changed successfully', 'success');
+            showMsg('passwordMsg', 'Password changed', 'success');
+            showToast('Password changed successfully', 'success', 2500);
         } else {
-            showMsg('passwordMsg', data.message || 'Failed to change password', 'error');
+            showMsg('passwordMsg', data.message || 'Failed', 'error');
         }
-    } catch (error) {
-        showMsg('passwordMsg', 'Network error. Please try again.', 'error');
-    } finally {
-        btn.disabled = false;
-        btn.textContent = 'Change password';
-    }
+    } catch { showMsg('passwordMsg', 'Network error', 'error'); }
+    finally  { btn.disabled = false; btn.textContent = 'Change password'; }
 }
 
 // ============================================
@@ -296,33 +334,27 @@ async function uploadAvatar() {
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-        alert('File is too large. Maximum size is 5MB.');
-        return;
+        showToast('File is too large. Max 5MB.', 'error'); return;
     }
 
     const formData = new FormData();
     formData.append('avatar', file);
 
     try {
-        const res = await fetch(`${API_BASE}/api/users/avatar`, {
-            method: 'POST',
-            credentials: 'include',
-            body: formData
+        const res  = await fetch(`${API_BASE}/api/users/avatar`, {
+            method: 'POST', credentials: 'include', body: formData
         });
-
         const data = await res.json();
 
         if (res.ok) {
             showAvatarImage(data.avatarUrl);
             currentUser.avatar_url = data.avatarUrl;
+            showToast('Photo updated', 'success', 2500);
         } else {
-            alert(data.message || 'Failed to upload avatar');
+            showToast(data.message || 'Failed to upload', 'error');
         }
-    } catch (error) {
-        alert('Network error. Please try again.');
-    }
+    } catch { showToast('Network error', 'error'); }
 
-    // Reset input
     document.getElementById('avatarInput').value = '';
 }
 
@@ -331,12 +363,9 @@ async function uploadAvatar() {
 // ============================================
 
 async function removeAvatar() {
-    if (!confirm('Remove your profile photo?')) return;
-
     try {
         const res = await fetch(`${API_BASE}/api/users/avatar`, {
-            method: 'DELETE',
-            credentials: 'include'
+            method: 'DELETE', credentials: 'include'
         });
 
         if (res.ok) {
@@ -344,10 +373,9 @@ async function removeAvatar() {
             document.getElementById('avatarInitials').classList.remove('hidden');
             document.getElementById('removeAvatarBtn').style.display = 'none';
             currentUser.avatar_url = null;
+            showToast('Photo removed', 'info', 2500);
         }
-    } catch (error) {
-        alert('Network error. Please try again.');
-    }
+    } catch { showToast('Network error', 'error'); }
 }
 
 // ============================================
@@ -356,36 +384,32 @@ async function removeAvatar() {
 
 async function deleteAccount() {
     const password = document.getElementById('deletePassword').value;
-    const btn = document.getElementById('confirmDeleteBtn');
+    const btn      = document.getElementById('confirmDeleteBtn');
 
-    if (!password) {
-        showMsg('deleteMsg', 'Please enter your password', 'error');
-        return;
-    }
+    if (!password) { showMsg('deleteMsg', 'Please enter your password', 'error'); return; }
 
     btn.disabled = true;
     btn.textContent = 'Deleting...';
 
     try {
-        const res = await fetch(`${API_BASE}/api/users/account`, {
+        const res  = await fetch(`${API_BASE}/api/users/account`, {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
             body: JSON.stringify({ password })
         });
-
         const data = await res.json();
 
         if (res.ok) {
-            alert('Your account has been deleted. Goodbye!');
-            window.location.href = '/auth/Auth.html';
+            showToast('Account deleted. Goodbye!', 'info', 2000);
+            setTimeout(() => window.location.href = '/auth/Auth.html', 1500);
         } else {
-            showMsg('deleteMsg', data.message || 'Failed to delete account', 'error');
+            showMsg('deleteMsg', data.message || 'Failed', 'error');
             btn.disabled = false;
             btn.textContent = 'Delete permanently';
         }
-    } catch (error) {
-        showMsg('deleteMsg', 'Network error. Please try again.', 'error');
+    } catch {
+        showMsg('deleteMsg', 'Network error', 'error');
         btn.disabled = false;
         btn.textContent = 'Delete permanently';
     }
@@ -396,10 +420,9 @@ async function deleteAccount() {
 // ============================================
 
 function showAvatarImage(url) {
-    const img = document.getElementById('avatarImg');
-    const initials = document.getElementById('avatarInitials');
+    const img       = document.getElementById('avatarImg');
+    const initials  = document.getElementById('avatarInitials');
     const removeBtn = document.getElementById('removeAvatarBtn');
-
     img.src = url;
     img.classList.remove('hidden');
     initials.classList.add('hidden');
@@ -411,8 +434,6 @@ function showMsg(id, message, type) {
     el.textContent = message;
     el.className = `form-msg ${type}`;
     el.classList.remove('hidden');
-
-    // Auto hide after 4s
     setTimeout(() => el.classList.add('hidden'), 4000);
 }
 
@@ -422,32 +443,27 @@ function hideMsg(id) {
 
 function updatePasswordStrength(password) {
     const el = document.getElementById('passwordStrength');
-
-    if (!password) {
-        el.textContent = '';
-        el.style.background = 'var(--bg-2)';
-        return;
-    }
+    if (!password) { el.textContent = ''; return; }
 
     let score = 0;
-    if (password.length >= 8)  score++;
-    if (password.length >= 12) score++;
-    if (/[A-Z]/.test(password)) score++;
-    if (/[0-9]/.test(password)) score++;
-    if (/[^A-Za-z0-9]/.test(password)) score++;
+    if (password.length >= 8)           score++;
+    if (password.length >= 12)          score++;
+    if (/[A-Z]/.test(password))         score++;
+    if (/[0-9]/.test(password))         score++;
+    if (/[^A-Za-z0-9]/.test(password))  score++;
 
     const levels = [
-        { label: 'Too short',  color: '#ef4444' },
-        { label: 'Weak',       color: '#f59e0b' },
-        { label: 'Fair',       color: '#f59e0b' },
-        { label: 'Good',       color: '#10b981' },
-        { label: 'Strong',     color: '#10b981' },
+        { label: 'Too short',   color: '#ef4444' },
+        { label: 'Weak',        color: '#f59e0b' },
+        { label: 'Fair',        color: '#f59e0b' },
+        { label: 'Good',        color: '#10b981' },
+        { label: 'Strong',      color: '#10b981' },
         { label: 'Very strong', color: '#3b82f6' }
     ];
 
     const level = levels[Math.min(score, 5)];
     el.textContent = level.label;
-    el.style.color = level.color;
+    el.style.color  = level.color;
 }
 
 function getInitials(name) {
@@ -468,9 +484,4 @@ function getStatus(conf) {
     if (conf.end_time && new Date(conf.end_time) < now) return 'Ended';
     if (conf.start_time && new Date(conf.start_time) > now) return 'Scheduled';
     return 'Active';
-}
-
-function getStatusClass(conf) {
-    const s = getStatus(conf);
-    return s.toLowerCase();
 }

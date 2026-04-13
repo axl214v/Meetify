@@ -3,31 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile - Meetify</title>
-    <link rel="stylesheet" href="/styles/styles.css">
-    <link rel="stylesheet" href="/styles/theme-additions.css">
+    <title>Profile — Meetify</title>
+    <!-- Apply theme before render to prevent flash -->
+    <script>
+        (function() {
+            const t = localStorage.getItem('meetify-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
+    <link rel="stylesheet" href="/styles/conf.css">
     <link rel="stylesheet" href="/styles/profile.css">
     <link rel="icon" href="/assets/logo.png">
 </head>
 <body>
 
-    <!-- Header -->
     <header class="profile-header">
         <div class="header-left">
             <button class="back-btn" id="backBtn">← Back</button>
             <h1 class="header-title">Profile</h1>
         </div>
         <div class="header-right">
+            <button id="themeToggleBtn" title="Switch theme">☀️</button>
             <span class="header-email" id="headerEmail">—</span>
         </div>
     </header>
 
     <main class="profile-main">
 
-        <!-- Left column: avatar + quick stats -->
         <aside class="profile-sidebar">
 
-            <!-- Avatar block -->
             <section class="profile-card avatar-card">
                 <div class="avatar-wrapper" id="avatarWrapper">
                     <div class="avatar-initials" id="avatarInitials">??</div>
@@ -46,7 +50,6 @@
                 </button>
             </section>
 
-            <!-- Stats block -->
             <section class="profile-card stats-card">
                 <h4 class="card-label">Activity</h4>
                 <div class="stats-grid">
@@ -71,10 +74,8 @@
 
         </aside>
 
-        <!-- Right column: forms + history -->
         <div class="profile-content">
 
-            <!-- Edit profile -->
             <section class="profile-card">
                 <h3 class="card-title">Personal Info</h3>
                 <div class="form-row">
@@ -94,7 +95,6 @@
                 <div id="profileMsg" class="form-msg hidden"></div>
             </section>
 
-            <!-- Change password -->
             <section class="profile-card">
                 <h3 class="card-title">Change Password</h3>
                 <div class="form-group">
@@ -118,7 +118,6 @@
                 <div id="passwordMsg" class="form-msg hidden"></div>
             </section>
 
-            <!-- Conference history -->
             <section class="profile-card">
                 <div class="card-header-row">
                     <h3 class="card-title">Conference History</h3>
@@ -133,7 +132,6 @@
                 </div>
             </section>
 
-            <!-- Danger zone -->
             <section class="profile-card danger-zone">
                 <h3 class="card-title danger-title">Danger Zone</h3>
                 <p>Permanently delete your account and all associated data. This action cannot be undone.</p>
@@ -143,7 +141,6 @@
         </div>
     </main>
 
-    <!-- Delete account modal -->
     <div class="modal-overlay hidden" id="deleteModal">
         <div class="modal">
             <h3>Delete Account</h3>
@@ -157,8 +154,8 @@
         </div>
     </div>
 
+    <script src="/js/theme.js"></script>
     <script src="/err/error-logger.js"></script>
     <script src="/profile/profile.js"></script>
-    <script src="/js/theme.js"></script>
 </body>
 </html>
