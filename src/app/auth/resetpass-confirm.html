@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Set New Password — Meetify</title>
+    <script>
+        (function() {
+            const t = localStorage.getItem('meetify-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
+    <link rel="stylesheet" href="/styles/auth_reg.css">
+    <link rel="icon" href="/assets/logo.png">
+</head>
+<body>
+
+    <button class="auth-theme-toggle" id="themeToggleBtn" title="Switch theme">☀️</button>
+
+    <div class="auth-page">
+
+        <div class="auth-brand">
+            <span class="auth-brand-logo">🎥</span>
+            <span class="auth-brand-name">Meetify</span>
+        </div>
+
+        <!-- Invalid/expired token -->
+        <div class="auth-card" id="invalidBlock" style="display:none;">
+            <div style="text-align:center;padding:1rem 0;">
+                <div style="font-size:2.5rem;margin-bottom:1rem;">⚠️</div>
+                <h1 class="auth-card-title">Link expired</h1>
+                <p class="auth-card-sub">This reset link is invalid or has expired.<br>Please request a new one.</p>
+            </div>
+            <div class="auth-footer">
+                <div class="auth-footer-row">
+                    <button class="auth-footer-btn" onclick="window.location.href='/auth/resetpass.html'">
+                        Request new link
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Set new password form -->
+        <div class="auth-card" id="confirmCard" style="display:none;">
+            <h1 class="auth-card-title">Set new password</h1>
+            <p class="auth-card-sub">Choose a strong password for your account</p>
+
+            <div class="auth-form">
+                <div class="form-group">
+                    <label for="newPassword">New password</label>
+                    <input
+                        type="password"
+                        id="newPassword"
+                        placeholder="Min 8 characters"
+                        maxlength="100"
+                        autocomplete="new-password"
+                        required
+                    >
+                    <span id="password-strength"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm password</label>
+                    <input
+                        type="password"
+                        id="confirmPassword"
+                        placeholder="Repeat password"
+                        maxlength="100"
+                        autocomplete="new-password"
+                        required
+                    >
+                </div>
+
+                <button class="auth-submit" id="submitBtn">Set New Password</button>
+                <div class="auth-message" id="confirmMessage"></div>
+            </div>
+
+            <div class="auth-footer">
+                <div class="auth-footer-row">
+                    <span>Remembered your password?</span>
+                    <button class="auth-footer-btn" onclick="window.location.href='/auth/Auth.html'">Sign in</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading state -->
+        <div class="auth-card" id="loadingBlock">
+            <div style="text-align:center;padding:2rem 0;color:var(--text-2);font-size:0.9rem;">
+                Validating link...
+            </div>
+        </div>
+
+        <div class="page-footer">
+            <p>© 2025 Meetify · <a href="/">Home</a></p>
+        </div>
+    </div>
+
+    <script src="/js/theme.js"></script>
+    <script src="/js/resetpass-confirm.js"></script>
+    <script src="/err/error-logger.js"></script>
+</body>
+</html>

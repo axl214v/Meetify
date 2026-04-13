@@ -1,5 +1,5 @@
 // ============================================
-// resetpass.js — Password reset page logic
+// resetpass.js — Request password reset link
 // ============================================
 
 const API_BASE = window.location.origin;
@@ -16,31 +16,14 @@ function clearMsg() {
     if (el) el.className = 'auth-message';
 }
 
-// ============================================
-// Submit handler
-// ============================================
-
 document.getElementById('submitBtn')?.addEventListener('click', async function () {
     clearMsg();
 
-    const nameInput  = document.getElementById('name');
     const emailInput = document.getElementById('email');
     const btn        = document.getElementById('submitBtn');
+    const email      = emailInput.value.trim();
 
-    const name  = nameInput.value.trim();
-    const email = emailInput.value.trim();
-
-    // Reset states
-    nameInput.classList.remove('error', 'success');
     emailInput.classList.remove('error', 'success');
-
-    // Validation
-    if (!name) {
-        showMsg('Please enter your display name.');
-        nameInput.classList.add('error');
-        nameInput.focus();
-        return;
-    }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email || !emailRegex.test(email)) {
@@ -49,59 +32,58 @@ document.getElementById('submitBtn')?.addEventListener('click', async function (
         return;
     }
 
-    // Loading
     btn.disabled = true;
     btn.classList.add('loading');
     const originalText = btn.textContent;
-    btn.textContent = 'Resetting...';
+    btn.textContent = 'Sending...';
 
     try {
-        const response = await fetch(`${API_BASE}/api/auth/reset-password`, {
+        const response = await fetch(`${API_BASE}/api/auth/forgot-password`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ name, email })
+            body: JSON.stringify({ email })
         });
 
         const data = await response.json();
 
         if (response.ok) {
-            // Show success block with temporary password
-            nameInput.classList.add('success');
             emailInput.classList.add('success');
 
-            document.querySelector('.auth-form').style.display = 'none';
+            // Show success block
+            document.getElementById('requestForm').style.display = 'none';
             document.getElementById('successBlock').style.display = 'block';
-            document.getElementById('tempPassword').textContent = data.tempPassword;
+            document.getElementById('sentToEmail').textContent = email;
 
-            // Setup copy button
-            document.getElementById('copyBtn').addEventListener('click', () => {
-                navigator.clipboard.writeText(data.tempPassword)
-                    .then(() => {
-                        const btn = document.getElementById('copyBtn');
-                        btn.textContent = 'Copied!';
-                        setTimeout(() => btn.textContent = 'Copy', 2000);
-                    })
-                    .catch(() => {
-                        const input = document.createElement('input');
-                        input.value = data.tempPassword;
-                        document.body.appendChild(input);
-                        input.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(input);
+            // DEV MODE — show reset link directly
+            if (data.resetLink) {
+                document.getElementById('devBlock').style.display = 'block';
+                document.getElementById('resetLink').textContent = data.resetLink;
+
+                document.getElementById('copyLinkBtn').addEventListener('click', () => {
+                    navigator.clipboard.writeText(data.resetLink).then(() => {
+                        const copyBtn = document.getElementById('copyLinkBtn');
+                        copyBtn.textContent = 'Copied!';
+                        setTimeout(() => copyBtn.textContent = 'Copy', 2000);
                     });
-            });
+                });
+            } else {
+                // Production — hide dev block
+                document.getElementById('devBlock').style.display = 'none';
+            }
 
         } else if (response.status === 404) {
-            showMsg('No account found with this name and email combination.');
-            nameInput.classList.add('error');
-            emailInput.classList.add('error');
+            // Don't reveal if email exists — security best practice
+            // Show success anyway
+            document.getElementById('requestForm').style.display = 'none';
+            document.getElementById('successBlock').style.display = 'block';
+            document.getElementById('sentToEmail').textContent = email;
+            document.getElementById('devBlock').style.display = 'none';
         } else {
-            showMsg(data.message || 'Failed to reset password. Please try again.');
+            showMsg(data.message || 'Failed to send reset link. Please try again.');
         }
 
     } catch (err) {
-        console.error('Reset password error:', err);
+        console.error('Forgot password error:', err);
         showMsg('Network error. Please check your connection.');
     } finally {
         btn.disabled = false;
@@ -110,7 +92,6 @@ document.getElementById('submitBtn')?.addEventListener('click', async function (
     }
 });
 
-// Enter key support
 document.getElementById('email')?.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') document.getElementById('submitBtn')?.click();
 });

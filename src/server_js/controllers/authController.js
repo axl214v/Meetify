@@ -104,26 +104,68 @@ const refreshToken = async (req, res) => {
 };
 
 
-const resetPassword = async (req, res) => {
+// POST /api/auth/forgot-password
+const forgotPassword = async (req, res) => {
     try {
-        const { name, email } = req.body;
+        const { email } = req.body;
  
-        if (!name || !email) {
-            return res.status(400).json({ message: 'Name and email are required' });
+        if (!email) {
+            return res.status(400).json({ message: 'Email is required' });
         }
  
-        const result = await AuthService.resetPassword(name.trim(), email.trim());
+        const result = await AuthService.forgotPassword(email);
  
+        // Always return 200 — don't reveal if email exists
         res.json({
-            message: 'Password reset successfully',
-            tempPassword: result.tempPassword
+            message: 'If this email is registered, a reset link has been sent.',
+            // DEV MODE: include reset link directly (remove in production)
+            resetLink: result.resetLink || null
         });
  
     } catch (error) {
-        console.error('Reset password error:', error.message);
+        console.error('Forgot password error:', error.message);
+        res.status(500).json({ message: 'Error processing request' });
+    }
+};
  
-        if (error.message.includes('not found')) {
-            return res.status(404).json({ message: 'User not found' });
+// GET /api/auth/reset-password/validate?token=xxx
+const validateResetToken = async (req, res) => {
+    try {
+        const { token } = req.query;
+ 
+        if (!token) {
+            return res.status(400).json({ message: 'Token is required' });
+        }
+ 
+        await AuthService.validateResetToken(token);
+        res.json({ valid: true });
+ 
+    } catch (error) {
+        res.status(400).json({ valid: false, message: error.message });
+    }
+};
+ 
+// POST /api/auth/reset-password/confirm
+const confirmResetPassword = async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+ 
+        if (!token || !newPassword) {
+            return res.status(400).json({ message: 'Token and new password are required' });
+        }
+ 
+        if (newPassword.length < 8) {
+            return res.status(400).json({ message: 'Password must be at least 8 characters' });
+        }
+ 
+        await AuthService.confirmResetPassword(token, newPassword);
+        res.json({ message: 'Password reset successfully' });
+ 
+    } catch (error) {
+        console.error('Confirm reset error:', error.message);
+ 
+        if (error.message.includes('expired') || error.message.includes('Invalid')) {
+            return res.status(400).json({ message: error.message });
         }
  
         res.status(500).json({ message: 'Error resetting password' });
@@ -216,7 +258,9 @@ const changePassword = async (req, res) => {
 module.exports = {
   register,
   login,
-  resetPassword,
+  forgotPassword,
+  validateResetToken,
+  confirmResetPassword,
   refreshToken,
   logout,
   getCurrentUser,

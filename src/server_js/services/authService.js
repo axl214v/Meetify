@@ -176,35 +176,67 @@ class AuthService {
     }
   }
 
-  static async resetPassword(name, email) {
-    // Find user by email
+  static async forgotPassword(email) {
+    const crypto = require('crypto');
+    const config = require('../config/config');
+ 
+    // Find user — don't throw if not found (security)
     const user = await User.findByEmail(email);
- 
     if (!user) {
-        throw new Error('User not found');
+        return { resetLink: null }; // silent — don't reveal email existence
     }
  
-    // Check name matches (case-insensitive)
-    const nameMatches = user.username &&
-        user.username.toLowerCase() === name.toLowerCase();
+    // Generate secure token
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
  
-    if (!nameMatches) {
-        throw new Error('User not found');
+    // Save token to DB
+    await db.promise().execute(
+        'INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)',
+        [user.id, token, expiresAt]
+    );
+ 
+    // Build reset URL
+    const resetLink = `${config.client.url}/auth/resetpass-confirm.html?token=${token}`;
+ 
+    // TODO: When email service is ready, send email here:
+    // await EmailService.sendPasswordReset(email, resetLink);
+ 
+    // DEV MODE: return link directly (remove resetLink in production)
+    return { resetLink };
+}
+ 
+static async validateResetToken(token) {
+    const [rows] = await db.promise().execute(
+        'SELECT * FROM password_reset_tokens WHERE token = ? AND used = FALSE AND expires_at > NOW()',
+        [token]
+    );
+ 
+    if (rows.length === 0) {
+        throw new Error('Invalid or expired reset token');
     }
  
-    // Generate temporary password — 12 chars, readable
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-    let tempPassword = '';
-    for (let i = 0; i < 12; i++) {
-        tempPassword += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
+    return rows[0];
+}
  
-    // Hash and save
-    const hashedPassword = await bcrypt.hash(tempPassword, 10);
-    await User.update(user.id, { password: hashedPassword });
+static async confirmResetPassword(token, newPassword) {
+    const bcrypt = require('bcrypt');
  
-    return { tempPassword };
-  }
+    // Validate token
+    const tokenRow = await this.validateResetToken(token);
+ 
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+ 
+    // Update user password
+    await User.update(tokenRow.user_id, { password: hashedPassword });
+ 
+    // Mark token as used
+    await db.promise().execute(
+        'UPDATE password_reset_tokens SET used = TRUE WHERE token = ?',
+        [token]
+    );
+}
 
   // Валидация данных для регистрации
   static validateRegistrationData(userData) {

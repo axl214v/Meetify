@@ -4,7 +4,9 @@ const rateLimit = require('express-rate-limit');
 const { 
   register, 
   login,
-  resetPassword,
+  confirmResetPassword,
+  forgotPassword,
+  validateResetToken,
   refreshToken,
   logout,
   getCurrentUser,
@@ -75,7 +77,9 @@ const refreshLimiter = rateLimit({
 
 router.post('/register', registerLimiter, register);
 router.post('/login', authLimiter, login);
-router.post('/reset-password', resetPassword);
+router.post('/forgot-password', forgotPassword);
+router.get('/reset-password/validate', validateResetToken);
+router.post('/reset-password/confirm', confirmResetPassword);
 router.post('/refresh', refreshLimiter, refreshToken);
 
 

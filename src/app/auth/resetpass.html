@@ -25,23 +25,12 @@
             <span class="auth-brand-name">Meetify</span>
         </div>
 
-        <div class="auth-card" id="resetCard">
-            <h1 class="auth-card-title">Reset password</h1>
-            <p class="auth-card-sub">Enter your name and email to receive a temporary password</p>
+        <div class="auth-card">
+            <h1 class="auth-card-title">Forgot password?</h1>
+            <p class="auth-card-sub">Enter your email and we'll send you a reset link</p>
 
-            <div class="auth-form">
-                <div class="form-group">
-                    <label for="name">Display name</label>
-                    <input
-                        type="text"
-                        id="name"
-                        placeholder="Ivan Petrov"
-                        maxlength="100"
-                        autocomplete="name"
-                        required
-                    >
-                </div>
-
+            <!-- Request form -->
+            <div id="requestForm" class="auth-form">
                 <div class="form-group">
                     <label for="email">Email</label>
                     <input
@@ -53,24 +42,27 @@
                         required
                     >
                 </div>
-
-                <button class="auth-submit" id="submitBtn">Reset Password</button>
-
+                <button class="auth-submit" id="submitBtn">Send Reset Link</button>
                 <div class="auth-message" id="resetMessage"></div>
             </div>
 
-            <!-- Success state — shown after reset -->
+            <!-- Success state -->
             <div id="successBlock" style="display:none;">
-                <div class="reset-success">
-                    <div class="reset-success-icon">✓</div>
-                    <h3>Temporary password generated</h3>
-                    <p>Use this password to sign in, then change it in your profile settings.</p>
-                    <div class="temp-password-block">
-                        <span class="temp-password-label">Temporary password</span>
-                        <div class="temp-password-value" id="tempPassword">—</div>
-                        <button class="copy-btn" id="copyBtn">Copy</button>
+                <div class="reset-success-block">
+                    <div class="reset-icon">📧</div>
+                    <h3>Check your email</h3>
+                    <p>A password reset link has been sent to <strong id="sentToEmail">—</strong></p>
+                    <p class="reset-hint">The link expires in <strong>1 hour</strong>.</p>
+
+                    <!-- DEV MODE — no email service yet -->
+                    <div id="devBlock" class="dev-block">
+                        <span class="dev-label">🛠 Dev mode — no email service yet</span>
+                        <p class="dev-hint">Copy this link manually:</p>
+                        <div class="dev-link-wrapper">
+                            <code id="resetLink" class="dev-link">—</code>
+                            <button class="copy-btn" id="copyLinkBtn">Copy</button>
+                        </div>
                     </div>
-                    <p class="reset-warning">⚠️ Save this password — it won't be shown again.</p>
                 </div>
             </div>
 
@@ -85,99 +77,40 @@
         <div class="page-footer">
             <p>© 2025 Meetify · <a href="/">Home</a></p>
         </div>
-
     </div>
 
     <style>
-        /* Reset-specific styles */
-        .reset-success {
-            text-align: center;
-            padding: 0.5rem 0;
-        }
+        .reset-success-block { text-align: center; padding: 0.5rem 0 1rem; }
+        .reset-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+        .reset-success-block h3 { font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 0.5rem; }
+        .reset-success-block p { font-size: 0.88rem; color: var(--text-2); margin-bottom: 0.5rem; }
+        .reset-success-block strong { color: var(--text); }
+        .reset-hint { font-size: 0.8rem !important; color: var(--text-3) !important; }
 
-        .reset-success-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: rgba(16,185,129,0.12);
-            border: 1px solid rgba(16,185,129,0.3);
-            color: #34d399;
-            font-size: 1.3rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1rem;
-        }
-
-        .reset-success h3 {
-            color: var(--text);
-            font-size: 1rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-
-        .reset-success > p {
-            font-size: 0.85rem;
-            color: var(--text-2);
-            margin-bottom: 1.25rem;
-        }
-
-        .temp-password-block {
-            background: var(--bg-2);
-            border: 1px solid var(--border);
+        .dev-block {
+            margin-top: 1.25rem;
+            background: rgba(245,158,11,0.06);
+            border: 1px solid rgba(245,158,11,0.2);
             border-radius: var(--radius);
             padding: 1rem;
-            margin-bottom: 1rem;
-            position: relative;
+            text-align: left;
         }
-
-        .temp-password-label {
-            display: block;
-            font-size: 0.72rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-3);
-            margin-bottom: 0.5rem;
-            font-family: var(--font-mono);
+        .dev-label { display: block; font-size: 0.75rem; font-weight: 600; color: #fbbf24; margin-bottom: 0.5rem; }
+        .dev-hint { font-size: 0.78rem !important; color: var(--text-3) !important; margin-bottom: 0.5rem !important; }
+        .dev-link-wrapper { display: flex; gap: 0.5rem; align-items: flex-start; }
+        .dev-link {
+            flex: 1; font-family: var(--font-mono); font-size: 0.72rem; color: #60a5fa;
+            word-break: break-all; background: var(--bg-2); border: 1px solid var(--border);
+            border-radius: 6px; padding: 0.5rem 0.7rem; display: block;
         }
-
-        .temp-password-value {
-            font-family: var(--font-mono);
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #60a5fa;
-            letter-spacing: 2px;
-            margin-bottom: 0.75rem;
-            word-break: break-all;
-        }
-
         .copy-btn {
-            width: 100%;
-            padding: 0.55rem;
-            font-size: 0.85rem;
-            min-height: auto;
-            background: rgba(59,130,246,0.12);
-            color: #60a5fa;
-            border: 1px solid rgba(59,130,246,0.25);
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            font-family: var(--font);
-            font-weight: 600;
-            transition: all 0.15s;
+            background: rgba(59,130,246,0.12); color: #60a5fa;
+            border: 1px solid rgba(59,130,246,0.25); border-radius: 6px;
+            padding: 0.5rem 0.8rem; font-size: 0.78rem; font-weight: 600;
+            font-family: var(--font); cursor: pointer; white-space: nowrap;
+            min-height: auto; flex-shrink: 0; transition: all 0.15s;
         }
-
-        .copy-btn:hover {
-            background: rgba(59,130,246,0.2);
-            transform: none;
-            box-shadow: none;
-        }
-
-        .reset-warning {
-            font-size: 0.78rem !important;
-            color: #fbbf24 !important;
-            margin: 0 !important;
-        }
+        .copy-btn:hover { background: rgba(59,130,246,0.2); transform: none; box-shadow: none; }
     </style>
 
     <script src="/js/theme.js"></script>
