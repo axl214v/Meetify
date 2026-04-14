@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const config = require('../config/config');
 const UserService = require('./userService');
+const db = require('../config/database');
 
 class AuthService {
   // Регистрация нового пользователя
