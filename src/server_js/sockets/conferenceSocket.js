@@ -5,6 +5,7 @@ const conferenceRooms = new Map(); // conferenceId -> Set of socket IDs
 const userSockets = new Map(); // userId -> socket ID
 const socketUsers = new Map(); // socket ID -> { userId, userName, conferenceId }
 const userMediaState = new Map(); // userId -> { audio, video }
+const screenSharingUsers = new Map();
 
 /**
  * Initialize Socket.IO for conference signaling
@@ -21,51 +22,55 @@ function initializeConferenceSocket(io) {
     // Join Conference
     socket.on('join-conference', async ({ conferenceId, userId, userName }) => {
       try {
-        console.log(`[Socket] join-conference received: userId=${userId}, conf=${conferenceId}`);
+          console.log(`[Socket] join-conference received: userId=${userId}, conf=${conferenceId}`);
 
-        // Validate conference exists
-        const conference = await Conference.findById(conferenceId);
-        if (!conference) {
-          socket.emit('error', { message: 'Conference not found' });
-          return;
-        }
+          const conference = await Conference.findById(conferenceId);
+          if (!conference) {
+              socket.emit('error', { message: 'Conference not found' });
+              return;
+          }
 
-        // Join Socket.IO room
-        socket.join(`conference-${conferenceId}`);
+          socket.join(`conference-${conferenceId}`);
+          socketUsers.set(socket.id, { userId, userName, conferenceId });
+          userSockets.set(userId, socket.id);
 
-        // Store user info
-        socketUsers.set(socket.id, { userId, userName, conferenceId });
-        userSockets.set(userId, socket.id);
+          if (!conferenceRooms.has(conferenceId)) {
+              conferenceRooms.set(conferenceId, new Set());
+          }
+          conferenceRooms.get(conferenceId).add(socket.id);
 
-        // Add to conference room tracking
-        if (!conferenceRooms.has(conferenceId)) {
-          conferenceRooms.set(conferenceId, new Set());
-        }
-        conferenceRooms.get(conferenceId).add(socket.id);
+          // Участники с их mediaState
+          const roomParticipants = Array.from(conferenceRooms.get(conferenceId))
+              .filter(sid => sid !== socket.id)
+              .map(sid => socketUsers.get(sid))
+              .filter(Boolean)
+              .map(u => ({
+                  ...u,
+                  mediaState: userMediaState.get(u.userId) || { audio: true, video: true }
+              }));
 
-        // Get all participants in the room (except the new user)
-        const roomParticipants = Array.from(conferenceRooms.get(conferenceId))
-          .filter(sid => sid !== socket.id)
-          .map(sid => socketUsers.get(sid))
-          .filter(Boolean);
+          // roomState — есть ли активный screen share в комнате
+          const sharingSet = screenSharingUsers.get(conferenceId);
+          const someoneIsScreenSharing = !!(sharingSet && sharingSet.size > 0);
 
-        // Notify new user about existing participants
-        socket.emit('room-participants', { participants: roomParticipants });
+          socket.emit('room-participants', {
+              participants: roomParticipants,
+              roomState: { someoneIsScreenSharing }
+          });
 
-        // Notify others about new user
-        socket.to(`conference-${conferenceId}`).emit('user-connected', {
-          userId,
-          userName,
-          socketId: socket.id
-        });
+          socket.to(`conference-${conferenceId}`).emit('user-connected', {
+              userId,
+              userName,
+              socketId: socket.id
+          });
 
-        console.log(`[Socket] User ${userId} joined conference ${conferenceId}. Total participants: ${conferenceRooms.get(conferenceId).size}`);
+          console.log(`[Socket] User ${userId} joined conference ${conferenceId}. Total participants: ${conferenceRooms.get(conferenceId).size}`);
 
       } catch (error) {
-        console.error('[Socket] Join conference error:', error);
-        socket.emit('error', { message: 'Failed to join conference' });
+          console.error('[Socket] Join conference error:', error);
+          socket.emit('error', { message: 'Failed to join conference' });
       }
-    });
+  });
 
     // WebRTC Signaling - Offer
     socket.on('offer', ({ to, offer }) => {
@@ -173,31 +178,34 @@ function initializeConferenceSocket(io) {
     // Screen Share Start
     socket.on('screen-share-start', ({ conferenceId }) => {
       const user = socketUsers.get(socket.id);
-      
       if (!user) return;
 
-      // Notify others that user started screen sharing
+      if (!screenSharingUsers.has(conferenceId)) {
+          screenSharingUsers.set(conferenceId, new Set());
+      }
+      screenSharingUsers.get(conferenceId).add(user.userId);
+
       socket.to(`conference-${conferenceId}`).emit('user-screen-share-start', {
-        userId: user.userId,
-        userName: user.userName
+          userId: user.userId,
+          userName: user.userName
       });
 
       console.log(`[Socket] User ${user.userName} started screen sharing`);
-    });
+  });
 
     // Screen Share Stop
     socket.on('screen-share-stop', ({ conferenceId }) => {
       const user = socketUsers.get(socket.id);
-      
       if (!user) return;
 
-      // Notify others that user stopped screen sharing
+      screenSharingUsers.get(conferenceId)?.delete(user.userId);
+
       socket.to(`conference-${conferenceId}`).emit('user-screen-share-stop', {
-        userId: user.userId
+          userId: user.userId
       });
 
       console.log(`[Socket] User ${user.userName} stopped screen sharing`);
-    });
+  });
 
     // Leave Conference
     socket.on('leave-conference', ({ conferenceId }) => {
@@ -221,8 +229,13 @@ function initializeConferenceSocket(io) {
    */
   function handleUserDisconnect(socket, conferenceId) {
     const user = socketUsers.get(socket.id);
-    
     if (!user) return;
+
+    // Очистка screen share
+    screenSharingUsers.get(conferenceId)?.delete(user.userId);
+    if (screenSharingUsers.get(conferenceId)?.size === 0) {
+        screenSharingUsers.delete(conferenceId);
+    }
 
     console.log(`[Socket] User ${user.userId} leaving conference ${conferenceId}`);
 

@@ -17,6 +17,7 @@ let startTime = null;
 let unreadMessages = 0;
 let joinedConference = false;
 const remoteMediaStates = {};
+const roomScreenShareState = new Set();
 
 // WebRTC Configuration
 const rtcConfig = {
@@ -55,19 +56,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     try {
-        const meRes = await fetch(`${API_BASE}/api/auth/me`, {
-            credentials: 'include'
-        });
-
-        if (!meRes.ok) {
-            window.location.href = '/auth/Auth.html';
-            return;
-        }
+        const meRes = await fetch(`${API_BASE}/api/auth/me`, { credentials: 'include' });
+        if (!meRes.ok) { window.location.href = '/auth/Auth.html'; return; }
 
         const meData = await meRes.json();
         currentUser = meData.user;
 
-        // Init chat after currentUser is loaded
         chat = new Chat('chatMessages', 'chatInput', 'sendBtn');
         chat.setCurrentUser({
             userId: currentUser.id,
@@ -82,7 +76,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         await loadConferenceDetails();
-        await initLocalMedia();
+        // Socket first — чтобы получить roomState до инициализации медиа
         await initSocket();
         setupEventListeners();
         startRoomTimer();
@@ -125,25 +119,43 @@ function updateRemoteMediaState(userId, audio, video) {
 /**
  * Request camera/microphone access and attach stream to local preview.
  * We request ideal HD constraints and common audio enhancements.
+ * @param {{ audio: boolean, video: boolean }} options
  */
-async function initLocalMedia() {
+async function initLocalMedia({ audio = true, video = true } = {}) {
     try {
         localStream = await navigator.mediaDevices.getUserMedia({
-            video: { width: { ideal: 1280 }, height: { ideal: 720 } },
-            audio: {
-                echoCancellation: true,
-                noiseSuppression: true,
-                autoGainControl: true
-            }
+            video: video
+                ? { width: { ideal: 1280 }, height: { ideal: 720 } }
+                : false,
+            audio: audio
+                ? { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+                : false
         });
 
+        // Sync state flags with actual track states
+        isAudioEnabled = audio && localStream.getAudioTracks().length > 0;
+        isVideoEnabled = video && localStream.getVideoTracks().length > 0;
+
         document.getElementById('localVideo').srcObject = localStream;
-        console.log('Local media initialized');
+        updateMediaControlsUI();
+        console.log('Local media initialized', { audio: isAudioEnabled, video: isVideoEnabled });
 
     } catch (error) {
         console.error('Error accessing media devices:', error);
         throw error;
     }
+}
+
+function updateMediaControlsUI() {
+    const micBtn = document.getElementById('toggleMic');
+    const videoBtn = document.getElementById('toggleVideo');
+    const micStatus = document.getElementById('localMicStatus');
+    const videoStatus = document.getElementById('localVideoStatus');
+
+    micBtn?.classList.toggle('muted', !isAudioEnabled);
+    videoBtn?.classList.toggle('off', !isVideoEnabled);
+    if (micStatus) micStatus.textContent = isAudioEnabled ? '🎤' : '🔇';
+    if (videoStatus) videoStatus.textContent = isVideoEnabled ? '📹' : '📵';
 }
 
 /**
@@ -175,8 +187,27 @@ async function initSocket() {
     });
 
     // Existing participants — new user is initiator
-    socket.on('room-participants', async ({ participants }) => {
-        console.log('room-participants received:', JSON.stringify(participants));
+    socket.on('room-participants', async ({ participants, roomState }) => {
+        console.log('room-participants received:', JSON.stringify(participants), 'roomState:', roomState);
+
+        // Определяем опции медиа на основе состояния комнаты
+        let joinAudio = true;
+        let joinVideo = true;
+
+        if (roomState?.someoneIsScreenSharing) {
+            joinVideo = false;
+            showNotification('Someone is screen sharing — camera disabled on join', 'info');
+        }
+
+        if (participants.length > 5) {
+            joinAudio = false;
+            showNotification('Large room detected — microphone muted on join', 'info');
+        }
+
+        // Инициализируем медиа только сейчас, когда знаем состояние комнаты
+        await initLocalMedia({ audio: joinAudio, video: joinVideo });
+
+        // Создаём peer connections с уже существующими участниками
         for (const p of participants) {
             if (p.userId !== currentUser.id) {
                 await createPeerConnection(p.userId, true, p.userName);
@@ -186,7 +217,6 @@ async function initSocket() {
             }
         }
     });
-
     // New user joined — existing user is NOT initiator, waits for offer
     socket.on('user-connected', async ({ userId, userName }) => {
         console.log('User connected:', userId, userName);
@@ -203,6 +233,22 @@ async function initSocket() {
         const videoContainer = document.getElementById(`video-${userId}`);
         if (videoContainer) videoContainer.remove();
         updateParticipantCount();
+    });
+
+    socket.on('user-screen-share-start', ({ userId, userName }) => {
+        roomScreenShareState.add(userId);
+        showNotification(`${userName} started screen sharing`, 'info');
+
+        // Если есть video-контейнер этого юзера — помечаем
+        const container = document.getElementById(`video-${userId}`);
+        if (container) container.classList.add('screen-sharing');
+    });
+
+    socket.on('user-screen-share-stop', ({ userId }) => {
+        roomScreenShareState.delete(userId);
+
+        const container = document.getElementById(`video-${userId}`);
+        if (container) container.classList.remove('screen-sharing');
     });
 
     socket.on('offer', async ({ userId, offer, userName }) => {

@@ -993,3 +993,20 @@ a:hover { color: #93c5fd; }
   .grid-2,
   .grid-3 { grid-template-columns: 1fr; }
 }
+
+.video-container.screen-sharing {
+    outline: 2px solid var(--accent, #6c63ff);
+    position: relative;
+}
+
+.video-container.screen-sharing::after {
+    content: '🖥️ Screen';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: var(--accent, #6c63ff);
+    color: #fff;
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
