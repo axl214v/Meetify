@@ -1,6 +1,10 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const config = require('../config/config');
+const { authenticateToken } = require('../middleware/auth');
+
+router.use(authenticateToken);
+router.use(adminAuth);
 
 // Middleware для проверки JWT токена
 const authenticateToken = async (req, res, next) => {
@@ -28,7 +32,7 @@ const authenticateToken = async (req, res, next) => {
     }
 
     // Добавляем пользователя в запрос
-    req.user = decoded;
+    req.user = user;
     next();
   } catch (error) {
     console.error('Token verification error:', error);

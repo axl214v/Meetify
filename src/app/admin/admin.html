@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meetify — Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles/admin.css">
+    <script>
+        (function() {
+            const t = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <span class="logo-mark">M</span>
+            <span class="logo-text">eetify</span>
+            <span class="logo-badge">ADMIN</span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <button class="nav-item active" data-tab="overview">
+                <span class="nav-icon">◈</span>
+                <span>Overview</span>
+            </button>
+            <button class="nav-item" data-tab="conferences">
+                <span class="nav-icon">⬡</span>
+                <span>Conferences</span>
+            </button>
+            <button class="nav-item" data-tab="users">
+                <span class="nav-icon">◉</span>
+                <span>Users</span>
+            </button>
+            <button class="nav-item" data-tab="server">
+                <span class="nav-icon">▣</span>
+                <span>Server</span>
+            </button>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="admin-identity">
+                <div class="admin-avatar" id="adminAvatar">A</div>
+                <div class="admin-info">
+                    <span id="adminName">Admin</span>
+                    <small>Administrator</small>
+                </div>
+            </div>
+            <button class="btn-icon" id="themeToggle" title="Toggle theme">◑</button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+
+        <!-- ── OVERVIEW ── -->
+        <section class="tab-panel active" id="tab-overview">
+            <header class="panel-header">
+                <div>
+                    <h1>Overview</h1>
+                    <p class="panel-sub" id="lastUpdated">Loading...</p>
+                </div>
+                <button class="btn-refresh" id="refreshOverview">↻ Refresh</button>
+            </header>
+
+            <div class="stat-grid">
+                <div class="stat-card" id="stat-users">
+                    <div class="stat-label">Total Users</div>
+                    <div class="stat-value" id="statUsers">—</div>
+                    <div class="stat-bar"><div class="stat-bar-fill"></div></div>
+                </div>
+                <div class="stat-card" id="stat-conferences">
+                    <div class="stat-label">Conferences</div>
+                    <div class="stat-value" id="statConferences">—</div>
+                    <div class="stat-bar"><div class="stat-bar-fill"></div></div>
+                </div>
+                <div class="stat-card accent" id="stat-active">
+                    <div class="stat-label">Active Now</div>
+                    <div class="stat-value" id="statActive">—</div>
+                    <div class="stat-pulse"></div>
+                </div>
+                <div class="stat-card" id="stat-joins">
+                    <div class="stat-label">Total Joins</div>
+                    <div class="stat-value" id="statJoins">—</div>
+                    <div class="stat-bar"><div class="stat-bar-fill"></div></div>
+                </div>
+            </div>
+
+            <div class="two-col">
+                <div class="panel-card">
+                    <div class="card-header">
+                        <span>Recent Users</span>
+                        <span class="card-tag">latest 5</span>
+                    </div>
+                    <table class="data-table" id="recentUsersTable">
+                        <thead><tr><th>User</th><th>Role</th><th>Joined</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="panel-card">
+                    <div class="card-header">
+                        <span>Recent Conferences</span>
+                        <span class="card-tag">latest 5</span>
+                    </div>
+                    <table class="data-table" id="recentConfsTable">
+                        <thead><tr><th>Name</th><th>Host</th><th>Created</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── CONFERENCES ── -->
+        <section class="tab-panel" id="tab-conferences">
+            <header class="panel-header">
+                <div>
+                    <h1>Conferences</h1>
+                    <p class="panel-sub">Manage all conferences</p>
+                </div>
+                <div class="header-controls">
+                    <input class="search-input" type="text" id="confSearch" placeholder="Search conferences...">
+                    <button class="btn-refresh" id="refreshConfs">↻</button>
+                </div>
+            </header>
+
+            <div class="panel-card">
+                <table class="data-table full" id="confsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Host</th>
+                            <th>Participants</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div class="pagination" id="confPagination"></div>
+            </div>
+        </section>
+
+        <!-- ── USERS ── -->
+        <section class="tab-panel" id="tab-users">
+            <header class="panel-header">
+                <div>
+                    <h1>Users</h1>
+                    <p class="panel-sub">Manage user accounts</p>
+                </div>
+                <div class="header-controls">
+                    <input class="search-input" type="text" id="userSearch" placeholder="Search users...">
+                    <button class="btn-refresh" id="refreshUsers">↻</button>
+                </div>
+            </header>
+
+            <div class="panel-card">
+                <table class="data-table full" id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Registered</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div class="pagination" id="userPagination"></div>
+            </div>
+        </section>
+
+        <!-- ── SERVER ── -->
+        <section class="tab-panel" id="tab-server">
+            <header class="panel-header">
+                <div>
+                    <h1>Server</h1>
+                    <p class="panel-sub">Runtime metrics</p>
+                </div>
+                <button class="btn-refresh" id="refreshServer">↻ Refresh</button>
+            </header>
+
+            <div class="server-grid">
+                <div class="panel-card server-card">
+                    <div class="server-label">Uptime</div>
+                    <div class="server-value mono" id="srvUptime">—</div>
+                </div>
+                <div class="panel-card server-card">
+                    <div class="server-label">Node.js</div>
+                    <div class="server-value mono" id="srvNode">—</div>
+                </div>
+                <div class="panel-card server-card">
+                    <div class="server-label">Platform</div>
+                    <div class="server-value mono" id="srvPlatform">—</div>
+                </div>
+                <div class="panel-card server-card">
+                    <div class="server-label">CPU Cores</div>
+                    <div class="server-value mono" id="srvCores">—</div>
+                </div>
+            </div>
+
+            <div class="panel-card">
+                <div class="card-header">
+                    <span>Memory Usage</span>
+                    <span class="card-tag mono" id="memPercent">—%</span>
+                </div>
+                <div class="mem-bar-wrap">
+                    <div class="mem-bar" id="memBar"></div>
+                </div>
+                <div class="mem-labels">
+                    <span>Used: <b id="memUsed">—</b></span>
+                    <span>Free: <b id="memFree">—</b></span>
+                    <span>Total: <b id="memTotal">—</b></span>
+                </div>
+            </div>
+
+            <div class="panel-card">
+                <div class="card-header">
+                    <span>CPU Model</span>
+                </div>
+                <p class="mono" id="srvCpuModel">—</p>
+            </div>
+
+            <div class="panel-card">
+                <div class="card-header">
+                    <span>Load Average</span>
+                    <span class="card-tag">1m / 5m / 15m</span>
+                </div>
+                <div class="load-grid">
+                    <div class="load-item"><span id="load1">—</span><small>1 min</small></div>
+                    <div class="load-item"><span id="load5">—</span><small>5 min</small></div>
+                    <div class="load-item"><span id="load15">—</span><small>15 min</small></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Confirm Modal -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal">
+            <div class="modal-icon" id="modalIcon">⚠</div>
+            <h3 id="modalTitle">Confirm action</h3>
+            <p id="modalBody">Are you sure?</p>
+            <div class="modal-actions">
+                <button class="btn-cancel" id="modalCancel">Cancel</button>
+                <button class="btn-danger" id="modalConfirm">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="/js/theme.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>

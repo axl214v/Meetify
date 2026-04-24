@@ -4,7 +4,8 @@ const auth      = require('../middleware/auth');
 const adminAuth = require('../middleware/adminAuth');
 const c         = require('../controllers/adminController');
 
-router.use(auth, adminAuth);
+router.use(auth);
+router.use(adminAuth);
 
 router.get   ('/stats',                         c.getStats);
 router.get   ('/server',                        c.getServerStats);
