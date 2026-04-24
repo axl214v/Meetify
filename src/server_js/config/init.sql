@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(100) NOT NULL,
     password VARCHAR(255) NOT NULL,
     avatar_url VARCHAR(500),
+    role ENUM('user', 'admin') DEFAULT 'user' NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_email (email),
@@ -78,8 +79,9 @@ CREATE TABLE password_reset_tokens (
 
 -- Create demo user (password: demo123)
 -- Password hash for 'demo123' (bcrypt with 10 rounds)
-INSERT IGNORE INTO users (email, username, password) VALUES 
-('demo@meetify.com', 'Demo User', '$2b$10$rBV2d1EA2lPPFbBvRZDPl.uqL2HyJxJ8VvZ1p5X6Y1L1C5l8X5X5X');
+INSERT IGNORE INTO users (email, username, password, role) VALUES 
+('demo@meetify.com', 'Demo User', '$2b$10$rBV2d1EA2lPPFbBvRZDPl.uqL2HyJxJ8VvZ1p5X6Y1L1C5l8X5X5X', 'user'),
+('admin@meetify.com', 'Admin', '$2b$10$rBV2d1EA2lPPFbBvRZDPl.uqL2HyJxJ8VvZ1p5X6Y1L1C5l8X5X5X', 'admin');
 
 -- ==========================================
 -- Success Message
