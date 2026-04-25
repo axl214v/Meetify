@@ -1,10 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const config = require('../config/config');
-const { authenticateToken } = require('../middleware/auth');
-
-router.use(authenticateToken);
-router.use(adminAuth);
 
 // Middleware для проверки JWT токена
 const authenticateToken = async (req, res, next) => {
