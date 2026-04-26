@@ -101,6 +101,8 @@ class AuthService {
         id: user.id,
         email: user.email,
         username: user.username,
+        avatar_url: user.avatar_url,
+        role: user.role,
         createdAt: user.created_at
     };
   }

@@ -195,13 +195,13 @@ const logout = async (req, res) => {
 // Получение текущего пользователя
  
 const getCurrentUser = async (req, res) => {
-  try {
-    const userId = req.user.userId;
-    
-    const user = await AuthService.getCurrentUser(userId);
-    
-    res.json({ user });
-  } catch (error) {
+    try {
+        console.log('[DEBUG] req.user:', req.user); 
+        const userId = req.user.userId;
+        console.log('[DEBUG] userId:', userId);      
+        const user = await AuthService.getCurrentUser(userId);
+        res.json({ user });
+    }catch (error) {
     console.error('Get current user error:', error);
     
     if (error.message.includes('not found')) {
