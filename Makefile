@@ -4,6 +4,12 @@
 
 .PHONY: help build up down restart logs clean first-run
 
+up:
+	APP_VERSION=$$(cat version.txt) docker compose up -d
+
+down:
+	docker compose down
+
 # Default target
 help:
 	@echo "Meetify Docker Commands:"
