@@ -68,7 +68,25 @@ async function checkConference() {
         }
         
         if (response.status === 403) {
-            showError('This conference is private and you do not have access.');
+            const err = await response.json();
+
+            if (err.requiresPassword && err.conference) {
+            // Приватная конференция с паролем — показываем форму
+            currentConference = err.conference;
+            conferenceIdInput.classList.add('success');
+            displayConferencePreview(err.conference);
+            passwordField.style.display = 'block';
+            joinBtn.style.display = 'inline-block';
+            showError('This conference is password protected. Enter the password to join.');
+            return;
+            } 
+
+            if (err.isPrivate) {
+                showError('This conference is private and invite-only.');
+            return;
+            }
+
+            showError('Access denied.');
             return;
         }
         
@@ -103,27 +121,30 @@ async function checkConference() {
 
 // Display conference preview
 function displayConferencePreview(conference) {
-    const conferencePreview = document.getElementById('conferencePreview');
-    const previewName = document.getElementById('previewName');
-    const previewHost = document.getElementById('previewHost');
-    const previewParticipants = document.getElementById('previewParticipants');
-    const previewStatus = document.getElementById('previewStatus');
-    
-    previewName.textContent = conference.name;
-    previewHost.textContent = conference.host_username || conference.host_email || 'Unknown';
-    
-    const participantCount = conference.participantCount || conference.participant_count || 0;
-    const maxParticipants = conference.max_participants;
-    const participantText = maxParticipants 
-        ? `${participantCount}/${maxParticipants}` 
-        : `${participantCount}`;
-    previewParticipants.textContent = `👥 ${participantText}`;
-    
-    // Status
-    const status = getConferenceStatus(conference);
-    previewStatus.textContent = status;
-    previewStatus.className = `status-badge ${status.toLowerCase().replace(' ', '-')}`;
-    
+    const conferencePreview    = document.getElementById('conferencePreview');
+    const previewName          = document.getElementById('previewName');
+    const previewHost          = document.getElementById('previewHost');
+    const previewParticipants  = document.getElementById('previewParticipants');
+    const previewStatus        = document.getElementById('previewStatus');
+
+    previewName.textContent = conference.name || '—';
+    previewHost.textContent = conference.isPrivate
+        ? '🔒 Private'
+        : (conference.host_username || conference.host_email || 'Unknown');
+
+    if (conference.isPrivate) {
+        previewParticipants.textContent = '—';
+        previewStatus.textContent = 'Private';
+        previewStatus.className = 'status-badge ended';
+    } else {
+        const participantCount = conference.participantCount || conference.participant_count || 0;
+        const maxParticipants  = conference.max_participants;
+        previewParticipants.textContent = `👥 ${maxParticipants ? `${participantCount}/${maxParticipants}` : participantCount}`;
+        const status = getConferenceStatus(conference);
+        previewStatus.textContent = status;
+        previewStatus.className   = `status-badge ${status.toLowerCase().replace(' ', '-')}`;
+    }
+
     conferencePreview.style.display = 'block';
 }
 
@@ -198,7 +219,6 @@ document.getElementById('joinBtn')?.addEventListener('click', async function(e) 
             
             // Redirect to conference room after delay
             setTimeout(() => {
-                // TODO: Redirect to conference room (On work)
                 window.location.href = `conf_room.html?id=${currentConference.id}`;
             }, 1500);
             

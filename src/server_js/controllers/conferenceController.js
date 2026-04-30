@@ -93,13 +93,24 @@ const getConference = async (req, res) => {
     }
 
     // Проверяем доступ к конференции
-    const isHost = conference.host_id === userId;
+    const isHost        = conference.host_id === userId;
     const isParticipant = await Conference.isParticipant(id, userId);
-    const isPublic = conference.is_public;
+    const isPublic      = conference.is_public;
 
-    // Если не хост, не участник и конференция приватная - отказ
-    if (!isHost && !isParticipant && !isPublic) {
-      return res.status(403).json({ message: 'Access denied' });
+
+    if (!isPublic && !isHost && !isParticipant) {
+      return res.status(403).json({
+          message: 'Access denied',
+          requiresPassword: !!conference.password,
+          isPrivate: true,
+          // Минимум для отображения формы
+          conference: {
+              id: conference.id,
+              name: conference.name,
+              hasPassword: !!conference.password,
+              isPrivate: true
+          }
+      });
     }
 
     // Получаем количество участников
@@ -137,8 +148,8 @@ const getConferences = async (req, res) => {
 
     // Фильтры
     const filters = {
-      isPublic: req.query.isPublic !== undefined ? req.query.isPublic === 'true' : undefined,
-      status: req.query.status, // 'upcoming', 'ongoing', 'ended'
+      isPublic: req.query.isPublic !== undefined ? req.query.isPublic === 'true' : true,
+      status: req.query.status,
       search: req.query.search ? req.query.search.trim() : undefined
     };
 
@@ -153,7 +164,10 @@ const getConferences = async (req, res) => {
     // Убираем пароли из всех конференций
     const conferencesWithoutPasswords = result.conferences.map(conf => {
       const { password, ...confData } = conf;
-      return confData;
+      return {
+        ...confData,
+        hasPassword: !!password  // ← добавить
+      };
     });
 
     res.json({ 

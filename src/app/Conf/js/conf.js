@@ -173,7 +173,9 @@ function createConferenceCard(conf) {
                 <button onclick="editConference(${conf.id})" class="secondary">✏️ Edit</button>
                 <button onclick="deleteConference(${conf.id})" class="danger">🗑️ Delete</button>
             ` : `
-                <button onclick="joinConference(${conf.id})">🚀 Join</button>
+                <button onclick="joinConference(${conf.id}, ${!!conf.hasPassword})">
+                ${conf.hasPassword ? '🔒' : '🚀'} Join
+            </button>
             `}
         </div>
     `;
@@ -219,13 +221,20 @@ function updatePagination(maxPage) {
 }
 
 // Join conference
-async function joinConference(conferenceId) {
+async function joinConference(conferenceId, requiresPassword = false) {
+    let password = null;
+
+    if (requiresPassword) {
+        password = await showPasswordPrompt();
+        if (password === null) return; // отмена
+    }
+
     try {
         const response = await fetch(`${API_BASE}/api/conferences/${conferenceId}/join`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({})
+            body: JSON.stringify({ password })
         });
 
         const data = await response.json();
@@ -233,7 +242,10 @@ async function joinConference(conferenceId) {
         if (response.ok) {
             window.location.href = `conf_room.html?id=${conferenceId}`;
         } else if (data.requiresPassword) {
-            window.location.href = `conf_join.html?id=${conferenceId}`;
+            // Пароль нужен но не был введён — повторить
+            joinConference(conferenceId, true);
+        } else if (response.status === 403) {
+            showNotification('Incorrect password', 'error');
         } else {
             showNotification(data.message || 'Failed to join conference', 'error');
         }
@@ -241,6 +253,46 @@ async function joinConference(conferenceId) {
         console.error('Join conference error:', error);
         showNotification('Network error. Please try again.', 'error');
     }
+}
+
+// Добавить функцию промпта (использует showConfirm из conf_utils.js как основу):
+function showPasswordPrompt() {
+    return new Promise(resolve => {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position:fixed;inset:0;background:rgba(0,0,0,0.6);
+            display:grid;place-items:center;z-index:9999;backdrop-filter:blur(4px);
+        `;
+        overlay.innerHTML = `
+            <div style="background:var(--surface,#161d2e);border:1px solid var(--border-hover,rgba(255,255,255,0.14));
+                border-radius:16px;padding:32px;width:360px;text-align:center;box-shadow:0 12px 48px rgba(0,0,0,0.6)">
+                <div style="font-size:32px;margin-bottom:16px">🔒</div>
+                <h3 style="margin-bottom:8px;font-size:16px;font-weight:700">Password Required</h3>
+                <p style="color:var(--text-2,#94a3b8);font-size:13px;margin-bottom:20px">Enter the conference password</p>
+                <input id="confPasswordInput" type="password" placeholder="Password"
+                    style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid var(--border,rgba(255,255,255,0.07));
+                    background:var(--bg-2,#0d1220);color:var(--text,#f1f5f9);font-size:14px;margin-bottom:16px;outline:none">
+                <div style="display:flex;gap:8px">
+                    <button id="confPassCancel" style="flex:1;padding:10px;border-radius:8px;background:transparent;
+                        border:1px solid var(--border,rgba(255,255,255,0.07));color:var(--text-2,#94a3b8);cursor:pointer">Cancel</button>
+                    <button id="confPassConfirm" style="flex:1;padding:10px;border-radius:8px;background:#3b82f6;
+                        border:none;color:#fff;font-weight:600;cursor:pointer">Join</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        const input = overlay.querySelector('#confPasswordInput');
+        input.focus();
+
+        const cleanup = (val) => { overlay.remove(); resolve(val); };
+
+        overlay.querySelector('#confPassCancel').onclick  = () => cleanup(null);
+        overlay.querySelector('#confPassConfirm').onclick = () => cleanup(input.value || '');
+        input.addEventListener('keydown', e => { if (e.key === 'Enter') cleanup(input.value || ''); });
+        overlay.onclick = e => { if (e.target === overlay) cleanup(null); };
+    });
 }
 
 // Edit conference

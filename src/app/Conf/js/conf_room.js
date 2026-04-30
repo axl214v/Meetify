@@ -94,11 +94,30 @@ async function loadConferenceDetails() {
             credentials: 'include'
         });
 
+        if (response.status === 403) {
+            const err = await response.json();
+            showNotification(
+                err.requiresPassword
+                    ? 'Password required — join from the conference list.'
+                    : 'Access denied.',
+                'error'
+            );
+            setTimeout(() => window.location.href = 'conf.html', 1500);
+            return;
+        }
+
         if (!response.ok) throw new Error('Conference not found');
 
         const data = await response.json();
-        document.getElementById('conferenceName').textContent = data.conference.name;
 
+        // Прямой заход по URL без участия — редирект
+        if (!data.conference.isParticipant && !data.conference.isHost) {
+            showNotification('You are not a participant of this conference.', 'error');
+            setTimeout(() => window.location.href = 'conf.html', 1500);
+            return;
+        }
+
+        document.getElementById('conferenceName').textContent = data.conference.name;
         await loadParticipants();
 
     } catch (error) {
