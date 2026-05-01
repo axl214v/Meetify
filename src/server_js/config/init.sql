@@ -22,10 +22,9 @@ CREATE TABLE IF NOT EXISTS users (
     INDEX idx_username (username)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-ALTER TABLE users 
-    ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE,
-    ADD COLUMN IF NOT EXISTS email_verification_token VARCHAR(255),
-    ADD COLUMN IF NOT EXISTS email_verification_expires DATETIME;
+ALTER TABLE users ADD COLUMN email_verified BOOLEAN DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN email_verification_token VARCHAR(255);
+ALTER TABLE users ADD COLUMN email_verification_expires DATETIME;
 -- ==========================================
 -- Conferences Table
 -- ==========================================

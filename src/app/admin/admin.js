@@ -25,6 +25,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('refreshConfs').addEventListener('click',    () => loadConferences(0));
     document.getElementById('refreshUsers').addEventListener('click',    () => loadUsers(0));
     document.getElementById('refreshServer').addEventListener('click',   loadServerStats);
+    document.getElementById('refreshSettings').addEventListener('click', loadSmtpSettings);
+    document.getElementById('saveSmtp').addEventListener('click',      saveSmtpSettings);
+    document.getElementById('testSmtp').addEventListener('click',      testSmtpConnection);
+    document.getElementById('sendTestEmail').addEventListener('click',  sendTestEmail);
+
+    // Lazy load settings tab
+    // В switchTab добавить:
+    if (tab === 'settings' && !document.getElementById('smtpHost').value) loadSmtpSettings();
 
     // Search (debounced)
     document.getElementById('confSearch').addEventListener('input',  debounce(e => {
@@ -228,6 +236,137 @@ async function loadUsers(page = 0) {
 
     } catch (e) {
         toast('Failed to load users: ' + e.message, 'error');
+    }
+}
+
+// ── Settings ─────────────────────────────────────────────────────────
+async function loadSmtpSettings() {
+    try {
+        const res  = await apiFetch('/api/admin/settings/smtp');
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        const s = data.settings;
+        document.getElementById('smtpHost').value     = s.smtp_host     || '';
+        document.getElementById('smtpPort').value     = s.smtp_port     || '587';
+        document.getElementById('smtpUser').value     = s.smtp_user     || '';
+        document.getElementById('smtpPassword').value = s.smtp_password || '';
+        document.getElementById('smtpFrom').value     = s.smtp_from     || '';
+        document.getElementById('smtpSecure').value   = s.smtp_secure   || 'false';
+        document.getElementById('smtpEnabled').value  = s.smtp_enabled  || 'false';
+
+        const badge = document.getElementById('smtpStatusBadge');
+        badge.textContent = s.smtp_enabled === 'true' ? 'Enabled' : 'Disabled';
+        badge.style.color = s.smtp_enabled === 'true' ? 'var(--success)' : 'var(--text3)';
+
+        await loadVerificationStats();
+    } catch (e) {
+        toast('Failed to load SMTP settings: ' + e.message, 'error');
+    }
+}
+
+async function saveSmtpSettings() {
+    const body = {
+        smtp_host:     document.getElementById('smtpHost').value.trim(),
+        smtp_port:     document.getElementById('smtpPort').value.trim(),
+        smtp_user:     document.getElementById('smtpUser').value.trim(),
+        smtp_password: document.getElementById('smtpPassword').value,
+        smtp_from:     document.getElementById('smtpFrom').value.trim(),
+        smtp_secure:   document.getElementById('smtpSecure').value,
+        smtp_enabled:  document.getElementById('smtpEnabled').value,
+    };
+
+    try {
+        const res = await apiFetch('/api/admin/settings/smtp', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        if (!res.ok) throw new Error((await res.json()).error);
+        toast('SMTP settings saved', 'success');
+        loadSmtpSettings();
+    } catch (e) {
+        toast('Error: ' + e.message, 'error');
+    }
+}
+
+async function testSmtpConnection() {
+    try {
+        const res  = await apiFetch('/api/admin/settings/smtp/test', { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+            toast('SMTP connection successful ✓', 'success');
+        } else {
+            toast('Connection failed: ' + (data.error || 'Unknown error'), 'error');
+        }
+    } catch (e) {
+        toast('Error: ' + e.message, 'error');
+    }
+}
+
+async function sendTestEmail() {
+    const to = document.getElementById('testEmailAddr').value.trim();
+    if (!to) { toast('Enter email address', 'error'); return; }
+
+    try {
+        const res  = await apiFetch('/api/admin/settings/smtp/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ to })
+        });
+        const data = await res.json();
+        if (data.success) {
+            toast(`Test email sent to ${to}`, 'success');
+        } else {
+            toast('Send failed: ' + (data.error || 'Unknown'), 'error');
+        }
+    } catch (e) {
+        toast('Error: ' + e.message, 'error');
+    }
+}
+
+async function loadVerificationStats() {
+    try {
+        const res  = await apiFetch('/api/admin/users?limit=100');
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        const verified   = data.users.filter(u => u.email_verified).length;
+        const unverified = data.users.filter(u => !u.email_verified);
+
+        document.getElementById('verifiedCount').textContent =
+            `${verified}/${data.total} verified`;
+
+        const tbody = document.querySelector('#verificationTable tbody');
+        if (!unverified.length) {
+            tbody.innerHTML = '<tr class="empty-row"><td colspan="4">All users verified</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = unverified.map(u => `
+            <tr>
+                <td>${escHtml(u.username)}</td>
+                <td class="mono">${escHtml(u.email)}</td>
+                <td><span class="badge badge-ended">Not verified</span></td>
+                <td>
+                    <button class="btn-sm btn-sm-neutral"
+                        onclick="forceVerify(${u.id})">Force verify</button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (e) {
+        console.error('Verification stats error:', e);
+    }
+}
+
+async function forceVerify(userId) {
+    try {
+        const res = await apiFetch(`/api/admin/users/${userId}/verify`, { method: 'POST' });
+        if (!res.ok) throw new Error((await res.json()).error);
+        toast('User verified', 'success');
+        loadVerificationStats();
+    } catch (e) {
+        toast('Error: ' + e.message, 'error');
     }
 }
 

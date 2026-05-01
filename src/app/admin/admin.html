@@ -40,6 +40,10 @@
                 <span class="nav-icon">▣</span>
                 <span>Server</span>
             </button>
+            <button class="nav-item" data-tab="settings">
+                <span class="nav-icon">⚙</span>
+                <span>Settings</span>
+            </button>
         </nav>
 
         <div class="sidebar-footer">
@@ -238,6 +242,89 @@
                     <div class="load-item"><span id="load5">—</span><small>5 min</small></div>
                     <div class="load-item"><span id="load15">—</span><small>15 min</small></div>
                 </div>
+            </div>
+        </section>
+        <!-- ── SETTINGS ── -->
+        <section class="tab-panel" id="tab-settings">
+            <header class="panel-header">
+                <div>
+                    <h1>Settings</h1>
+                    <p class="panel-sub">SMTP and application configuration</p>
+                </div>
+                <button class="btn-refresh" id="refreshSettings">↻ Reload</button>
+            </header>
+
+            <!-- SMTP Config -->
+            <div class="panel-card">
+                <div class="card-header">
+                    <span>SMTP Configuration</span>
+                    <span class="card-tag" id="smtpStatusBadge">—</span>
+                </div>
+
+                <div class="settings-grid">
+                    <div class="setting-row">
+                        <label class="setting-label">Host</label>
+                        <input class="setting-input" type="text" id="smtpHost" placeholder="smtp.gmail.com">
+                    </div>
+                    <div class="setting-row">
+                        <label class="setting-label">Port</label>
+                        <input class="setting-input" type="number" id="smtpPort" placeholder="587">
+                    </div>
+                    <div class="setting-row">
+                        <label class="setting-label">User</label>
+                        <input class="setting-input" type="text" id="smtpUser" placeholder="your@email.com">
+                    </div>
+                    <div class="setting-row">
+                        <label class="setting-label">Password</label>
+                        <input class="setting-input" type="password" id="smtpPassword" placeholder="••••••••">
+                    </div>
+                    <div class="setting-row">
+                        <label class="setting-label">From</label>
+                        <input class="setting-input" type="text" id="smtpFrom" placeholder="Meetify <noreply@meetify.com>">
+                    </div>
+                    <div class="setting-row">
+                        <label class="setting-label">Secure (TLS)</label>
+                        <select class="setting-input" id="smtpSecure">
+                            <option value="false">No (STARTTLS)</option>
+                            <option value="true">Yes (SSL/TLS)</option>
+                        </select>
+                    </div>
+                    <div class="setting-row">
+                        <label class="setting-label">Enable SMTP</label>
+                        <select class="setting-input" id="smtpEnabled">
+                            <option value="false">Disabled</option>
+                            <option value="true">Enabled</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="settings-actions">
+                    <button class="btn-refresh" id="saveSmtp">💾 Save</button>
+                    <button class="btn-refresh" id="testSmtp">🔌 Test Connection</button>
+                    <div class="test-email-row">
+                        <input class="setting-input" type="email" id="testEmailAddr" placeholder="Send test email to...">
+                        <button class="btn-refresh" id="sendTestEmail">✉ Send</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email Verification -->
+            <div class="panel-card">
+                <div class="card-header">
+                    <span>Email Verification</span>
+                    <span class="card-tag" id="verifiedCount">—</span>
+                </div>
+                <table class="data-table full" id="verificationTable">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Email</th>
+                            <th>Verified</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
             </div>
         </section>
     </main>

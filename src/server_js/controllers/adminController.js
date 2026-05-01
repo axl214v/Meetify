@@ -145,6 +145,18 @@ const adminController = {
         }
     },
 
+    forceVerify: async (req, res) => {
+    try {
+        await db.promise().query(
+            'UPDATE users SET email_verified = TRUE, email_verification_token = NULL WHERE id = ?',
+            [req.params.id]
+        );
+        res.json({ success: true });
+        }   catch (e) {
+            res.status(500).json({ error: e.message });
+        }
+    },
+
     sendTestEmail: async (req, res) => {
         const { to } = req.body;
         if (!to) return res.status(400).json({ error: 'Email address required' });
