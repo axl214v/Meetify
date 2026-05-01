@@ -10,7 +10,9 @@ const {
   refreshToken,
   logout,
   getCurrentUser,
-  changePassword
+  changePassword,
+  verifyEmail,
+  resendVerification
 } = require('../controllers/authController');
 const { authenticateToken } = require('../middleware/auth');
 
@@ -93,7 +95,8 @@ router.get('/token', authenticateToken, (req, res) => {
     res.json({ token });
 });
 router.put('/change-password', authenticateToken, passwordChangeLimiter, changePassword);
-
+router.get('/verify-email', authenticateToken, verifyEmail);
+router.post('/resend-verification', authenticateToken, resendVerification);
 // Обработка несуществующих маршрутов
 router.use((req, res) => {
   res.status(404).json({
@@ -104,7 +107,9 @@ router.use((req, res) => {
       'POST /api/auth/refresh',
       'POST /api/auth/logout (protected)',
       'GET /api/auth/me (protected)',
-      'PUT /api/auth/change-password (protected)'
+      'PUT /api/auth/change-password (protected)',
+      'GET /api/auth/verify-email (protected)',
+      'POST /api/auth/resend-verification (protected)'
     ]
   });
 });

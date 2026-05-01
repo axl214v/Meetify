@@ -17,6 +17,20 @@ class AuthService {
 
       // Создание пользователя через UserService
       const user = await UserService.createUser(userData);
+
+      // Генерируем токен верификации
+      const verificationToken   = crypto.randomBytes(32).toString('hex');
+      const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24ч
+
+      await db.promise().query(
+          'UPDATE users SET email_verification_token = ?, email_verification_expires = ? WHERE id = ?',
+          [verificationToken, verificationExpires, user.id]
+      );
+
+      // Отправляем письмо (не блокируем регистрацию если SMTP не настроен)
+      EmailService.sendVerificationEmail(user, verificationToken).catch(e =>
+          console.error('[Email] Verification email failed:', e.message)
+      );
       
       // Генерация JWT токена
       const token = jwt.sign(
@@ -291,6 +305,41 @@ static async confirmResetPassword(token, newPassword) {
     } catch (error) {
       return null;
     }
+  }
+  static async verifyEmail(token) {
+    const [rows] = await db.promise().query(
+        'SELECT * FROM users WHERE email_verification_token = ? AND email_verification_expires > NOW()',
+        [token]
+    );
+
+    if (!rows.length) throw new Error('Invalid or expired token');
+
+    await db.promise().query(
+        'UPDATE users SET email_verified = TRUE, email_verification_token = NULL, email_verification_expires = NULL WHERE id = ?',
+        [rows[0].id]
+    );
+
+    return { message: 'Email verified successfully' };
+}
+
+  static async resendVerification(userId) {
+      const crypto = require('crypto');
+      const EmailService = require('./emailService');
+
+      const user = await User.findById(userId);
+      if (!user) throw new Error('User not found');
+      if (user.email_verified) throw new Error('Email already verified');
+
+      const token   = crypto.randomBytes(32).toString('hex');
+      const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+      await db.promise().query(
+          'UPDATE users SET email_verification_token = ?, email_verification_expires = ? WHERE id = ?',
+          [token, expires, userId]
+      );
+
+      await EmailService.sendVerificationEmail(user, token);
+      return { message: 'Verification email sent' };
   }
 
   // Проверка, что пользователь не авторизован (для регистрации/входа)

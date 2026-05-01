@@ -1,6 +1,7 @@
 const db = require('../config/database');
 const os = require('os');
 const Conference = require('../models/Conference');
+const EmailService = require('../services/emailService');
 
 const adminController = {
 
@@ -96,6 +97,71 @@ const adminController = {
             return res.status(400).json({ error: 'Cannot change own role' });
         try {
             await db.promise().query('UPDATE users SET role = ? WHERE id = ?', [role, req.params.id]);
+            res.json({ success: true });
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
+    },
+
+    getSmtpSettings: async (req, res) => {
+        try {
+            const settings = await EmailService.getSmtpSettings();
+            // Не отдаём пароль в открытом виде
+            const safe = { ...settings };
+            if (safe.smtp_password) safe.smtp_password = '••••••••';
+            res.json({ settings: safe });
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
+    },
+
+    updateSmtpSettings: async (req, res) => {
+        const allowed = ['smtp_host','smtp_port','smtp_secure','smtp_user','smtp_password','smtp_from','smtp_enabled'];
+        try {
+            for (const [key, value] of Object.entries(req.body)) {
+                if (!allowed.includes(key)) continue;
+                // Если пароль не менялся — пропускаем
+                if (key === 'smtp_password' && value === '••••••••') continue;
+                await db.promise().query(
+                    'INSERT INTO app_settings (`key`, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = ?',
+                    [key, value, value]
+                );
+            }
+            res.json({ success: true });
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
+    },
+
+    testSmtp: async (req, res) => {
+        try {
+            const settings = await EmailService.getSmtpSettings();
+            // Если передали новые настройки — тестируем их, иначе текущие
+            const testSettings = Object.keys(req.body).length ? req.body : settings;
+            const result = await EmailService.testConnection(testSettings);
+            res.json(result);
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
+    },
+
+    sendTestEmail: async (req, res) => {
+        const { to } = req.body;
+        if (!to) return res.status(400).json({ error: 'Email address required' });
+        try {
+            const result = await EmailService.send({
+                to,
+                subject: 'Meetify SMTP Test',
+                html: `
+                    <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;
+                        background:#0d1220;color:#f1f5f9;border-radius:12px">
+                        <h2 style="color:#60a5fa">SMTP Test Successful</h2>
+                        <p style="color:#94a3b8">Your Meetify SMTP configuration is working correctly.</p>
+                        <p style="color:#475569;font-size:12px;margin-top:24px">Sent at ${new Date().toISOString()}</p>
+                    </div>
+                `
+            });
+            if (!result.sent) return res.status(400).json({ error: result.reason });
             res.json({ success: true });
         } catch (e) {
             res.status(500).json({ error: e.message });

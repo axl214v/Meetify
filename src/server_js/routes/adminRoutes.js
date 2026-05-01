@@ -16,5 +16,9 @@ router.patch ('/users/:id/role',                c.updateUserRole);
 router.get   ('/conferences',                   c.getConferences);
 router.delete('/conferences/:id',               c.deleteConference);
 router.post  ('/conferences/:id/kick/:userId',  c.kickParticipant);
+router.get   ('/settings/smtp',       c.getSmtpSettings);
+router.put   ('/settings/smtp',       c.updateSmtpSettings);
+router.post  ('/settings/smtp/test',  c.testSmtp);
+router.post  ('/settings/smtp/send',  c.sendTestEmail);
 
 module.exports = router;

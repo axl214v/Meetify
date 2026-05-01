@@ -22,6 +22,10 @@ CREATE TABLE IF NOT EXISTS users (
     INDEX idx_username (username)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+ALTER TABLE users 
+    ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS email_verification_token VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS email_verification_expires DATETIME;
 -- ==========================================
 -- Conferences Table
 -- ==========================================
@@ -73,6 +77,12 @@ CREATE TABLE password_reset_tokens (
     INDEX idx_expires (expires_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS app_settings (
+    `key`       VARCHAR(100) PRIMARY KEY,
+    value       TEXT,
+    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- ==========================================
 -- Initial Data (Optional)
 -- ==========================================
@@ -82,6 +92,15 @@ CREATE TABLE password_reset_tokens (
 INSERT IGNORE INTO users (email, username, password, role) VALUES 
 ('demo@meetify.com', 'Demo User', '$2b$10$rBV2d1EA2lPPFbBvRZDPl.uqL2HyJxJ8VvZ1p5X6Y1L1C5l8X5X5X', 'user'),
 ('admin@meetify.com', 'Admin', '$2b$10$rBV2d1EA2lPPFbBvRZDPl.uqL2HyJxJ8VvZ1p5X6Y1L1C5l8X5X5X', 'admin');
+
+INSERT IGNORE INTO app_settings (`key`, value) VALUES
+('smtp_host',     'smtp.gmail.com'),
+('smtp_port',     '587'),
+('smtp_secure',   'false'),
+('smtp_user',     ''),
+('smtp_password', ''),
+('smtp_from',     'Meetify <noreply@meetify.com>'),
+('smtp_enabled',  'false');
 
 -- ==========================================
 -- Success Message

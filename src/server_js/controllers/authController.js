@@ -255,6 +255,24 @@ const changePassword = async (req, res) => {
   }
 };
 
+const verifyEmail = async (req, res) => {
+    try {
+        const result = await AuthService.verifyEmail(req.query.token);
+        res.json(result);
+    } catch (e) {
+        res.status(400).json({ message: e.message });
+    }
+};
+
+const resendVerification = async (req, res) => {
+    try {
+        const result = await AuthService.resendVerification(req.user.userId);
+        res.json(result);
+    } catch (e) {
+        res.status(400).json({ message: e.message });
+    }
+};
+
 module.exports = {
   register,
   login,
@@ -264,5 +282,7 @@ module.exports = {
   refreshToken,
   logout,
   getCurrentUser,
-  changePassword
+  changePassword,
+  verifyEmail,
+  resendVerification
 };
