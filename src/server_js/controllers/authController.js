@@ -273,6 +273,18 @@ const resendVerification = async (req, res) => {
     }
 };
 
+const resendVerificationPublic = async (req, res) => {
+    try {
+        await AuthService.resendVerificationByEmail(req.body.email);
+        // Всегда 200 — не раскрываем существует ли email
+        res.json({ message: 'If this email exists, a verification link has been sent.' });
+    } catch (e) {
+        if (e.message === 'Email already verified')
+            return res.status(400).json({ message: e.message });
+        res.status(500).json({ message: e.message });
+    }
+};
+
 module.exports = {
   register,
   login,
@@ -284,5 +296,6 @@ module.exports = {
   getCurrentUser,
   changePassword,
   verifyEmail,
-  resendVerification
+  resendVerification,
+  resendVerificationPublic
 };

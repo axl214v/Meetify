@@ -4,6 +4,8 @@ const jwt = require('jsonwebtoken');
 const config = require('../config/config');
 const UserService = require('./userService');
 const db = require('../config/database');
+const crypto = require('crypto');
+const EmailService = require('./emailService');
 
 class AuthService {
   // Регистрация нового пользователя
@@ -282,6 +284,23 @@ static async confirmResetPassword(token, newPassword) {
       errors
     };
   }
+
+  static async resendVerificationByEmail(email) {
+    const user = await User.findByEmail(email);
+    if (!user) return;
+
+    if (user.email_verified) throw new Error('Email already verified');
+
+    const token   = crypto.randomBytes(32).toString('hex');
+    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    await db.promise().query(
+        'UPDATE users SET email_verification_token = ?, email_verification_expires = ? WHERE id = ?',
+        [token, expires, user.id]
+    );
+
+    await EmailService.sendVerificationEmail(user, token);
+}
 
   // Валидация email
   static isValidEmail(email) {

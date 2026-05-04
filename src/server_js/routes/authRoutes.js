@@ -12,7 +12,8 @@ const {
   getCurrentUser,
   changePassword,
   verifyEmail,
-  resendVerification
+  resendVerification,
+  resendVerificationPublic
 } = require('../controllers/authController');
 const { authenticateToken } = require('../middleware/auth');
 
@@ -83,6 +84,7 @@ router.post('/forgot-password', forgotPassword);
 router.get('/reset-password/validate', validateResetToken);
 router.post('/reset-password/confirm', confirmResetPassword);
 router.post('/refresh', refreshLimiter, refreshToken);
+router.post('/resend-verification', resendVerificationPublic);
 
 
 // Защищенные маршруты (требуют аутентификации)
