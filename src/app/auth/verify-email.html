@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Email — Meetify</title>
+    <link rel="stylesheet" href="/styles/auth_reg.css">
+    <link rel="stylesheet" href="/styles/verify-email.css">
+    <link rel="icon" href="/assets/logo.png">
+    <script>
+        (function() {
+            const t = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
+</head>
+<body>
+    <a class="auth-back" href="/">← Home</a>
+    <button class="auth-theme-toggle" id="themeToggleBtn" title="Switch theme">☀️</button>
+
+    <div class="auth-page">
+        <div class="auth-brand">
+            <span class="auth-brand-logo">🎥</span>
+            <span class="auth-brand-name">Meetify</span>
+        </div>
+
+        <div class="auth-card">
+
+            <!-- State: loading -->
+            <div id="stateLoading">
+                <h1 class="auth-card-title">Verifying...</h1>
+                <p class="auth-card-sub">Please wait while we verify your email.</p>
+                <div class="verify-spinner-wrap">
+                    <div class="verify-spinner"></div>
+                </div>
+            </div>
+
+            <!-- State: success -->
+            <div id="stateSuccess" style="display:none">
+                <div class="verify-icon">✅</div>
+                <h1 class="auth-card-title">Email Verified</h1>
+                <p class="auth-card-sub">Your email has been successfully verified. You can now access all features.</p>
+                <button class="auth-submit" onclick="window.location.href='/Conf/pages/conf.html'">
+                    Go to Dashboard
+                </button>
+            </div>
+
+            <!-- State: error -->
+            <div id="stateError" style="display:none">
+                <div class="verify-icon">❌</div>
+                <h1 class="auth-card-title">Verification Failed</h1>
+                <p class="auth-card-sub" id="errorText">The link is invalid or has expired.</p>
+                <div class="auth-form" id="resendForm" style="display:none">
+                    <p style="font-size:0.9rem;margin-bottom:1rem">Enter your email to resend the verification link:</p>
+                    <div class="form-group">
+                        <label for="resendEmail">Email</label>
+                        <input type="email" id="resendEmail" placeholder="you@example.com" autocomplete="email">
+                    </div>
+                    <button class="auth-submit" id="resendBtn">Resend Verification Email</button>
+                    <div class="auth-message" id="resendMessage"></div>
+                </div>
+                <div class="auth-footer">
+                    <div class="auth-footer-row">
+                        <button class="auth-footer-btn" onclick="window.location.href='/auth/Auth.html'">
+                            Back to Sign In
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- State: already verified -->
+            <div id="stateAlready" style="display:none">
+                <div class="verify-icon">👍</div>
+                <h1 class="auth-card-title">Already Verified</h1>
+                <p class="auth-card-sub">Your email is already verified.</p>
+                <button class="auth-submit" onclick="window.location.href='/Conf/pages/conf.html'">
+                    Go to Dashboard
+                </button>
+            </div>
+
+        </div>
+
+        <div class="page-footer">
+            <p>© 2025 Meetify · <a href="/">Home</a></p>
+        </div>
+    </div>
+
+    <script src="/js/theme.js"></script>
+    <script src="/js/verify-email.js"></script>
+    <script src="/err/error-logger.js"></script>
+</body>
+</html>
