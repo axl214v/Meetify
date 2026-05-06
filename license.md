@@ -1,25 +1,41 @@
 ## 📄 License
 
-MIT License
+Polyform Noncommercial License 1.0.0
 
-Copyright (c) 2025 axl214
+Author: [@axl214v](https://github.com/axl214v)
+Project: Meetify
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Acceptance
+In order to get any license under these terms, you must agree
+to them as understanding that these terms create a 
+legally-binding contract between you and the licensor. 
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+Noncommercial License
+The licensor grants you a non-exclusive, worldwide, 
+royalty-free, sublicensable, and transferable license 
+to use, reproduce, prepare derivative works of, 
+distribute, and publicly display this software for 
+noncommercial purposes only.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Noncommercial Purposes
+Noncommercial purposes are purposes that are not 
+intended for or directed toward commercial advantage 
+or monetary compensation.
 
----
+Notices
+You must ensure that everyone who receives a copy of 
+any part of this software from you, with or without 
+changes, also receives the text of these terms or the 
+address of a display of these terms on the Internet.
+
+No Other Rights
+Any other use of this software is not covered by 
+this license. If you want to use this software for 
+commercial purposes, you must contact the licensor 
+separately to obtain a commercial license.
+
+Disclaimer of Warranties
+AS IS. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT 
+WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
+
+axl214v@gmail.com

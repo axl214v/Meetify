@@ -2,7 +2,6 @@
 
 **Meetify** — A web-based video conferencing platform built with WebRTC, Node.js, and Socket.IO. Deployed via Docker with Nginx as a reverse proxy.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D14.0.0-brightgreen)](https://nodejs.org/)
 [![MySQL](https://img.shields.io/badge/MySQL-8.0%2B-blue)](https://www.mysql.com/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-blue)](https://www.docker.com/)
@@ -389,5 +388,6 @@ docker compose down -v
 - GitHub: [@axl214v](https://github.com/axl214v)
 
 ## 📄 License
-
-MIT License — see [LICENSE](LICENSE) for details.
+This project is licensed under the **Polyform Noncommercial License 1.0.0**. 
+- **Personal/Educational use:** Free.
+- **Commercial use:** Requires a separate license. Contact [Твой Email].
