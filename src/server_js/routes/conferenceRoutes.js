@@ -83,16 +83,28 @@ const createConferenceLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-/**
- * Rate limiter для присоединения к конференциям
- * Ограничение: 20 попыток за минуту
- */
+// Глобальный лимит join: 20 попыток за минуту с одного IP
 const joinConferenceLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 минута
+  windowMs: 1 * 60 * 1000,
   max: 20,
   message: {
     message: 'Too many join requests',
     error: 'You can only join 20 conferences per minute. Please slow down.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Лимит брутфорса пароля: 5 попыток за 15 минут на IP + conferenceId
+// Защищает от перебора паролей к конкретной конференции
+const joinPasswordBruteForceLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  keyGenerator: (req) => `${req.ip}:${req.params.id}`,
+  skip: (req) => !req.body?.password, // не трогаем запросы без пароля
+  message: {
+    message: 'Too many failed join attempts',
+    error: 'Too many incorrect password attempts for this conference. Try again in 15 minutes.'
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -125,7 +137,7 @@ router.get('/:id', validateConferenceId, getConference);
 router.put('/:id', validateConferenceId, updateConference);
 router.delete('/:id', validateConferenceId, deleteConference);
 router.get('/:id/participants', validateConferenceId, getConferenceParticipants);
-router.post('/:id/join', validateConferenceId, joinConferenceLimiter, joinConference);
+router.post('/:id/join', validateConferenceId, joinConferenceLimiter, joinPasswordBruteForceLimiter, joinConference);
 router.post('/:id/leave', validateConferenceId, leaveConference);
 
 

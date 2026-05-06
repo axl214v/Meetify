@@ -1,5 +1,6 @@
 const Conference = require('../models/Conference');
 const User = require('../models/User');
+const bcrypt = require('bcrypt');
 
 // Вспомогательная функция для валидации
 const validateConferenceData = (data) => {
@@ -50,11 +51,13 @@ const createConference = async (req, res) => {
       });
     }
 
+    const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
+
     // Создаем конференцию
     const conference = await Conference.create({
       name: name.trim(),
       hostId,
-      password,
+      password: hashedPassword,
       maxParticipants: maxParticipants ? parseInt(maxParticipants) : null,
       isPublic: isPublic !== undefined ? isPublic : true,
       description: description ? description.trim() : null,
@@ -230,6 +233,13 @@ const updateConference = async (req, res) => {
       }
     }
 
+    // Хэшируем пароль если он меняется
+    if (updateData.password != null) {
+      updateData.password = updateData.password
+        ? await bcrypt.hash(updateData.password, 10)
+        : null;
+    }
+
     // Обновляем конференцию
     const updatedConference = await Conference.update(id, updateData);
     
@@ -303,15 +313,27 @@ const joinConference = async (req, res) => {
       });
     }
 
+    // trust_level >= 1 требуется для приватных конференций
+    if (!conference.is_public) {
+      const user = await User.findById(userId);
+      if (!user || (user.trust_level || 0) < 1) {
+        return res.status(403).json({
+          message: 'Email verification required to join private conferences',
+          requiresVerification: true
+        });
+      }
+    }
+
     // Проверяем пароль если конференция защищена
     if (conference.password) {
       if (!password) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: 'Password required',
           requiresPassword: true
         });
       }
-      if (password !== conference.password) {
+      const passwordMatch = await bcrypt.compare(password, conference.password);
+      if (!passwordMatch) {
         return res.status(403).json({ message: 'Incorrect password' });
       }
     }
