@@ -36,12 +36,29 @@ const initDatabase = async () => {
             username VARCHAR(100) NOT NULL,
             password VARCHAR(255) NOT NULL,
             avatar_url VARCHAR(500),
+            role VARCHAR(20) DEFAULT 'user',
+            email_verified BOOLEAN DEFAULT FALSE,
+            email_verification_token VARCHAR(255),
+            email_verification_expires DATETIME,
+            trust_level TINYINT DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             INDEX idx_email (email),
             INDEX idx_username (username)
           ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         `, 'Users table');
+
+        // Add missing columns to existing users table (idempotent migrations)
+        const userMigrations = [
+          ["ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'user'", 'users.role'],
+          ['ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE', 'users.email_verified'],
+          ['ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verification_token VARCHAR(255)', 'users.email_verification_token'],
+          ['ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verification_expires DATETIME', 'users.email_verification_expires'],
+          ['ALTER TABLE users ADD COLUMN IF NOT EXISTS trust_level TINYINT DEFAULT 0', 'users.trust_level'],
+        ];
+        for (const [sql, desc] of userMigrations) {
+          await executeQuery(sql, desc).catch(() => {});
+        }
 
         // Create conferences table
         await executeQuery(`
@@ -81,6 +98,30 @@ const initDatabase = async () => {
             INDEX idx_joined (joined_at)
           ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         `, 'Conference members table');
+
+        // Create password_reset_tokens table
+        await executeQuery(`
+          CREATE TABLE IF NOT EXISTS password_reset_tokens (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            user_id INT NOT NULL,
+            token VARCHAR(255) UNIQUE NOT NULL,
+            expires_at DATETIME NOT NULL,
+            used BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            INDEX idx_token (token),
+            INDEX idx_user (user_id)
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `, 'Password reset tokens table');
+
+        // Create app_settings table (SMTP and other admin settings)
+        await executeQuery(`
+          CREATE TABLE IF NOT EXISTS app_settings (
+            \`key\` VARCHAR(100) PRIMARY KEY,
+            value TEXT,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `, 'App settings table');
 
         console.log('[Database] ✅ Database initialization complete!');
         resolve(true);
