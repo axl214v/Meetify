@@ -13,6 +13,7 @@ router.get   ('/server',                        c.getServerStats);
 router.get   ('/users',                         c.getUsers);
 router.delete('/users/:id',                     c.deleteUser);
 router.patch ('/users/:id/role',                c.updateUserRole);
+router.post  ('/users/:id/verify',              c.forceVerify);
 router.get   ('/conferences',                   c.getConferences);
 router.delete('/conferences/:id',               c.deleteConference);
 router.post  ('/conferences/:id/kick/:userId',  c.kickParticipant);

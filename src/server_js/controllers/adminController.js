@@ -146,13 +146,13 @@ const adminController = {
     },
 
     forceVerify: async (req, res) => {
-    try {
-        await db.promise().query(
-            'UPDATE users SET email_verified = TRUE, email_verification_token = NULL WHERE id = ?',
-            [req.params.id]
-        );
-        res.json({ success: true });
-        }   catch (e) {
+        try {
+            await db.promise().query(
+                'UPDATE users SET email_verified = TRUE, email_verification_token = NULL, trust_level = GREATEST(trust_level, 1) WHERE id = ?',
+                [req.params.id]
+            );
+            res.json({ success: true });
+        } catch (e) {
             res.status(500).json({ error: e.message });
         }
     },
