@@ -63,13 +63,24 @@ const passwordChangeLimiter = rateLimit({
 
 // Лимитер для refresh токенов
 // 10 запросов за минуту
-
 const refreshLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 минута
+  windowMs: 1 * 60 * 1000,
   max: 10,
   message: {
     message: 'Too many token refresh requests',
     error: 'Please slow down your token refresh requests.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Лимитер для публичного resend-verification
+// 3 запроса за час с одного IP — silent ответ не раскрывает факт существования email
+const resendVerificationLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 3,
+  message: {
+    message: 'If this email exists, a verification link has been sent.'
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -84,7 +95,7 @@ router.post('/forgot-password', forgotPassword);
 router.get('/reset-password/validate', validateResetToken);
 router.post('/reset-password/confirm', confirmResetPassword);
 router.post('/refresh', refreshLimiter, refreshToken);
-router.post('/resend-verification', resendVerificationPublic);
+router.post('/resend-verification', resendVerificationLimiter, resendVerificationPublic);
 
 
 // Защищенные маршруты (требуют аутентификации)

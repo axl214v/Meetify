@@ -333,8 +333,9 @@ static async confirmResetPassword(token, newPassword) {
 
     if (!rows.length) throw new Error('Invalid or expired token');
 
+    // email_verified=true + trust_level минимум 1 (не понижаем, если уже выше)
     await db.promise().query(
-        'UPDATE users SET email_verified = TRUE, email_verification_token = NULL, email_verification_expires = NULL WHERE id = ?',
+        'UPDATE users SET email_verified = TRUE, email_verification_token = NULL, email_verification_expires = NULL, trust_level = GREATEST(trust_level, 1) WHERE id = ?',
         [rows[0].id]
     );
 
