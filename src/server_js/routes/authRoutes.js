@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const rateLimit = require('express-rate-limit');
-const { 
-  register, 
+const {
+  register,
   login,
   confirmResetPassword,
   forgotPassword,
@@ -12,7 +12,6 @@ const {
   getCurrentUser,
   changePassword,
   verifyEmail,
-  resendVerification,
   resendVerificationPublic
 } = require('../controllers/authController');
 const { authenticateToken } = require('../middleware/auth');
@@ -96,6 +95,8 @@ router.get('/reset-password/validate', validateResetToken);
 router.post('/reset-password/confirm', confirmResetPassword);
 router.post('/refresh', refreshLimiter, refreshToken);
 router.post('/resend-verification', resendVerificationLimiter, resendVerificationPublic);
+// Верификация по ссылке из письма — без авторизации, безопасность держится на одноразовом токене
+router.get('/verify-email', verifyEmail);
 
 
 // Защищенные маршруты (требуют аутентификации)
@@ -108,8 +109,7 @@ router.get('/token', authenticateToken, (req, res) => {
     res.json({ token });
 });
 router.put('/change-password', authenticateToken, passwordChangeLimiter, changePassword);
-router.get('/verify-email', authenticateToken, verifyEmail);
-router.post('/resend-verification', authenticateToken, resendVerification);
+
 // Обработка несуществующих маршрутов
 router.use((req, res) => {
   res.status(404).json({
@@ -118,11 +118,14 @@ router.use((req, res) => {
       'POST /api/auth/register',
       'POST /api/auth/login',
       'POST /api/auth/refresh',
+      'POST /api/auth/forgot-password',
+      'POST /api/auth/reset-password/confirm',
+      'GET /api/auth/reset-password/validate',
+      'GET /api/auth/verify-email',
+      'POST /api/auth/resend-verification',
       'POST /api/auth/logout (protected)',
       'GET /api/auth/me (protected)',
-      'PUT /api/auth/change-password (protected)',
-      'GET /api/auth/verify-email (protected)',
-      'POST /api/auth/resend-verification (protected)'
+      'PUT /api/auth/change-password (protected)'
     ]
   });
 });
