@@ -48,17 +48,22 @@ const initDatabase = async () => {
           ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         `, 'Users table');
 
-        // Add missing columns to existing users table (idempotent migrations)
-        const userMigrations = [
-          ["ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'user'", 'users.role'],
-          ['ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE', 'users.email_verified'],
-          ['ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verification_token VARCHAR(255)', 'users.email_verification_token'],
-          ['ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verification_expires DATETIME', 'users.email_verification_expires'],
-          ['ALTER TABLE users ADD COLUMN IF NOT EXISTS trust_level TINYINT DEFAULT 0', 'users.trust_level'],
-        ];
-        for (const [sql, desc] of userMigrations) {
-          await executeQuery(sql, desc).catch(() => {});
-        }
+        // Add missing columns to existing users table (MySQL 8.0 compatible — check information_schema first)
+        const addColumnIfMissing = async (column, definition) => {
+          const [cols] = await db.promise().query(
+            `SELECT 1 FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = ?`,
+            [column]
+          );
+          if (!cols.length) {
+            await executeQuery(`ALTER TABLE users ADD COLUMN ${column} ${definition}`, `users.${column}`);
+          }
+        };
+        await addColumnIfMissing('role', "VARCHAR(20) DEFAULT 'user'");
+        await addColumnIfMissing('email_verified', 'BOOLEAN DEFAULT FALSE');
+        await addColumnIfMissing('email_verification_token', 'VARCHAR(255)');
+        await addColumnIfMissing('email_verification_expires', 'DATETIME');
+        await addColumnIfMissing('trust_level', 'TINYINT DEFAULT 0');
 
         // Create conferences table
         await executeQuery(`

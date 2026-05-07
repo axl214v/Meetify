@@ -100,8 +100,12 @@ const joinConferenceLimiter = rateLimit({
 const joinPasswordBruteForceLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
-  keyGenerator: (req) => `${req.ip}:${req.params.id}`,
-  skip: (req) => !req.body?.password, // не трогаем запросы без пароля
+  keyGenerator: (req) => {
+    const ip = (req.ip || '').replace(/^::ffff:/, '');
+    return `${ip}:${req.params.id}`;
+  },
+  skip: (req) => !req.body?.password,
+  validate: { keyGeneratorIpFallback: false }, // req.ip нормализован через trust proxy
   message: {
     message: 'Too many failed join attempts',
     error: 'Too many incorrect password attempts for this conference. Try again in 15 minutes.'
