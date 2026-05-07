@@ -1,4 +1,6 @@
 const Conference = require('../models/Conference');
+const User = require('../models/User');
+const bcrypt = require('bcrypt');
 const { conferenceLimits } = require('../config/webrtc');
 
 /**
@@ -130,26 +132,29 @@ class ConferenceService {
         return { allowed: false, reason: 'Conference has not started yet' };
       }
 
-      // Check password
-      if (conference.password && conference.password !== password) {
-        return { allowed: false, reason: 'Incorrect password', requiresPassword: true };
+      // Check password (bcrypt-hashed)
+      if (conference.password) {
+        if (!password) {
+          return { allowed: false, reason: 'Password required', requiresPassword: true };
+        }
+        const passwordMatch = await bcrypt.compare(password, conference.password);
+        if (!passwordMatch) {
+          return { allowed: false, reason: 'Incorrect password', requiresPassword: true };
+        }
+      }
+
+      // Приватные конференции требуют верифицированного email (trust_level >= 1)
+      if (!conference.is_public) {
+        const user = await User.findById(userId);
+        if (!user || (user.trust_level || 0) < 1) {
+          return { allowed: false, reason: 'Email verification required', requiresVerification: true };
+        }
       }
 
       // Check participant limit
       const participantCount = await Conference.getParticipantCount(conferenceId);
       if (conference.max_participants && participantCount >= conference.max_participants) {
         return { allowed: false, reason: 'Conference is full' };
-      }
-
-      // Check if private and user is not invited
-      if (!conference.is_public) {
-        // TODO: Implement invitation system(on working)
-        if (userId.hasPermission = true){
-          return { allowed: true }
-        }
-        else{
-          return { allowed: false, reason: 'Conference is private' };
-        }
       }
 
       return { allowed: true };
@@ -298,13 +303,7 @@ class ConferenceService {
         endTime: new Date()
       });
 
-      // TODO: Notify all participants via socket that conference has ended
-      if (conference.endTime > currentTime) {
-        // Notify participants
-        console.log(`[ConferenceService] Notifying participants that conference ${conferenceId} has ended`);
-        return conference.endConference; // Example action
-      }
-
+      // TODO: notify participants via socket that conference has ended
       return true;
     } catch (error) {
       console.error('ConferenceService.endConference error:', error);
@@ -318,21 +317,9 @@ class ConferenceService {
    * @returns {Promise<number>} Number of deleted conferences
    */
   static async cleanupOldConferences(daysOld = 30) {
-    try {
-      // This would require a custom query in the Conference model
-      // For now, just log
-      console.log(`[ConferenceService] Cleanup task: Would delete conferences older than ${daysOld} days`);
-      
-      // TODO: Implement actual cleanup
-      const cutoffDate = new Date();
-      cutoffDate.setDate(cutoffDate.getDate() - daysOld);
-      return await Conference.deleteOlderThan(cutoffDate);
-      
-      return 0; // Placeholder
-    } catch (error) {
-      console.error('ConferenceService.cleanupOldConferences error:', error);
-      throw error;
-    }
+    // TODO: implement Conference.deleteOlderThan and wire this up to a scheduler.
+    console.log(`[ConferenceService] Cleanup task stub — would delete conferences older than ${daysOld} days`);
+    return 0;
   }
 
   /**
