@@ -390,4 +390,4 @@ docker compose down -v
 ## 📄 License
 This project is licensed under the **Polyform Noncommercial License 1.0.0**. 
 - **Personal/Educational use:** Free.
-- **Commercial use:** Requires a separate license. Contact [Твой Email].
+- **Commercial use:** Requires a separate license. Contact [axl214v@gmail.com].
