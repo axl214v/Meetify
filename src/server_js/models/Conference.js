@@ -482,39 +482,31 @@ const Conference = {
 
   // Проверка доступа к конференции (упрощенная версия)
   hasAccess: async (conferenceId, userId, password = null) => {
+    const bcrypt = require('bcrypt');
     const query = 'SELECT * FROM conferences WHERE id = ?';
 
     try {
       const [rows] = await db.promise().query(query, [conferenceId]);
       const conference = rows[0];
-      
-      if (!conference) {
-        return false;
-      }
+
+      if (!conference) return false;
 
       // Хост всегда имеет доступ
-      if (conference.host_id === userId) {
-        return true;
-      }
+      if (conference.host_id === userId) return true;
 
       // Проверяем, является ли пользователь участником
       const isParticipant = await Conference.isParticipant(conferenceId, userId);
-      if (isParticipant) {
-        return true;
-      }
+      if (isParticipant) return true;
+
+      // Только публичные доступны без приглашения
+      if (!conference.is_public) return false;
 
       // Публичная конференция без пароля
-      if (conference.is_public && !conference.password) {
-        return true;
-      }
+      if (!conference.password) return true;
 
-      // Публичная конференция с паролем
-      if (conference.is_public && conference.password) {
-        return password === conference.password;
-      }
-
-      // Приватная конференция - доступ запрещен
-      return false;
+      // Публичная конференция с паролем — сверяем bcrypt-хеш
+      if (!password) return false;
+      return await bcrypt.compare(password, conference.password);
     } catch (error) {
       console.error('Error checking conference access:', error);
       throw error;
