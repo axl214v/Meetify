@@ -286,10 +286,11 @@ static async confirmResetPassword(token, newPassword) {
   }
 
   static async resendVerificationByEmail(email) {
+    if (!email) return;
     const user = await User.findByEmail(email);
-    if (!user) return;
-
-    if (user.email_verified) throw new Error('Email already verified');
+    // Молча игнорируем несуществующий email и уже верифицированных,
+    // чтобы наружу не утекал статус почты. Контроллер всегда отдаёт 200.
+    if (!user || user.email_verified) return;
 
     const token   = crypto.randomBytes(32).toString('hex');
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
