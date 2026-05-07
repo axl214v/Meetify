@@ -196,9 +196,7 @@ const logout = async (req, res) => {
  
 const getCurrentUser = async (req, res) => {
     try {
-        console.log('[DEBUG] req.user:', req.user); 
         const userId = req.user.userId;
-        console.log('[DEBUG] userId:', userId);      
         const user = await AuthService.getCurrentUser(userId);
         res.json({ user });
     }catch (error) {
@@ -274,15 +272,14 @@ const resendVerification = async (req, res) => {
 };
 
 const resendVerificationPublic = async (req, res) => {
+    // Всегда 200 — не раскрываем ни существование email, ни статус верификации.
+    // Любые ошибки логируем, но клиенту отдаём один и тот же ответ.
     try {
-        await AuthService.resendVerificationByEmail(req.body.email);
-        // Всегда 200 — не раскрываем существует ли email
-        res.json({ message: 'If this email exists, a verification link has been sent.' });
+        await AuthService.resendVerificationByEmail(req.body?.email);
     } catch (e) {
-        if (e.message === 'Email already verified')
-            return res.status(400).json({ message: e.message });
-        res.status(500).json({ message: e.message });
+        console.error('[resendVerificationPublic]', e.message);
     }
+    res.json({ message: 'If this email exists, a verification link has been sent.' });
 };
 
 module.exports = {
