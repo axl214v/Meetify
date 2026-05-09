@@ -1,2 +1,21 @@
-# Claude Code specific files
 CLAUDE.md
+node_modules
+npm-debug.log
+.env
+.git
+.gitignore
+.vscode
+.idea
+logs/*.log
+*.log
+coverage
+.nyc_output
+.DS_Store
+Thumbs.db
+.git
+.gitignore
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+*.log
