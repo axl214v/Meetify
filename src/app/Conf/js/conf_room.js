@@ -19,6 +19,13 @@ let joinedConference = false;
 const remoteMediaStates = {};
 const roomScreenShareState = new Set();
 
+// Host / moderation state
+let isHost = false;
+let hostId = null;
+let coHosts = new Set();
+let chatBanned = new Set();
+const isModerator = () => isHost || coHosts.has(currentUser?.id);
+
 // WebRTC Configuration
 const rtcConfig = {
     iceServers: [
@@ -109,6 +116,9 @@ async function loadConferenceDetails() {
         if (!response.ok) throw new Error('Conference not found');
 
         const data = await response.json();
+
+        isHost = data.conference.isHost || false;
+        hostId = data.conference.host_id || null;
 
         // Прямой заход по URL без участия — редирект
         if (!data.conference.isParticipant && !data.conference.isHost) {
@@ -209,7 +219,9 @@ async function initSocket() {
     socket.on('room-participants', async ({ participants, roomState }) => {
         console.log('room-participants received:', JSON.stringify(participants), 'roomState:', roomState);
 
-        // Определяем опции медиа на основе состояния комнаты
+        if (roomState?.coHosts) coHosts = new Set(roomState.coHosts);
+        if (roomState?.chatBanned) chatBanned = new Set(roomState.chatBanned);
+
         let joinAudio = true;
         let joinVideo = true;
 
@@ -223,10 +235,8 @@ async function initSocket() {
             showNotification('Large room detected — microphone muted on join', 'info');
         }
 
-        // Инициализируем медиа только сейчас, когда знаем состояние комнаты
         await initLocalMedia({ audio: joinAudio, video: joinVideo });
 
-        // Создаём peer connections с уже существующими участниками
         for (const p of participants) {
             if (p.userId !== currentUser.id) {
                 await createPeerConnection(p.userId, true, p.userName);
@@ -312,6 +322,56 @@ async function initSocket() {
 
     socket.on('error', (err) => {
         console.error('Socket error:', err);
+    });
+
+    // Forced media change by host/co-host
+    socket.on('force-muted', ({ audio, video, screen }) => {
+        if (audio === false) setMicEnabled(false);
+        if (video === false) setCameraEnabled(false);
+        if (screen === false && isScreenSharing) stopScreenShare();
+        showNotification('Your media was muted by the host', 'warning');
+    });
+
+    // Chat ban/unban by host/co-host
+    socket.on('chat-banned', ({ banned }) => {
+        chat.setEnabled(!banned);
+        showNotification(
+            banned ? 'You have been banned from chat' : 'Your chat access has been restored',
+            banned ? 'warning' : 'info'
+        );
+    });
+
+    // Kicked from conference
+    socket.on('force-disconnect', ({ message }) => {
+        cleanupAndRedirect(message || 'You have been removed from the conference.');
+    });
+
+    // Rejected on re-join after kick
+    socket.on('join-rejected', () => {
+        cleanupAndRedirect('You have been kicked from this conference.');
+    });
+
+    // Another participant was kicked — update UI
+    socket.on('user-kicked', ({ userId: kickedUserId, kickerName }) => {
+        const el = document.getElementById(`video-${kickedUserId}`);
+        if (el) el.remove();
+        updateParticipantCount();
+        showNotification(`A participant was removed by ${kickerName}`, 'info');
+        loadParticipants();
+    });
+
+    // Co-host role update
+    socket.on('user-role-change', ({ userId: changedId, isCoHost }) => {
+        if (isCoHost) coHosts.add(changedId);
+        else coHosts.delete(changedId);
+        loadParticipants();
+    });
+
+    // Chat ban badge update for the room
+    socket.on('user-chat-banned', ({ userId: bannedId, banned }) => {
+        if (banned) chatBanned.add(bannedId);
+        else chatBanned.delete(bannedId);
+        loadParticipants();
     });
 }
 
@@ -423,40 +483,42 @@ function setupEventListeners() {
     document.getElementById('leaveBtn').addEventListener('click', leaveConference);
 }
 
-function toggleMicrophone() {
-    // Mute/unmute local microphone and broadcast state to peers
-    isAudioEnabled = !isAudioEnabled;
-    const audioTrack = localStream.getAudioTracks()[0];
+function setMicEnabled(enabled, { emit = true } = {}) {
+    isAudioEnabled = enabled;
+    const audioTrack = localStream?.getAudioTracks()[0];
     if (audioTrack) audioTrack.enabled = isAudioEnabled;
 
     const btn = document.getElementById('toggleMic');
     const status = document.getElementById('localMicStatus');
-    btn.classList.toggle('muted', !isAudioEnabled);
-    status.textContent = isAudioEnabled ? '🎤' : '🔇';
+    btn?.classList.toggle('muted', !isAudioEnabled);
+    if (status) status.textContent = isAudioEnabled ? '🎤' : '🔇';
 
-    socket?.emit('media-state-change', {
-        conferenceId,
-        audio: isAudioEnabled,
-        video: isVideoEnabled
-    });
+    if (emit) {
+        socket?.emit('media-state-change', { conferenceId, audio: isAudioEnabled, video: isVideoEnabled });
+    }
 }
 
-function toggleCamera() {
-    // Enable/disable local video and broadcast state to peers
-    isVideoEnabled = !isVideoEnabled;
-    const videoTrack = localStream.getVideoTracks()[0];
+function toggleMicrophone() {
+    setMicEnabled(!isAudioEnabled);
+}
+
+function setCameraEnabled(enabled, { emit = true } = {}) {
+    isVideoEnabled = enabled;
+    const videoTrack = localStream?.getVideoTracks()[0];
     if (videoTrack) videoTrack.enabled = isVideoEnabled;
 
     const btn = document.getElementById('toggleVideo');
     const status = document.getElementById('localVideoStatus');
-    btn.classList.toggle('off', !isVideoEnabled);
-    status.textContent = isVideoEnabled ? '📹' : '📵';
+    btn?.classList.toggle('off', !isVideoEnabled);
+    if (status) status.textContent = isVideoEnabled ? '📹' : '📵';
 
-    socket?.emit('media-state-change', {
-        conferenceId,
-        audio: isAudioEnabled,
-        video: isVideoEnabled
-    });
+    if (emit) {
+        socket?.emit('media-state-change', { conferenceId, audio: isAudioEnabled, video: isVideoEnabled });
+    }
+}
+
+function toggleCamera() {
+    setCameraEnabled(!isVideoEnabled);
 }
 
 async function toggleScreenShare() {
@@ -559,24 +621,52 @@ function renderParticipants(participants) {
     }
 
     participantsList.innerHTML = participants.map(p => {
+        const uid = p.user_id || p.userId;
         const name = p.username || p.userName || 'Unknown';
         const initials = getInitials(name);
-        const hostBadge = p.is_host || p.isHost ? ' 👑' : '';
+        const isParticipantHost = !!(p.is_host || p.isHost);
+        const isCoHost = coHosts.has(uid);
+        const isChatBanned = chatBanned.has(uid);
+        const isSelf = uid === currentUser?.id;
+        const canActOn = isModerator() && !isSelf && !isParticipantHost;
+        const canManageCoHost = isHost && !isSelf && !isParticipantHost;
+
+        const badges = [
+            isParticipantHost ? '👑' : '',
+            isCoHost && !isParticipantHost ? '🛡️' : '',
+            isChatBanned ? '🔇' : ''
+        ].filter(Boolean).join(' ');
+
         const avatarHtml = p.avatar_url
             ? `<img class="participant-avatar-img" src="${p.avatar_url}" alt="${escapeHtml(name)}">`
             : `<div class="participant-avatar-initials" style="background:${stringToColor(name)}">${initials}</div>`;
+
+        const actionMenu = canActOn ? `
+            <div class="mod-menu-wrap">
+                <button class="mod-menu-btn" onclick="toggleModMenu(this, ${uid})" title="Moderation options">⋮</button>
+                <div class="mod-menu" id="mod-menu-${uid}">
+                    <button onclick="hostForceMute(${uid}, 'audio')">🔇 Mute mic</button>
+                    <button onclick="hostForceMute(${uid}, 'video')">📵 Turn off camera</button>
+                    <button onclick="hostForceMute(${uid}, 'screen')">🖥️ Stop screen share</button>
+                    <button onclick="hostChatBan(${uid}, ${!isChatBanned})">${isChatBanned ? '💬 Unban chat' : '🚫 Ban from chat'}</button>
+                    ${canManageCoHost ? `<button onclick="${isCoHost ? 'hostDemoteCoHost' : 'hostPromoteCoHost'}(${uid})">${isCoHost ? '🛡️ Remove co-host' : '🛡️ Make co-host'}</button>` : ''}
+                    <button class="danger" onclick="hostKick(${uid}, '${escapeHtml(name).replace(/'/g, "\\'")}')">❌ Kick</button>
+                </div>
+            </div>
+        ` : '';
 
         return `
             <div class="participant-item">
                 <div class="participant-avatar">${avatarHtml}</div>
                 <div class="participant-info">
-                    <strong>${escapeHtml(name)}${hostBadge}</strong>
+                    <strong>${escapeHtml(name)} ${badges}</strong>
                     <small>Joined ${formatJoinTime(p.joined_at || p.joinedAt)}</small>
                 </div>
                 <div class="participant-media">
                     <div class="media-icon">🎤</div>
                     <div class="media-icon">📹</div>
                 </div>
+                ${actionMenu}
             </div>
         `;
     }).join('');
@@ -634,6 +724,80 @@ function startRoomTimer() {
     }, 1000);
 }
 
+function cleanupAndRedirect(reason) {
+    if (roomTimer) clearInterval(roomTimer);
+    if (localStream) localStream.getTracks().forEach(t => t.stop());
+    if (screenStream) screenStream.getTracks().forEach(t => t.stop());
+    Object.values(peers).forEach(p => p.close());
+    peers = {};
+    if (socket) socket.disconnect();
+    alert(reason);
+    window.location.href = 'conf.html';
+}
+
+// ============================================================
+// Moderation actions (called from participant list HTML)
+// ============================================================
+
+function toggleModMenu(btn, targetUserId) {
+    document.querySelectorAll('.mod-menu').forEach(m => {
+        if (m.id !== `mod-menu-${targetUserId}`) m.style.display = 'none';
+    });
+    const menu = document.getElementById(`mod-menu-${targetUserId}`);
+    if (!menu) return;
+    const isOpen = menu.style.display === 'block';
+    menu.style.display = isOpen ? 'none' : 'block';
+
+    if (!isOpen) {
+        const closeOutside = (e) => {
+            if (!btn.closest('.mod-menu-wrap').contains(e.target)) {
+                menu.style.display = 'none';
+                document.removeEventListener('click', closeOutside);
+            }
+        };
+        setTimeout(() => document.addEventListener('click', closeOutside), 0);
+    }
+}
+
+function closeAllModMenus() {
+    document.querySelectorAll('.mod-menu').forEach(m => m.style.display = 'none');
+}
+
+function hostForceMute(targetUserId, type) {
+    closeAllModMenus();
+    const payload = { conferenceId, targetUserId };
+    if (type === 'audio') payload.audio = false;
+    else if (type === 'video') payload.video = false;
+    else if (type === 'screen') payload.screen = false;
+    socket?.emit('host:force-media', payload);
+}
+
+function hostChatBan(targetUserId, banned) {
+    closeAllModMenus();
+    socket?.emit('host:chat-ban', { conferenceId, targetUserId, banned });
+    // Optimistic update — confirmed via user-chat-banned broadcast
+    if (banned) chatBanned.add(targetUserId);
+    else chatBanned.delete(targetUserId);
+    loadParticipants();
+}
+
+async function hostKick(targetUserId, targetName) {
+    closeAllModMenus();
+    const confirmed = await showConfirm(`Kick ${targetName} from the conference?`, 'Kick', 'danger');
+    if (!confirmed) return;
+    socket?.emit('host:kick', { conferenceId, targetUserId });
+}
+
+function hostPromoteCoHost(targetUserId) {
+    closeAllModMenus();
+    socket?.emit('host:promote-co-host', { conferenceId, targetUserId });
+}
+
+function hostDemoteCoHost(targetUserId) {
+    closeAllModMenus();
+    socket?.emit('host:demote-co-host', { conferenceId, targetUserId });
+}
+
 async function leaveConference() {
     const confirmed = await showConfirm('Leave this conference?', 'Leave', 'danger');
     if (!confirmed) return;
@@ -667,3 +831,9 @@ window.addEventListener('beforeunload', () => {
 
 window.closeSidebar = closeSidebar;
 window.sendMessage = sendMessage;
+window.toggleModMenu = toggleModMenu;
+window.hostForceMute = hostForceMute;
+window.hostChatBan = hostChatBan;
+window.hostKick = hostKick;
+window.hostPromoteCoHost = hostPromoteCoHost;
+window.hostDemoteCoHost = hostDemoteCoHost;

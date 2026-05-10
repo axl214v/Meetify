@@ -534,6 +534,73 @@
         }
 
         /* ============================================ */
+        /* Moderation menu                              */
+        /* ============================================ */
+
+        .mod-menu-wrap {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .mod-menu-btn {
+            background: none;
+            border: none;
+            color: var(--room-muted, #64748b);
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 2px 6px;
+            border-radius: 6px;
+            line-height: 1;
+            transition: background 0.15s, color 0.15s;
+        }
+
+        .mod-menu-btn:hover {
+            background: rgba(255,255,255,0.08);
+            color: var(--room-text, #f1f5f9);
+        }
+
+        .mod-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: calc(100% + 4px);
+            background: #1c2540;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            min-width: 180px;
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .mod-menu button {
+            display: block;
+            width: 100%;
+            text-align: left;
+            background: none;
+            border: none;
+            color: #cbd5e1;
+            padding: 0.6rem 1rem;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.12s;
+        }
+
+        .mod-menu button:hover {
+            background: rgba(255,255,255,0.07);
+            color: #f1f5f9;
+        }
+
+        .mod-menu button.danger {
+            color: #fca5a5;
+        }
+
+        .mod-menu button.danger:hover {
+            background: rgba(239,68,68,0.12);
+        }
+
+        /* ============================================ */
         /* Chat                                         */
         /* ============================================ */
 
