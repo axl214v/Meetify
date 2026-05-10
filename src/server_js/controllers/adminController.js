@@ -2,6 +2,7 @@ const db = require('../config/database');
 const os = require('os');
 const Conference = require('../models/Conference');
 const EmailService = require('../services/emailService');
+const { forceDisconnectUser } = require('../sockets/conferenceSocket');
 
 const adminController = {
 
@@ -208,6 +209,8 @@ const adminController = {
     kickParticipant: async (req, res) => {
         try {
             await Conference.removeParticipant(req.params.id, req.params.userId);
+            const io = req.app.get('io');
+            if (io) forceDisconnectUser(io, parseInt(req.params.userId), parseInt(req.params.id));
             res.json({ success: true });
         } catch (e) {
             res.status(500).json({ error: e.message });
