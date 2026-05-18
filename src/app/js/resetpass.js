@@ -46,38 +46,12 @@ document.getElementById('submitBtn')?.addEventListener('click', async function (
 
         const data = await response.json();
 
-        if (response.ok) {
+        if (response.ok || response.status === 404) {
+            // Always show success — don't reveal whether email is registered
             emailInput.classList.add('success');
-
-            // Show success block
             document.getElementById('requestForm').style.display = 'none';
             document.getElementById('successBlock').style.display = 'block';
             document.getElementById('sentToEmail').textContent = email;
-
-            // DEV MODE — show reset link directly
-            if (data.resetLink) {
-                document.getElementById('devBlock').style.display = 'block';
-                document.getElementById('resetLink').textContent = data.resetLink;
-
-                document.getElementById('copyLinkBtn').addEventListener('click', () => {
-                    navigator.clipboard.writeText(data.resetLink).then(() => {
-                        const copyBtn = document.getElementById('copyLinkBtn');
-                        copyBtn.textContent = 'Copied!';
-                        setTimeout(() => copyBtn.textContent = 'Copy', 2000);
-                    });
-                });
-            } else {
-                // Production — hide dev block
-                document.getElementById('devBlock').style.display = 'none';
-            }
-
-        } else if (response.status === 404) {
-            // Don't reveal if email exists — security best practice
-            // Show success anyway
-            document.getElementById('requestForm').style.display = 'none';
-            document.getElementById('successBlock').style.display = 'block';
-            document.getElementById('sentToEmail').textContent = email;
-            document.getElementById('devBlock').style.display = 'none';
         } else {
             showMsg(data.message || 'Failed to send reset link. Please try again.');
         }

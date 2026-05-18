@@ -51,18 +51,8 @@
                 <div class="reset-success-block">
                     <div class="reset-icon">📧</div>
                     <h3>Check your email</h3>
-                    <p>A password reset link has been sent to <strong id="sentToEmail">—</strong></p>
-                    <p class="reset-hint">The link expires in <strong>1 hour</strong>.</p>
-
-                    <!-- DEV MODE — no email service yet -->
-                    <div id="devBlock" class="dev-block">
-                        <span class="dev-label">🛠 Dev mode — no email service yet</span>
-                        <p class="dev-hint">Copy this link manually:</p>
-                        <div class="dev-link-wrapper">
-                            <code id="resetLink" class="dev-link">—</code>
-                            <button class="copy-btn" id="copyLinkBtn">Copy</button>
-                        </div>
-                    </div>
+                    <p>If <strong id="sentToEmail">—</strong> is registered, a reset link is on its way.</p>
+                    <p class="reset-hint">The link expires in <strong>1 hour</strong>. Check your spam folder if you don't see it.</p>
                 </div>
             </div>
 
@@ -86,31 +76,6 @@
         .reset-success-block p { font-size: 0.88rem; color: var(--text-2); margin-bottom: 0.5rem; }
         .reset-success-block strong { color: var(--text); }
         .reset-hint { font-size: 0.8rem !important; color: var(--text-3) !important; }
-
-        .dev-block {
-            margin-top: 1.25rem;
-            background: rgba(245,158,11,0.06);
-            border: 1px solid rgba(245,158,11,0.2);
-            border-radius: var(--radius);
-            padding: 1rem;
-            text-align: left;
-        }
-        .dev-label { display: block; font-size: 0.75rem; font-weight: 600; color: #fbbf24; margin-bottom: 0.5rem; }
-        .dev-hint { font-size: 0.78rem !important; color: var(--text-3) !important; margin-bottom: 0.5rem !important; }
-        .dev-link-wrapper { display: flex; gap: 0.5rem; align-items: flex-start; }
-        .dev-link {
-            flex: 1; font-family: var(--font-mono); font-size: 0.72rem; color: #60a5fa;
-            word-break: break-all; background: var(--bg-2); border: 1px solid var(--border);
-            border-radius: 6px; padding: 0.5rem 0.7rem; display: block;
-        }
-        .copy-btn {
-            background: rgba(59,130,246,0.12); color: #60a5fa;
-            border: 1px solid rgba(59,130,246,0.25); border-radius: 6px;
-            padding: 0.5rem 0.8rem; font-size: 0.78rem; font-weight: 600;
-            font-family: var(--font); cursor: pointer; white-space: nowrap;
-            min-height: auto; flex-shrink: 0; transition: all 0.15s;
-        }
-        .copy-btn:hover { background: rgba(59,130,246,0.2); transform: none; box-shadow: none; }
     </style>
 
     <script src="/js/theme.js"></script>
