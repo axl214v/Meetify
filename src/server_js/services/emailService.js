@@ -81,6 +81,27 @@ class EmailService {
         });
     }
 
+    // Письмо со ссылкой для сброса пароля
+    static async sendPasswordResetEmail(user, resetLink) {
+        return EmailService.send({
+            to: user.email,
+            subject: 'Reset your Meetify password',
+            html: `
+                <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0d1220;color:#f1f5f9;border-radius:12px">
+                    <h2 style="color:#60a5fa;margin-bottom:8px">Password Reset</h2>
+                    <p style="color:#94a3b8;margin-bottom:8px">We received a request to reset the password for your Meetify account.</p>
+                    <p style="color:#94a3b8;margin-bottom:24px">Click the button below to set a new password:</p>
+                    <a href="${resetLink}" style="display:inline-block;padding:12px 28px;background:#3b82f6;color:#fff;
+                        text-decoration:none;border-radius:8px;font-weight:600">Reset Password</a>
+                    <p style="color:#475569;font-size:12px;margin-top:24px">
+                        This link expires in <strong style="color:#94a3b8">1 hour</strong>.
+                        If you didn't request a password reset, you can safely ignore this email.
+                    </p>
+                </div>
+            `
+        });
+    }
+
     // Тест SMTP соединения
     static async testConnection(settings) {
         try {
