@@ -73,6 +73,19 @@ const refreshLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Лимитер для сброса пароля
+// 5 запросов за час с одного IP (skipSuccessful — считаем только ошибки)
+const forgotPasswordLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  message: {
+    message: 'If this email exists, a reset link has been sent.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+});
+
 // Лимитер для публичного resend-verification
 // 3 запроса за час с одного IP — silent ответ не раскрывает факт существования email
 const resendVerificationLimiter = rateLimit({
@@ -90,7 +103,7 @@ const resendVerificationLimiter = rateLimit({
 
 router.post('/register', registerLimiter, register);
 router.post('/login', authLimiter, login);
-router.post('/forgot-password', forgotPassword);
+router.post('/forgot-password', forgotPasswordLimiter, forgotPassword);
 router.get('/reset-password/validate', validateResetToken);
 router.post('/reset-password/confirm', confirmResetPassword);
 router.post('/refresh', refreshLimiter, refreshToken);

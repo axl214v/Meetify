@@ -198,31 +198,21 @@ class AuthService {
   static async forgotPassword(email) {
     const crypto = require('crypto');
     const config = require('../config/config');
- 
-    // Find user — don't throw if not found (security)
+    const EmailService = require('./emailService');
+
     const user = await User.findByEmail(email);
-    if (!user) {
-        return { resetLink: null }; // silent — don't reveal email existence
-    }
- 
-    // Generate secure token
+    if (!user) return; // silent — don't reveal email existence
+
     const token = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
- 
-    // Save token to DB
+
     await db.promise().execute(
         'INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)',
         [user.id, token, expiresAt]
     );
- 
-    // Build reset URL
+
     const resetLink = `${config.client.url}/auth/resetpass-confirm.html?token=${token}`;
- 
-    // TODO: When email service is ready, send email here:
-    // await EmailService.sendPasswordReset(email, resetLink);
- 
-    // DEV MODE: return link directly (remove resetLink in production)
-    return { resetLink };
+    await EmailService.sendPasswordResetEmail(user, resetLink);
 }
  
 static async validateResetToken(token) {
