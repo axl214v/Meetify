@@ -153,6 +153,11 @@ function createConferenceCard(conf) {
         </div>
         ${conf.description ? `<p class="card-description">${escapeHtml(conf.description)}</p>` : ''}
         <div class="card-info">
+            ${isHost ? `
+            <div class="info-item">
+                <span class="info-label">Conference ID:</span>
+                <span class="conf-id-value">#${conf.id}</span>
+            </div>` : ''}
             <div class="info-item">
                 <span class="info-label">Host:</span>
                 <span>${escapeHtml(conf.host_username || conf.host_email || 'Unknown')}</span>
@@ -295,10 +300,104 @@ function showPasswordPrompt() {
     });
 }
 
-// Edit conference
-function editConference(conferenceId) {
-    showNotification('Edit functionality coming soon!', 'info');
+// Edit conference — open modal with current data
+async function editConference(conferenceId) {
+    try {
+        const response = await fetch(`${API_BASE}/api/conferences/${conferenceId}`, {
+            credentials: 'include'
+        });
+        if (!response.ok) throw new Error('Failed to load conference');
+        const data = await response.json();
+        const conf = data.conference || data;
+
+        document.getElementById('editConfId').value = conf.id;
+        document.getElementById('editName').value = conf.name || '';
+        document.getElementById('editDescription').value = conf.description || '';
+        document.getElementById('editMaxParticipants').value = conf.max_participants || '';
+        document.getElementById('editIsPublic').checked = !!conf.is_public;
+        document.getElementById('editStartTime').value = toDatetimeLocal(conf.start_time);
+        document.getElementById('editEndTime').value = toDatetimeLocal(conf.end_time);
+        document.getElementById('editChangePassword').checked = false;
+        document.getElementById('editPassword').value = '';
+        document.getElementById('editPasswordGroup').style.display = 'none';
+
+        document.getElementById('editModal').style.display = 'flex';
+    } catch (err) {
+        console.error('editConference error:', err);
+        showNotification('Failed to load conference data.', 'error');
+    }
 }
+
+function closeEditModal() {
+    document.getElementById('editModal').style.display = 'none';
+}
+
+function togglePasswordField() {
+    const show = document.getElementById('editChangePassword').checked;
+    document.getElementById('editPasswordGroup').style.display = show ? 'block' : 'none';
+    if (!show) document.getElementById('editPassword').value = '';
+}
+
+function toDatetimeLocal(isoString) {
+    if (!isoString) return '';
+    const d = new Date(isoString);
+    // format: YYYY-MM-DDTHH:MM
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('editForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('editConfId').value;
+        const submitBtn = document.getElementById('editSubmitBtn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving…';
+
+        const body = {
+            name: document.getElementById('editName').value.trim(),
+            description: document.getElementById('editDescription').value.trim() || null,
+            maxParticipants: document.getElementById('editMaxParticipants').value
+                ? parseInt(document.getElementById('editMaxParticipants').value)
+                : null,
+            isPublic: document.getElementById('editIsPublic').checked,
+            startTime: document.getElementById('editStartTime').value || null,
+            endTime: document.getElementById('editEndTime').value || null,
+        };
+
+        if (document.getElementById('editChangePassword').checked) {
+            body.password = document.getElementById('editPassword').value || null;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/api/conferences/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(body)
+            });
+            const data = await response.json();
+            if (response.ok) {
+                showNotification('Conference updated successfully', 'success');
+                closeEditModal();
+                loadConferences();
+            } else {
+                showNotification(data.message || 'Failed to update conference', 'error');
+            }
+        } catch (err) {
+            console.error('Update conference error:', err);
+            showNotification('Network error. Please try again.', 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Save Changes';
+        }
+    });
+
+    // Close modal on overlay click
+    document.getElementById('editModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('editModal')) closeEditModal();
+    });
+});
 
 // Delete conference
 async function deleteConference(conferenceId) {
