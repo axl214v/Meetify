@@ -98,6 +98,69 @@
         <p>&copy; 2024 Meetify. All rights reserved.</p>
     </footer>
 
+    <!-- Edit Conference Modal -->
+    <div id="editModal" class="modal-overlay" style="display:none;">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2>Edit Conference</h2>
+                <button class="modal-close" onclick="closeEditModal()">✕</button>
+            </div>
+            <form id="editForm" class="modal-form">
+                <input type="hidden" id="editConfId">
+
+                <div class="form-group">
+                    <label for="editName">Name <span class="required">*</span></label>
+                    <input type="text" id="editName" maxlength="100" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="editDescription">Description</label>
+                    <textarea id="editDescription" rows="3" maxlength="500"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editMaxParticipants">Max Participants</label>
+                        <input type="number" id="editMaxParticipants" min="2" max="100">
+                    </div>
+                    <div class="form-group form-group--checkbox">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="editIsPublic">
+                            Public conference
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editStartTime">Start Time</label>
+                        <input type="datetime-local" id="editStartTime">
+                    </div>
+                    <div class="form-group">
+                        <label for="editEndTime">End Time</label>
+                        <input type="datetime-local" id="editEndTime">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="editChangePassword" onchange="togglePasswordField()">
+                        Change password
+                    </label>
+                </div>
+                <div class="form-group" id="editPasswordGroup" style="display:none;">
+                    <label for="editPassword">New Password <span class="field-hint">(leave empty to remove)</span></label>
+                    <input type="password" id="editPassword" maxlength="100" placeholder="Leave empty to remove password">
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="secondary" onclick="closeEditModal()">Cancel</button>
+                    <button type="submit" id="editSubmitBtn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="/js/theme.js"></script>
     <script src="/Conf/js/conf_utils.js"></script>
     <script src="/Conf/js/conf.js"></script>
