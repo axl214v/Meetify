@@ -201,7 +201,7 @@ class AuthService {
     const EmailService = require('./emailService');
 
     const user = await User.findByEmail(email);
-    if (!user) return; // silent — don't reveal email existence
+    if (!user) return {}; // silent — don't reveal email existence
 
     const token = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
@@ -213,6 +213,7 @@ class AuthService {
 
     const resetLink = `${config.client.url}/auth/resetpass-confirm.html?token=${token}`;
     await EmailService.sendPasswordResetEmail(user, resetLink);
+    return { resetLink };
 }
  
 static async validateResetToken(token) {
