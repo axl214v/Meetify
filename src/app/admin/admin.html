@@ -68,7 +68,10 @@
                     <h1>Overview</h1>
                     <p class="panel-sub" id="lastUpdated">Loading...</p>
                 </div>
-                <button class="btn-refresh" id="refreshOverview">↻ Refresh</button>
+                <div class="header-controls">
+                    <span class="auto-refresh-label" id="overviewCountdown"></span>
+                    <button class="btn-refresh" id="refreshOverview">↻ Refresh</button>
+                </div>
             </header>
 
             <div class="stat-grid">
@@ -90,6 +93,26 @@
                 <div class="stat-card" id="stat-joins">
                     <div class="stat-label">Total Joins</div>
                     <div class="stat-value" id="statJoins">—</div>
+                    <div class="stat-bar"><div class="stat-bar-fill"></div></div>
+                </div>
+                <div class="stat-card" id="stat-verified">
+                    <div class="stat-label">Verified Users</div>
+                    <div class="stat-value" id="statVerified">—</div>
+                    <div class="stat-bar"><div class="stat-bar-fill stat-bar-green"></div></div>
+                </div>
+                <div class="stat-card accent-green" id="stat-sockets">
+                    <div class="stat-label">Live Connections</div>
+                    <div class="stat-value" id="statSockets">—</div>
+                    <div class="stat-pulse stat-pulse-green"></div>
+                </div>
+                <div class="stat-card" id="stat-public">
+                    <div class="stat-label">Public Conferences</div>
+                    <div class="stat-value" id="statPublic">—</div>
+                    <div class="stat-bar"><div class="stat-bar-fill"></div></div>
+                </div>
+                <div class="stat-card" id="stat-avg">
+                    <div class="stat-label">Avg Participants</div>
+                    <div class="stat-value" id="statAvg">—</div>
                     <div class="stat-bar"><div class="stat-bar-fill"></div></div>
                 </div>
             </div>
@@ -186,9 +209,12 @@
             <header class="panel-header">
                 <div>
                     <h1>Server</h1>
-                    <p class="panel-sub">Runtime metrics</p>
+                    <p class="panel-sub" id="serverLastUpdated">Runtime metrics</p>
                 </div>
-                <button class="btn-refresh" id="refreshServer">↻ Refresh</button>
+                <div class="header-controls">
+                    <span class="auto-refresh-label" id="serverCountdown"></span>
+                    <button class="btn-refresh" id="refreshServer">↻ Refresh</button>
+                </div>
             </header>
 
             <div class="server-grid">

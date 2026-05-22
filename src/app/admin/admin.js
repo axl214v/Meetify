@@ -7,6 +7,47 @@ const state = {
     users: { page: 0, total: 0, search: '' }
 };
 
+// ── Auto-refresh ────────────────────────────────────────────────────────
+const autoRefresh = {
+    overview: { intervalId: null, countdownId: null, seconds: 30, remaining: 30, elId: 'overviewCountdown' },
+    server:   { intervalId: null, countdownId: null, seconds: 15, remaining: 15, elId: 'serverCountdown' },
+};
+
+function startAutoRefresh(key, loadFn) {
+    const cfg = autoRefresh[key];
+    stopAutoRefresh(key);
+    cfg.remaining = cfg.seconds;
+
+    cfg.intervalId = setInterval(() => {
+        if (document.hidden) return;
+        cfg.remaining = cfg.seconds;
+        loadFn();
+    }, cfg.seconds * 1000);
+
+    cfg.countdownId = setInterval(() => {
+        if (document.hidden) return;
+        cfg.remaining--;
+        if (cfg.remaining < 0) cfg.remaining = cfg.seconds;
+        const el = document.getElementById(cfg.elId);
+        if (el) el.textContent = `↻ ${cfg.remaining}s`;
+    }, 1000);
+
+    const el = document.getElementById(cfg.elId);
+    if (el) el.textContent = `↻ ${cfg.remaining}s`;
+}
+
+function stopAutoRefresh(key) {
+    const cfg = autoRefresh[key];
+    if (cfg.intervalId)   { clearInterval(cfg.intervalId);   cfg.intervalId   = null; }
+    if (cfg.countdownId)  { clearInterval(cfg.countdownId);  cfg.countdownId  = null; }
+    const el = document.getElementById(cfg.elId);
+    if (el) el.textContent = '';
+}
+
+function resetCountdown(key) {
+    autoRefresh[key].remaining = autoRefresh[key].seconds;
+}
+
 // ── Init ───────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
     await guardAdmin();
@@ -14,6 +55,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupThemeToggle();
     loadOverview();
     loadServerStats();
+    startAutoRefresh('overview', loadOverview);
+    startAutoRefresh('server', loadServerStats);
 
     // Tabs
     document.querySelectorAll('.nav-item').forEach(btn => {
@@ -21,18 +64,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // Refresh buttons
-    document.getElementById('refreshOverview').addEventListener('click', loadOverview);
+    document.getElementById('refreshOverview').addEventListener('click', () => {
+        resetCountdown('overview');
+        loadOverview();
+    });
     document.getElementById('refreshConfs').addEventListener('click',    () => loadConferences(0));
     document.getElementById('refreshUsers').addEventListener('click',    () => loadUsers(0));
-    document.getElementById('refreshServer').addEventListener('click',   loadServerStats);
+    document.getElementById('refreshServer').addEventListener('click',   () => {
+        resetCountdown('server');
+        loadServerStats();
+    });
     document.getElementById('refreshSettings').addEventListener('click', loadSmtpSettings);
     document.getElementById('saveSmtp').addEventListener('click',      saveSmtpSettings);
     document.getElementById('testSmtp').addEventListener('click',      testSmtpConnection);
     document.getElementById('sendTestEmail').addEventListener('click',  sendTestEmail);
-
-    // Lazy load settings tab
-    // В switchTab добавить:
-    if (tab === 'settings' && !document.getElementById('smtpHost').value) loadSmtpSettings();
 
     // Search (debounced)
     document.getElementById('confSearch').addEventListener('input',  debounce(e => {
@@ -67,9 +112,16 @@ function switchTab(tab) {
     document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === `tab-${tab}`));
 
+    // Stop all auto-refresh, restart relevant ones
+    stopAutoRefresh('overview');
+    stopAutoRefresh('server');
+    if (tab === 'overview') startAutoRefresh('overview', loadOverview);
+    if (tab === 'server')   startAutoRefresh('server', loadServerStats);
+
     // Lazy load on first visit
     if (tab === 'conferences' && state.conf.total === 0)   loadConferences(0);
     if (tab === 'users'       && state.users.total === 0)  loadUsers(0);
+    if (tab === 'settings') loadSmtpSettings();
 }
 
 function setupNav() {}  // placeholder — tabs wired in DOMContentLoaded
@@ -96,6 +148,10 @@ async function loadOverview() {
         document.getElementById('statConferences').textContent   = fmt(stats.conferences);
         document.getElementById('statActive').textContent        = fmt(stats.activeConferences);
         document.getElementById('statJoins').textContent         = fmt(stats.totalJoins);
+        document.getElementById('statVerified').textContent      = fmt(stats.verifiedUsers);
+        document.getElementById('statSockets').textContent       = fmt(stats.socketConnections);
+        document.getElementById('statPublic').textContent        = fmt(stats.publicConferences);
+        document.getElementById('statAvg').textContent           = stats.avgParticipants ?? '0';
         document.getElementById('lastUpdated').textContent       = 'Updated ' + new Date().toLocaleTimeString();
 
         renderMiniTable('recentUsersTable', recentUsers, u => `
@@ -438,6 +494,9 @@ async function loadServerStats() {
         document.getElementById('load1').textContent  = l1.toFixed(2);
         document.getElementById('load5').textContent  = l5.toFixed(2);
         document.getElementById('load15').textContent = l15.toFixed(2);
+
+        const sub = document.getElementById('serverLastUpdated');
+        if (sub) sub.textContent = 'Updated ' + new Date().toLocaleTimeString();
 
     } catch (e) {
         toast('Failed to load server stats: ' + e.message, 'error');
