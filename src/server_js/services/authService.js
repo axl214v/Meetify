@@ -207,6 +207,11 @@ class AuthService {
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
     await db.promise().execute(
+        'UPDATE password_reset_tokens SET used = TRUE WHERE user_id = ? AND used = FALSE',
+        [user.id]
+    );
+
+    await db.promise().execute(
         'INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)',
         [user.id, token, expiresAt]
     );
