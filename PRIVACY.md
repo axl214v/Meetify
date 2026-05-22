@@ -51,7 +51,7 @@ You have the right to:
 - **Correct** inaccurate data via your profile settings
 - **Delete** your account and all associated data via your profile settings, or by emailing us
 
-To exercise any of these rights, email **privacy@meetify.cc**. We will respond within 30 days.
+To exercise any of these rights, email **privacy@meetify.cc**. We will respond within one month as required by applicable law.
 
 ---
 
@@ -60,6 +60,26 @@ To exercise any of these rights, email **privacy@meetify.cc**. We will respond w
 - Passwords are hashed with **bcrypt** (cost factor 10) and never stored in plaintext
 - All connections use **HTTPS**
 - Authentication uses short-lived **JWT** tokens stored in `httpOnly` cookies
+
+---
+
+## Legal basis for processing (GDPR Art. 6)
+
+We process your personal data on the basis of **contract performance** (Art. 6(1)(b) GDPR): your email address and password are strictly necessary to create and operate your account. Without this data, the service cannot function.
+
+We do not process data for any purpose beyond what is required to deliver the service.
+
+---
+
+## Minimum age
+
+You must be at least **16 years old** to create an account. By registering, you confirm that you meet this requirement. If we become aware that a user is under 16, we will delete their account and all associated data without delay.
+
+---
+
+## Data breach notification
+
+In the event of a data breach that poses a risk to your rights, we will notify the competent supervisory authority within 72 hours and inform affected users without undue delay.
 
 ---
 
