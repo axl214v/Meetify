@@ -12,6 +12,12 @@ Meetify is a free video conferencing platform operated by an independent develop
 
 ---
 
+## Eligibility
+
+You must be at least **16 years old** to use Meetify. By creating an account, you confirm that you meet this requirement.
+
+---
+
 ## Your account
 
 - You must provide a valid email address to register.
