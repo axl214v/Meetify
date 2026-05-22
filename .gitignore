@@ -20,3 +20,4 @@ Thumbs.db
 Thumbs.db
 *.log
 .claude
+deploy.sh
