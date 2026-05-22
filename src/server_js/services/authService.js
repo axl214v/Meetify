@@ -247,6 +247,17 @@ static async confirmResetPassword(token, newPassword) {
     );
 }
 
+  static async changePassword(userId, currentPassword, newPassword) {
+    const user = await User.findById(userId);
+    if (!user) throw new Error('User not found');
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) throw new Error('Current password is incorrect');
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await User.update(userId, { password: hashed });
+  }
+
   // Валидация данных для регистрации
   static validateRegistrationData(userData) {
     const errors = [];
