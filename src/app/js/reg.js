@@ -52,6 +52,7 @@ document.getElementById('submit')?.addEventListener('click', async function (e) 
     const name     = nameInput.value.trim();
     const email    = emailInput.value.trim();
     const password = passwordInput.value.trim();
+    const consent  = document.getElementById('consent')?.checked;
 
     // Reset states
     nameInput.classList.remove('error', 'success');
@@ -66,6 +67,13 @@ document.getElementById('submit')?.addEventListener('click', async function (e) 
         if (!password) passwordInput.classList.add('error');
         return;
     }
+
+    if (!consent) {
+        showMsg('Please agree to the Terms of Service and Privacy Policy.');
+        document.getElementById('consent')?.closest('.form-group-consent')?.classList.add('consent-error');
+        return;
+    }
+    document.getElementById('consent')?.closest('.form-group-consent')?.classList.remove('consent-error');
 
     if (!validateName(name)) {
         showMsg('Name must be at least 2 characters and contain only letters.');
