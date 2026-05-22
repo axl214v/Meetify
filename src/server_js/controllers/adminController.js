@@ -8,18 +8,29 @@ const adminController = {
 
     getStats: async (req, res) => {
         try {
-            const [[{ users }]]       = await db.promise().query('SELECT COUNT(*) as users FROM users');
-            const [[{ conferences }]] = await db.promise().query('SELECT COUNT(*) as conferences FROM conferences');
-            const [[{ active }]]      = await db.promise().query(`
+            const [[{ users }]]        = await db.promise().query('SELECT COUNT(*) as users FROM users');
+            const [[{ conferences }]]  = await db.promise().query('SELECT COUNT(*) as conferences FROM conferences');
+            const [[{ active }]]       = await db.promise().query(`
                 SELECT COUNT(*) as active FROM conferences
                 WHERE (end_time IS NULL OR end_time >= NOW())
                 AND (start_time IS NULL OR start_time <= NOW())
             `);
-            const [[{ joins }]]       = await db.promise().query('SELECT COUNT(*) as joins FROM conference_members');
-            const [recentUsers]       = await db.promise().query(
+            const [[{ joins }]]        = await db.promise().query('SELECT COUNT(*) as joins FROM conference_members');
+            const [[{ verified }]]     = await db.promise().query('SELECT COUNT(*) as verified FROM users WHERE email_verified = TRUE');
+            const [[{ publicConfs }]]  = await db.promise().query('SELECT COUNT(*) as publicConfs FROM conferences WHERE is_public = 1');
+            const [[{ ended }]]        = await db.promise().query('SELECT COUNT(*) as ended FROM conferences WHERE end_time IS NOT NULL AND end_time < NOW()');
+            const [[{ avgPart }]]      = await db.promise().query(`
+                SELECT ROUND(AVG(cnt), 1) as avgPart FROM (
+                    SELECT conference_id, COUNT(*) as cnt FROM conference_members GROUP BY conference_id
+                ) t
+            `);
+
+            const socketConnections = req.app.get('io')?.engine?.clientsCount || 0;
+
+            const [recentUsers] = await db.promise().query(
                 'SELECT id, email, username, role, created_at FROM users ORDER BY created_at DESC LIMIT 5'
             );
-            const [recentConfs]       = await db.promise().query(`
+            const [recentConfs] = await db.promise().query(`
                 SELECT c.id, c.name, u.username as host, c.created_at
                 FROM conferences c
                 LEFT JOIN users u ON c.host_id = u.id
@@ -27,7 +38,12 @@ const adminController = {
             `);
 
             res.json({
-                stats: { users, conferences, activeConferences: active, totalJoins: joins },
+                stats: {
+                    users, conferences, activeConferences: active, totalJoins: joins,
+                    verifiedUsers: verified, publicConferences: publicConfs,
+                    endedConferences: ended, avgParticipants: avgPart || 0,
+                    socketConnections
+                },
                 recentUsers,
                 recentConferences: recentConfs
             });
