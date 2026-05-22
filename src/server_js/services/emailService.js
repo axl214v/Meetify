@@ -35,14 +35,20 @@ class EmailService {
     // Отправить письмо
     static async send({ to, subject, html }) {
         try {
-            const transport = await EmailService.createTransport();
+            const s = await EmailService.getSmtpSettings();
 
-            if (!transport) {
+            if (s.smtp_enabled !== 'true' || !s.smtp_user || !s.smtp_password) {
                 console.log('[Email] SMTP disabled or not configured — skipping send');
                 return { sent: false, reason: 'smtp_disabled' };
             }
 
-            const s = await EmailService.getSmtpSettings();
+            const transport = nodemailer.createTransport({
+                host:   s.smtp_host,
+                port:   parseInt(s.smtp_port) || 587,
+                secure: s.smtp_secure === 'true',
+                auth:   { user: s.smtp_user, pass: s.smtp_password }
+            });
+
             await transport.sendMail({
                 from: s.smtp_from || 'Meetify <noreply@meetify.com>',
                 to,
