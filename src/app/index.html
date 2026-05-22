@@ -44,17 +44,21 @@
     <!-- Hero -->
     <main>
         <section class="hero">
-            <div class="hero-badge">✨ Free &amp; Open Source</div>
+            <div class="hero-badge">✨ Free to Use</div>
             <h1 class="hero-title">Video Conferences<br>Made Simple</h1>
             <p class="hero-sub">
-                Connect with anyone, anywhere. High-quality video, real-time chat,
-                screen sharing — all in your browser. No plugins, no fees.
+                Connect with anyone, anywhere. High-quality video and real-time chat
+                — all in your browser. No plugins, no fees.
             </p>
             <div class="hero-actions">
                 <button class="hero-cta" id="heroCta">🚀 Get Started</button>
                 <button class="hero-secondary" id="heroLogin" onclick="window.location.href='/auth/Auth.html'">
                     Log in
                 </button>
+            </div>
+            <div class="status-bar" id="statusBar">
+                <span class="status-dot" id="statusDot"></span>
+                <span id="statusText">Checking…</span>
             </div>
         </section>
 
@@ -71,9 +75,9 @@
                 <p>Instant messaging during conferences with unread message badges.</p>
             </div>
             <div class="feature-card">
-                <span class="feature-icon">🖥️</span>
-                <h3>Screen Sharing</h3>
-                <p>Share your screen mid-call without restarting the connection.</p>
+                <span class="feature-icon">🛡️</span>
+                <h3>Privacy First</h3>
+                <p>Peer-to-peer connections — your calls don't pass through our servers. What you share stays between you.</p>
             </div>
             <div class="feature-card">
                 <span class="feature-icon">🔐</span>
@@ -88,7 +92,7 @@
             <div class="feature-card">
                 <span class="feature-icon">🆓</span>
                 <h3>Free Forever</h3>
-                <p>No subscriptions, no ads. Self-host with Docker in minutes.</p>
+                <p>No subscriptions, no hidden fees. Free to use for everyone.</p>
             </div>
         </section>
     </main>

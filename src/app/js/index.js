@@ -4,7 +4,37 @@
 
 const API_BASE = window.location.origin;
 
+function formatUptime(seconds) {
+    const d = Math.floor(seconds / 86400);
+    const h = Math.floor((seconds % 86400) / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    if (d > 0) return `${d}d ${h}h uptime`;
+    if (h > 0) return `${h}h ${m}m uptime`;
+    return `${m}m uptime`;
+}
+
+async function loadServerStatus() {
+    const dot = document.getElementById('statusDot');
+    const text = document.getElementById('statusText');
+    try {
+        const res = await fetch(`${API_BASE}/api/health`);
+        if (res.ok) {
+            const data = await res.json();
+            dot.classList.add('online');
+            text.textContent = `Online · ${formatUptime(Math.floor(data.uptime))}`;
+        } else {
+            dot.classList.add('offline');
+            text.textContent = 'Server unavailable';
+        }
+    } catch {
+        dot.classList.add('offline');
+        text.textContent = 'Server unavailable';
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
+
+    loadServerStatus();
 
     // Check auth and update nav accordingly
     try {
