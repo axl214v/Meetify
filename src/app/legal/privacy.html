@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy — Meetify</title>
+    <link rel="icon" href="/assets/logo.png">
+    <link rel="stylesheet" href="/styles/legal.css">
+</head>
+<body>
+
+    <nav class="legal-nav">
+        <a class="legal-nav-brand" href="/">
+            <span>🎥</span>
+            <span>Meetify</span>
+        </a>
+        <button class="legal-nav-theme" id="themeToggleBtn" title="Switch theme">☀️</button>
+    </nav>
+
+    <main class="legal-main">
+
+        <div class="legal-header">
+            <div class="legal-tag">Legal</div>
+            <h1>Privacy Policy</h1>
+            <p class="legal-updated">Last updated: May 2026</p>
+            <p class="legal-lead">
+                Meetify is an independent project maintained by a single developer.
+                This policy explains what data we collect, why, and how we protect it —
+                in plain language.
+            </p>
+        </div>
+
+        <div class="legal-body">
+
+            <section>
+                <h2>What we collect</h2>
+                <table class="legal-table">
+                    <thead>
+                        <tr><th>Data</th><th>Why</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Email address</td><td>Account creation and login</td></tr>
+                        <tr><td>Password hash (bcrypt)</td><td>Authentication — your plaintext password is never stored</td></tr>
+                        <tr><td>Username</td><td>Display name inside the app</td></tr>
+                        <tr><td>Avatar image</td><td>Optional, only if you upload one</td></tr>
+                    </tbody>
+                </table>
+                <p class="legal-note">
+                    We do <strong>not</strong> collect IP address logs, browser fingerprints,
+                    analytics events, or any data beyond what is listed above.
+                </p>
+            </section>
+
+            <section>
+                <h2>How we use your data</h2>
+                <p>
+                    Your data is used solely to operate your account.
+                    We do not sell, share, rent, or otherwise disclose your data
+                    to any third party — ever.
+                </p>
+            </section>
+
+            <section>
+                <h2>Where data is stored</h2>
+                <p>
+                    All data is stored on a server located in <strong>Switzerland</strong>.
+                    Switzerland operates under the Federal Act on Data Protection (nFADP),
+                    which provides protections equivalent to or exceeding the EU GDPR.
+                </p>
+                <div class="legal-highlight">
+                    <span class="legal-highlight-icon">🇨🇭</span>
+                    <span>Swiss-hosted · Strong data protection laws · No third-party data sharing</span>
+                </div>
+            </section>
+
+            <section>
+                <h2>How long we keep your data</h2>
+                <p>
+                    Your data is retained for as long as your account exists.
+                    When you delete your account, all associated data — email, password hash,
+                    username, avatar — is permanently and irreversibly removed from our database.
+                </p>
+            </section>
+
+            <section>
+                <h2>Cookies</h2>
+                <p>
+                    We use a single session cookie (<code>token</code>) strictly required
+                    for authentication. No tracking, advertising, or analytics cookies are used.
+                </p>
+            </section>
+
+            <section>
+                <h2>Your rights</h2>
+                <ul>
+                    <li><strong>Access</strong> — request a copy of the data we hold about you</li>
+                    <li><strong>Correct</strong> — update inaccurate data via your profile settings</li>
+                    <li><strong>Delete</strong> — remove your account and all data via profile settings,
+                        or by emailing us</li>
+                </ul>
+                <p>Email <a href="mailto:privacy@meetify.cc">privacy@meetify.cc</a> for any of these requests. We respond within 30 days.</p>
+            </section>
+
+            <section>
+                <h2>Security</h2>
+                <ul>
+                    <li>Passwords are hashed with <strong>bcrypt</strong> (cost factor 10) — never stored in plaintext</li>
+                    <li>All connections use <strong>HTTPS</strong></li>
+                    <li>Authentication uses short-lived <strong>JWT</strong> tokens in <code>httpOnly</code> cookies</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>Changes to this policy</h2>
+                <p>
+                    If we make material changes, we will update the "Last updated" date above.
+                    Continued use of the service after changes constitutes acceptance.
+                </p>
+            </section>
+
+            <section>
+                <h2>Contact</h2>
+                <p>
+                    Questions or requests: <a href="mailto:privacy@meetify.cc">privacy@meetify.cc</a>
+                </p>
+            </section>
+
+        </div>
+
+        <div class="legal-footer-links">
+            <a href="/legal/terms.html">Terms of Service</a>
+            <span>·</span>
+            <a href="/">Back to Meetify</a>
+        </div>
+
+    </main>
+
+    <script src="/js/theme.js"></script>
+</body>
+</html>
