@@ -131,6 +131,10 @@ async function loadProfile() {
     document.getElementById('inputEmail').value = currentUser.email;
 
     if (currentUser.avatar_url) showAvatarImage(currentUser.avatar_url);
+
+    if (!currentUser.email_verified) {
+        document.getElementById('verificationBanner').classList.remove('hidden');
+    }
 }
 
 // ============================================
@@ -244,6 +248,8 @@ function setupEventListeners() {
     document.getElementById('deleteModal').addEventListener('click', function (e) {
         if (e.target === this) this.classList.add('hidden');
     });
+
+    document.getElementById('resendVerificationBtn')?.addEventListener('click', resendVerification);
 }
 
 // ============================================
@@ -412,6 +418,33 @@ async function deleteAccount() {
         showMsg('deleteMsg', 'Network error', 'error');
         btn.disabled = false;
         btn.textContent = 'Delete permanently';
+    }
+}
+
+// ============================================
+// Resend verification email
+// ============================================
+
+async function resendVerification() {
+    const btn = document.getElementById('resendVerificationBtn');
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+
+    try {
+        const res = await fetch(`${API_BASE}/api/auth/resend-verification`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ email: currentUser.email })
+        });
+
+        showMsg('verificationMsg', 'Verification email sent. Check your inbox.', 'success');
+        showToast('Verification email sent', 'success', 3000);
+    } catch {
+        showMsg('verificationMsg', 'Network error, please try again.', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Resend email';
     }
 }
 
