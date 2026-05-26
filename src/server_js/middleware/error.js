@@ -1,4 +1,5 @@
 const config = require('../config/config');
+const { getClientIp } = require('../utils/ip');
 
 // Middleware для обработки ошибок
 const errorHandler = (err, req, res, next) => {
@@ -8,7 +9,7 @@ const errorHandler = (err, req, res, next) => {
     stack: config.environment.development ? err.stack : undefined,
     url: req.url,
     method: req.method,
-    ip: req.ip,
+    ip: getClientIp(req),
     userAgent: req.get('User-Agent')
   });
 

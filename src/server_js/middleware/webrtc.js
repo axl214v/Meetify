@@ -143,7 +143,7 @@ const logWebRTCMetrics = (req, res, next) => {
       endpoint: req.path,
       method: req.method,
       userAgent: req.get('user-agent'),
-      ip: req.ip
+      ip: getClientIp(req)
     };
 
     WebRTCService.logMetrics(userId, conferenceId, metrics);
@@ -186,20 +186,22 @@ const getRecommendedConstraints = async (req, res, next) => {
  * Rate limiter for WebRTC signaling
  */
 const rateLimit = require('express-rate-limit');
+const { getClientIp } = require('../utils/ip');
 
 const signalingRateLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  max: 100, // Max 100 signaling messages per minute
+  windowMs: 1 * 60 * 1000,
+  max: 100,
   message: {
     message: 'Too many signaling requests',
     error: 'Rate limit exceeded. Please try again later.'
   },
   standardHeaders: true,
   legacyHeaders: false,
-  // Use user ID as key
   keyGenerator: (req) => {
-    return req.user?.userId || req.ip;
-  }
+    // Prefer userId for authenticated users; fall back to real client IP
+    return req.user?.userId?.toString() || getClientIp(req);
+  },
+  validate: { keyGeneratorIpFallback: false },
 });
 
 module.exports = {

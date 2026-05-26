@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const rateLimit = require('express-rate-limit');
 const { authenticateToken } = require('../middleware/auth');
+const { getClientIp } = require('../utils/ip');
 const { 
   createConference,
   getConference,
@@ -73,7 +74,7 @@ const validateQueryParams = (req, res, next) => {
  * Ограничение: 5 конференций за 15 минут
  */
 const createConferenceLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 минут
+  windowMs: 15 * 60 * 1000,
   max: 5,
   message: {
     message: 'Too many conferences created',
@@ -81,6 +82,8 @@ const createConferenceLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => getClientIp(req),
+  validate: { keyGeneratorIpFallback: false },
 });
 
 // Глобальный лимит join: 20 попыток за минуту с одного IP
@@ -93,6 +96,8 @@ const joinConferenceLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => getClientIp(req),
+  validate: { keyGeneratorIpFallback: false },
 });
 
 // Лимит брутфорса пароля: 5 попыток за 15 минут на IP + conferenceId
@@ -101,11 +106,11 @@ const joinPasswordBruteForceLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
   keyGenerator: (req) => {
-    const ip = (req.ip || '').replace(/^::ffff:/, '');
+    const ip = getClientIp(req);
     return `${ip}:${req.params.id}`;
   },
   skip: (req) => !req.body?.password,
-  validate: { keyGeneratorIpFallback: false }, // req.ip нормализован через trust proxy
+  validate: { keyGeneratorIpFallback: false },
   message: {
     message: 'Too many failed join attempts',
     error: 'Too many incorrect password attempts for this conference. Try again in 15 minutes.'
@@ -119,7 +124,7 @@ const joinPasswordBruteForceLimiter = rateLimit({
  * Ограничение: 100 запросов за минуту
  */
 const generalLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 минута
+  windowMs: 1 * 60 * 1000,
   max: 100,
   message: {
     message: 'Too many requests',
@@ -127,6 +132,8 @@ const generalLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => getClientIp(req),
+  validate: { keyGeneratorIpFallback: false },
 });
 
 

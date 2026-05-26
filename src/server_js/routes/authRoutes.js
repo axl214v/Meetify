@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const rateLimit = require('express-rate-limit');
+const { getClientIp } = require('../utils/ip');
 const {
   register,
   login,
@@ -20,7 +21,7 @@ const { authenticateToken } = require('../middleware/auth');
 //Строгий лимитер для аутентификации
  // 5 попыток за 15 минут
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 минут
+  windowMs: 15 * 60 * 1000,
   max: 5,
   message: {
     message: 'Too many authentication attempts',
@@ -28,14 +29,16 @@ const authLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  skipSuccessfulRequests: true
+  skipSuccessfulRequests: true,
+  keyGenerator: (req) => getClientIp(req),
+  validate: { keyGeneratorIpFallback: false },
 });
 
 
 // Лимитер для регистрации
 // 3 регистрации за час с одного IP
 const registerLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 час
+  windowMs: 60 * 60 * 1000,
   max: 3,
   message: {
     message: 'Too many registration attempts',
@@ -43,13 +46,15 @@ const registerLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => getClientIp(req),
+  validate: { keyGeneratorIpFallback: false },
 });
 
 
 // Лимитер для смены пароля
 // 3 попытки за час
 const passwordChangeLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 час
+  windowMs: 60 * 60 * 1000,
   max: 3,
   message: {
     message: 'Too many password change attempts',
@@ -57,6 +62,8 @@ const passwordChangeLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => getClientIp(req),
+  validate: { keyGeneratorIpFallback: false },
 });
 
 
@@ -71,6 +78,8 @@ const refreshLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => getClientIp(req),
+  validate: { keyGeneratorIpFallback: false },
 });
 
 // Лимитер для сброса пароля
@@ -84,6 +93,8 @@ const forgotPasswordLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: true,
+  keyGenerator: (req) => getClientIp(req),
+  validate: { keyGeneratorIpFallback: false },
 });
 
 // Лимитер для публичного resend-verification
@@ -96,6 +107,8 @@ const resendVerificationLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => getClientIp(req),
+  validate: { keyGeneratorIpFallback: false },
 });
 
 

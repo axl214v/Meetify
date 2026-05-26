@@ -23,8 +23,9 @@ const { initializeConferenceSocket } = require('./sockets/conferenceSocket');
 // Создаём экземпляр приложения
 const app = express();
 
-// Доверяем прокси (важно для правильной работы в production, особенно если сервер за Nginx)
-app.set('trust proxy', 1);
+// Trust all proxy hops — required for Cloudflare (CF-Connecting-IP / X-Forwarded-For).
+// Rate limiters use CF-Connecting-IP directly via getClientIp() to prevent header spoofing.
+app.set('trust proxy', true);
 
 // Убедимся, что папка для аватаров существует
 fs.mkdirSync('/app/uploads/avatars', { recursive: true });
