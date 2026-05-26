@@ -82,7 +82,8 @@ class UserService {
         id: user.id,
         email: user.email,
         username: user.username,
-        avatar_url: user.avatar_url,  
+        avatar_url: user.avatar_url,
+        email_verified: !!user.email_verified,
         createdAt: user.created_at,
         updatedAt: user.updated_at
       };

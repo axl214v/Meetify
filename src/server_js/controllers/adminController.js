@@ -79,7 +79,7 @@ const adminController = {
             const params = search ? [search, search] : [];
 
             const [users] = await db.promise().query(
-                `SELECT id, email, username, role, created_at, avatar_url FROM users ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+                `SELECT id, email, username, role, created_at, avatar_url, email_verified FROM users ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
                 [...params, limit, offset]
             );
             const [[{ total }]] = await db.promise().query(
