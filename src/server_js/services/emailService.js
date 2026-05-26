@@ -18,18 +18,16 @@ class EmailService {
     static async createTransport() {
         const s = await EmailService.getSmtpSettings();
 
-        if (s.smtp_enabled !== 'true') return null;
-        if (!s.smtp_user || !s.smtp_password) return null;
+        if (s.smtp_enabled !== 'true' || !s.smtp_host) return null;
 
-        return nodemailer.createTransport({
+        const config = {
             host:   s.smtp_host,
-            port:   parseInt(s.smtp_port) || 587,
-            secure: s.smtp_secure === 'true',
-            auth: {
-                user: s.smtp_user,
-                pass: s.smtp_password
-            }
-        });
+            port:   parseInt(s.smtp_port || '25', 10),
+            secure: s.smtp_ignore_tls === 'true' ? false : (s.smtp_secure === 'true'),
+            ...(s.smtp_user && s.smtp_password ? { auth: { user: s.smtp_user, pass: s.smtp_password } } : {}),
+            ...(s.smtp_ignore_tls === 'true' ? { tls: { rejectUnauthorized: false } } : {})
+        };
+        return nodemailer.createTransport(config);
     }
 
     // Отправить письмо
@@ -37,17 +35,19 @@ class EmailService {
         try {
             const s = await EmailService.getSmtpSettings();
 
-            if (s.smtp_enabled !== 'true' || !s.smtp_user || !s.smtp_password) {
+            if (s.smtp_enabled !== 'true' || !s.smtp_host) {
                 console.log('[Email] SMTP disabled or not configured — skipping send');
                 return { sent: false, reason: 'smtp_disabled' };
             }
 
-            const transport = nodemailer.createTransport({
+            const transportConfig = {
                 host:   s.smtp_host,
-                port:   parseInt(s.smtp_port) || 587,
-                secure: s.smtp_secure === 'true',
-                auth:   { user: s.smtp_user, pass: s.smtp_password }
-            });
+                port:   parseInt(s.smtp_port || '25', 10),
+                secure: s.smtp_ignore_tls === 'true' ? false : (s.smtp_secure === 'true'),
+                ...(s.smtp_user && s.smtp_password ? { auth: { user: s.smtp_user, pass: s.smtp_password } } : {}),
+                ...(s.smtp_ignore_tls === 'true' ? { tls: { rejectUnauthorized: false } } : {})
+            };
+            const transport = nodemailer.createTransport(transportConfig);
 
             await transport.sendMail({
                 from: s.smtp_from || 'Meetify <noreply@meetify.com>',
@@ -111,15 +111,15 @@ class EmailService {
     // Тест SMTP соединения
     static async testConnection(settings) {
         try {
-            const transport = nodemailer.createTransport({
-                host:   settings.smtp_host,
-                port:   parseInt(settings.smtp_port) || 587,
-                secure: settings.smtp_secure === 'true',
-                auth: {
-                    user: settings.smtp_user,
-                    pass: settings.smtp_password
-                }
-            });
+            const s = settings;
+            const config = {
+                host:   s.smtp_host,
+                port:   parseInt(s.smtp_port || '25', 10),
+                secure: s.smtp_ignore_tls === 'true' ? false : (s.smtp_secure === 'true'),
+                ...(s.smtp_user && s.smtp_password ? { auth: { user: s.smtp_user, pass: s.smtp_password } } : {}),
+                ...(s.smtp_ignore_tls === 'true' ? { tls: { rejectUnauthorized: false } } : {})
+            };
+            const transport = nodemailer.createTransport(config);
 
             await transport.verify();
             return { success: true };

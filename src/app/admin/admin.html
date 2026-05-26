@@ -316,6 +316,13 @@
                         </select>
                     </div>
                     <div class="setting-row">
+                        <label class="setting-label">Ignore TLS</label>
+                        <select class="setting-input" id="smtpIgnoreTls">
+                            <option value="false">No (verify certificates)</option>
+                            <option value="true">Yes (skip TLS / IP relay)</option>
+                        </select>
+                    </div>
+                    <div class="setting-row">
                         <label class="setting-label">Enable SMTP</label>
                         <select class="setting-input" id="smtpEnabled">
                             <option value="false">Disabled</option>

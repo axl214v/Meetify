@@ -308,8 +308,9 @@ async function loadSmtpSettings() {
         document.getElementById('smtpUser').value     = s.smtp_user     || '';
         document.getElementById('smtpPassword').value = s.smtp_password || '';
         document.getElementById('smtpFrom').value     = s.smtp_from     || '';
-        document.getElementById('smtpSecure').value   = s.smtp_secure   || 'false';
-        document.getElementById('smtpEnabled').value  = s.smtp_enabled  || 'false';
+        document.getElementById('smtpSecure').value     = s.smtp_secure     || 'false';
+        document.getElementById('smtpIgnoreTls').value = s.smtp_ignore_tls || 'false';
+        document.getElementById('smtpEnabled').value   = s.smtp_enabled    || 'false';
 
         const badge = document.getElementById('smtpStatusBadge');
         badge.textContent = s.smtp_enabled === 'true' ? 'Enabled' : 'Disabled';
@@ -328,8 +329,9 @@ async function saveSmtpSettings() {
         smtp_user:     document.getElementById('smtpUser').value.trim(),
         smtp_password: document.getElementById('smtpPassword').value,
         smtp_from:     document.getElementById('smtpFrom').value.trim(),
-        smtp_secure:   document.getElementById('smtpSecure').value,
-        smtp_enabled:  document.getElementById('smtpEnabled').value,
+        smtp_secure:      document.getElementById('smtpSecure').value,
+        smtp_ignore_tls:  document.getElementById('smtpIgnoreTls').value,
+        smtp_enabled:     document.getElementById('smtpEnabled').value,
     };
 
     try {

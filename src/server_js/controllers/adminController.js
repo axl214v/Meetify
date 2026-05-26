@@ -133,7 +133,7 @@ const adminController = {
     },
 
     updateSmtpSettings: async (req, res) => {
-        const allowed = ['smtp_host','smtp_port','smtp_secure','smtp_user','smtp_password','smtp_from','smtp_enabled'];
+        const allowed = ['smtp_host','smtp_port','smtp_secure','smtp_ignore_tls','smtp_user','smtp_password','smtp_from','smtp_enabled'];
         try {
             for (const [key, value] of Object.entries(req.body)) {
                 if (!allowed.includes(key)) continue;
