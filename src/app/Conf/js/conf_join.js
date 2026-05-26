@@ -223,7 +223,9 @@ document.getElementById('joinBtn')?.addEventListener('click', async function(e) 
             }, 1500);
             
         } else if (response.status === 403) {
-            if (data.message.includes('password')) {
+            if (data.requiresVerification) {
+                showError('Email verification required. Please verify your email to join private conferences. Go to your profile to resend the verification link.');
+            } else if (data.message.includes('password')) {
                 showError('Incorrect password. Please try again.');
                 passwordInput?.classList.add('error');
             } else if (data.message.includes('started')) {
