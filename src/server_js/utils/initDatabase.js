@@ -128,6 +128,20 @@ const initDatabase = async () => {
           ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         `, 'App settings table');
 
+        // Create notifications table (admin broadcast notifications)
+        await executeQuery(`
+          CREATE TABLE IF NOT EXISTS notifications (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            title VARCHAR(255) NOT NULL,
+            message TEXT NOT NULL,
+            category ENUM('info', 'update', 'maintenance', 'warning') DEFAULT 'info',
+            created_by INT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
+            INDEX idx_created (created_at)
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `, 'Notifications table');
+
         console.log('[Database] ✅ Database initialization complete!');
         resolve(true);
 
