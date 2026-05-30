@@ -15,7 +15,7 @@ const {
   verifyEmail,
   resendVerificationPublic
 } = require('../controllers/authController');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken, requireRole } = require('../middleware/auth');
 
 
 //Строгий лимитер для аутентификации
@@ -135,6 +135,7 @@ router.get('/token', authenticateToken, (req, res) => {
     res.json({ token });
 });
 router.put('/change-password', authenticateToken, passwordChangeLimiter, changePassword);
+router.get('/admin-check', authenticateToken, requireRole('admin'), (req, res) => res.sendStatus(200));
 
 // Обработка несуществующих маршрутов
 router.use((req, res) => {
