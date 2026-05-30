@@ -1,6 +1,7 @@
 const db = require('../config/database');
 const os = require('os');
 const Conference = require('../models/Conference');
+const Notification = require('../models/Notification');
 const EmailService = require('../services/emailService');
 const { forceDisconnectUser } = require('../sockets/conferenceSocket');
 
@@ -227,6 +228,45 @@ const adminController = {
             await Conference.removeParticipant(req.params.id, req.params.userId);
             const io = req.app.get('io');
             if (io) forceDisconnectUser(io, parseInt(req.params.userId), parseInt(req.params.id));
+            res.json({ success: true });
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
+    },
+
+    getNotifications: async (req, res) => {
+        try {
+            const notifications = await Notification.getAll(50);
+            res.json({ notifications });
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
+    },
+
+    sendNotification: async (req, res) => {
+        try {
+            const { title, message, category } = req.body;
+            if (!title?.trim() || !message?.trim()) {
+                return res.status(400).json({ error: 'Title and message are required' });
+            }
+            const valid = ['info', 'update', 'maintenance', 'warning'];
+            const notif = await Notification.create({
+                title:     title.trim(),
+                message:   message.trim(),
+                category:  valid.includes(category) ? category : 'info',
+                createdBy: req.user.userId
+            });
+            req.app.get('io')?.emit('admin-notification', notif);
+            res.status(201).json({ notification: notif });
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
+    },
+
+    deleteNotification: async (req, res) => {
+        try {
+            const deleted = await Notification.deleteById(req.params.id);
+            if (!deleted) return res.status(404).json({ error: 'Notification not found' });
             res.json({ success: true });
         } catch (e) {
             res.status(500).json({ error: e.message });

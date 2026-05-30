@@ -21,4 +21,8 @@ router.put   ('/settings/smtp',       c.updateSmtpSettings);
 router.post  ('/settings/smtp/test',  c.testSmtp);
 router.post  ('/settings/smtp/send',  c.sendTestEmail);
 
+router.get   ('/notifications',       c.getNotifications);
+router.post  ('/notifications',       c.sendNotification);
+router.delete('/notifications/:id',   c.deleteNotification);
+
 module.exports = router;

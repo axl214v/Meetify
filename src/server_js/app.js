@@ -16,6 +16,7 @@ const conferenceRoutes = require('./routes/conferenceRoutes');
 const healthRoutes = require('./routes/healthRoutes');
 const logRoutes = require('./routes/logRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 // Socket handlers
 const { initializeConferenceSocket } = require('./sockets/conferenceSocket');
@@ -81,6 +82,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/conferences', conferenceRoutes);
 app.use('/api/logs', logRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Health check с Socket.IO info
 app.get('/check-status', (req, res) => {
