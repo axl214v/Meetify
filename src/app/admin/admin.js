@@ -78,6 +78,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('saveSmtp').addEventListener('click',      saveSmtpSettings);
     document.getElementById('testSmtp').addEventListener('click',      testSmtpConnection);
     document.getElementById('sendTestEmail').addEventListener('click',  sendTestEmail);
+    document.getElementById('sendNotif').addEventListener('click',      sendNotification);
+    document.getElementById('refreshNotifs').addEventListener('click',  loadNotifications);
 
     // Search (debounced)
     document.getElementById('confSearch').addEventListener('input',  debounce(e => {
@@ -121,7 +123,8 @@ function switchTab(tab) {
     // Lazy load on first visit
     if (tab === 'conferences' && state.conf.total === 0)   loadConferences(0);
     if (tab === 'users'       && state.users.total === 0)  loadUsers(0);
-    if (tab === 'settings') loadSmtpSettings();
+    if (tab === 'settings')       loadSmtpSettings();
+    if (tab === 'notifications')  loadNotifications();
 }
 
 function setupNav() {}  // placeholder — tabs wired in DOMContentLoaded
@@ -594,6 +597,87 @@ function timeAgo(ts) {
     const h = Math.floor(m / 60);
     if (h < 24) return `${h}h ago`;
     return `${Math.floor(h / 24)}d ago`;
+}
+
+// ── Notifications ──────────────────────────────────────────────────────────
+const NOTIF_CATEGORIES = {
+    info:        { label: 'Info',        color: '#3b82f6', bg: 'rgba(59,130,246,0.15)'  },
+    update:      { label: 'Update',      color: '#10b981', bg: 'rgba(16,185,129,0.15)'  },
+    maintenance: { label: 'Maintenance', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)'  },
+    warning:     { label: 'Warning',     color: '#ef4444', bg: 'rgba(239,68,68,0.15)'   }
+};
+
+async function loadNotifications() {
+    try {
+        const res  = await apiFetch('/api/admin/notifications');
+        const data = await res.json();
+        const tbody = document.getElementById('notifsBody');
+        if (!res.ok) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#f87171;padding:24px;">${escHtml(data.error)}</td></tr>`; return; }
+
+        const list = data.notifications;
+        if (!list.length) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text2);padding:24px;">No notifications sent yet</td></tr>';
+            return;
+        }
+        tbody.innerHTML = list.map(n => {
+            const cat = NOTIF_CATEGORIES[n.category] || NOTIF_CATEGORIES.info;
+            const badge = `<span style="display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;background:${cat.bg};color:${cat.color};text-transform:uppercase;letter-spacing:0.5px;">${cat.label}</span>`;
+            return `<tr>
+                <td style="white-space:nowrap;">${fmtDate(n.created_at)}</td>
+                <td>${badge}</td>
+                <td style="font-weight:500;color:var(--text);">${escHtml(n.title)}</td>
+                <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escAttr(n.message)}">${escHtml(n.message)}</td>
+                <td>${escHtml(n.created_by_name || '—')}</td>
+                <td><button class="btn-sm btn-sm-danger" onclick="confirmDeleteNotif(${n.id}, '${escAttr(n.title)}')">Delete</button></td>
+            </tr>`;
+        }).join('');
+    } catch (e) {
+        document.getElementById('notifsBody').innerHTML = `<tr><td colspan="6" style="text-align:center;color:#f87171;padding:24px;">Error loading notifications</td></tr>`;
+    }
+}
+
+async function sendNotification() {
+    const title    = document.getElementById('notifTitle').value.trim();
+    const message  = document.getElementById('notifMessage').value.trim();
+    const category = document.getElementById('notifCategory').value;
+    if (!title || !message) { toast('Title and message are required', 'error'); return; }
+
+    const btn = document.getElementById('sendNotif');
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+    try {
+        const res = await apiFetch('/api/admin/notifications', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, message, category })
+        });
+        const data = await res.json();
+        if (!res.ok) { toast(data.error || 'Failed to send', 'error'); return; }
+        toast('Notification sent to all users', 'success');
+        document.getElementById('notifTitle').value   = '';
+        document.getElementById('notifMessage').value = '';
+        loadNotifications();
+    } catch {
+        toast('Failed to send notification', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '◎ Send to all users';
+    }
+}
+
+async function deleteNotification(id) {
+    try {
+        const res = await apiFetch(`/api/admin/notifications/${id}`, { method: 'DELETE' });
+        if (!res.ok) { toast('Failed to delete notification', 'error'); return; }
+        toast('Notification deleted', 'success');
+        loadNotifications();
+    } catch {
+        toast('Failed to delete notification', 'error');
+    }
+}
+
+function confirmDeleteNotif(id, title) {
+    showConfirmModal('🗑', 'Delete Notification', `Delete "${title}"? Users will no longer see it in history.`, () => deleteNotification(id));
 }
 
 function isActive(conf) {

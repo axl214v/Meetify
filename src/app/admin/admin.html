@@ -44,6 +44,10 @@
                 <span class="nav-icon">⚙</span>
                 <span>Settings</span>
             </button>
+            <button class="nav-item" data-tab="notifications">
+                <span class="nav-icon">◎</span>
+                <span>Notifications</span>
+            </button>
         </nav>
 
         <div class="sidebar-footer">
@@ -361,6 +365,69 @@
             </div>
         </section>
     </main>
+
+        <!-- ── NOTIFICATIONS ── -->
+        <section class="tab-panel" id="tab-notifications">
+            <header class="panel-header">
+                <div>
+                    <h1>Notifications</h1>
+                    <p class="panel-sub">Broadcast announcements to all users in real-time</p>
+                </div>
+            </header>
+
+            <!-- Send form -->
+            <div class="panel-card">
+                <div class="card-header">
+                    <span>New Notification</span>
+                </div>
+                <div class="settings-grid">
+                    <div class="setting-row">
+                        <label class="setting-label">Title</label>
+                        <input class="setting-input" type="text" id="notifTitle" placeholder="Notification title" maxlength="255">
+                    </div>
+                    <div class="setting-row">
+                        <label class="setting-label">Category</label>
+                        <select class="setting-input" id="notifCategory">
+                            <option value="info">Info</option>
+                            <option value="update">Update</option>
+                            <option value="maintenance">Maintenance</option>
+                            <option value="warning">Warning</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="margin-top:12px;">
+                    <textarea class="setting-input" id="notifMessage" rows="4"
+                        placeholder="Notification message..." maxlength="1000"
+                        style="width:100%;resize:vertical;font-family:inherit;"></textarea>
+                </div>
+                <div class="settings-actions" style="margin-top:12px;">
+                    <button class="btn-refresh" id="sendNotif">◎ Send to all users</button>
+                </div>
+            </div>
+
+            <!-- Sent notifications list -->
+            <div class="panel-card">
+                <div class="card-header">
+                    <span>Sent Notifications</span>
+                    <button class="btn-refresh" id="refreshNotifs" style="font-size:11px;padding:4px 10px;">↻ Reload</button>
+                </div>
+                <table class="data-table full" id="notifsTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th>Title</th>
+                            <th>Message</th>
+                            <th>Sent by</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="notifsBody">
+                        <tr><td colspan="6" style="text-align:center;color:var(--text2);padding:24px;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
 
     <!-- Confirm Modal -->
     <div class="modal-overlay" id="confirmModal">
