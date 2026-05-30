@@ -143,6 +143,8 @@
             background: var(--room-bg);
             overflow: hidden;
             position: relative;
+            display: flex;
+            flex-direction: column;
         }
 
         .video-grid {
@@ -150,7 +152,8 @@
             grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 8px;
             padding: 8px;
-            height: 100%;
+            flex: 1;
+            min-height: 0;
             align-content: start;
             overflow-y: auto;
         }
@@ -712,6 +715,110 @@
         ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
         /* ============================================ */
+        /* Pin / Spotlight                              */
+        /* ============================================ */
+
+        .pin-btn {
+            background: rgba(0,0,0,0.55);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 8px;
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.72rem;
+            cursor: pointer;
+            color: white;
+            opacity: 0;
+            transition: opacity 0.15s;
+            padding: 0;
+            min-height: unset;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
+        .video-container:hover .pin-btn { opacity: 1; }
+
+        .video-container.pinned .pin-btn {
+            opacity: 1;
+            background: rgba(59,130,246,0.75);
+            border-color: rgba(59,130,246,0.9);
+        }
+
+        .video-container.pinned {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(59,130,246,0.35);
+        }
+
+        /* Filmstrip section */
+        .filmstrip-section {
+            flex-shrink: 0;
+            background: var(--room-surface);
+            border-top: 1px solid var(--room-border);
+        }
+
+        .filmstrip-section.hidden { display: none; }
+
+        .filmstrip-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.3rem 0.75rem;
+        }
+
+        .filmstrip-label {
+            font-size: 0.72rem;
+            color: var(--room-muted);
+            font-family: var(--font-mono);
+        }
+
+        .filmstrip-toggle-btn {
+            background: none;
+            border: 1px solid var(--room-border);
+            color: var(--room-muted);
+            border-radius: 6px;
+            font-size: 0.7rem;
+            padding: 0.15rem 0.55rem;
+            cursor: pointer;
+            min-height: unset;
+            font-family: var(--font);
+            transition: all 0.15s;
+        }
+
+        .filmstrip-toggle-btn:hover {
+            border-color: rgba(255,255,255,0.15);
+            color: var(--room-text);
+            transform: none;
+            box-shadow: none;
+        }
+
+        .filmstrip {
+            height: 120px;
+            display: flex;
+            align-items: stretch;
+            gap: 6px;
+            padding: 0 8px 8px;
+            overflow-x: auto;
+        }
+
+        .filmstrip-section.strip-collapsed .filmstrip { display: none; }
+
+        .filmstrip .video-container {
+            width: 190px;
+            min-width: 150px;
+            flex-shrink: 0;
+            height: 100%;
+            aspect-ratio: unset;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .filmstrip .video-container .pin-btn { opacity: 0.65; }
+        .filmstrip .video-container:hover .pin-btn { opacity: 1; }
+
+        /* ============================================ */
         /* Mobile                                       */
         /* ============================================ */
 
@@ -756,11 +863,11 @@
     </header>
 
     <!-- Video Grid -->
-    <div class="video-area">
+    <div class="video-area" id="videoArea">
         <div class="video-grid" id="videoGrid">
 
             <!-- Local video -->
-            <div class="video-container" id="localVideoContainer">
+            <div class="video-container" id="localVideoContainer" data-user-id="local">
                 <video id="localVideo" autoplay muted playsinline></video>
                 <div class="video-placeholder">
                     <div class="placeholder-avatar" id="localPlaceholder">?</div>
@@ -773,10 +880,20 @@
                     <div class="overlay-right">
                         <div class="status-pill" id="localMicStatus">🎤</div>
                         <div class="status-pill" id="localVideoStatus">📹</div>
+                        <button class="pin-btn" id="localPinBtn" title="Pin (spotlight)">📍</button>
                     </div>
                 </div>
             </div>
 
+        </div>
+
+        <!-- Filmstrip: unpinned participants shown here in spotlight mode -->
+        <div class="filmstrip-section hidden" id="filmstripSection">
+            <div class="filmstrip-header">
+                <span class="filmstrip-label" id="filmstripLabel">0 others</span>
+                <button class="filmstrip-toggle-btn" id="filmstripToggleBtn" onclick="toggleStrip()">Hide</button>
+            </div>
+            <div class="filmstrip" id="filmstrip"></div>
         </div>
     </div>
 

@@ -19,6 +19,9 @@ let joinedConference = false;
 const remoteMediaStates = {};
 const roomScreenShareState = new Set();
 
+// Pin / spotlight state
+const pinnedTiles = new Set();
+
 // Host / moderation state
 let isHost = false;
 let hostId = null;
@@ -261,6 +264,8 @@ async function initSocket() {
         }
         const videoContainer = document.getElementById(`video-${userId}`);
         if (videoContainer) videoContainer.remove();
+        pinnedTiles.delete(String(userId));
+        applyPinLayout();
         updateParticipantCount();
     });
 
@@ -355,6 +360,8 @@ async function initSocket() {
     socket.on('user-kicked', ({ userId: kickedUserId, kickerName }) => {
         const el = document.getElementById(`video-${kickedUserId}`);
         if (el) el.remove();
+        pinnedTiles.delete(String(kickedUserId));
+        applyPinLayout();
         updateParticipantCount();
         showNotification(`A participant was removed by ${kickerName}`, 'info');
         loadParticipants();
@@ -419,6 +426,8 @@ async function createPeerConnection(userId, isInitiator, userName = 'Unknown') {
             }
             const videoContainer = document.getElementById(`video-${userId}`);
             if (videoContainer) videoContainer.remove();
+            pinnedTiles.delete(String(userId));
+            applyPinLayout();
             updateParticipantCount();
         }
     };
@@ -439,35 +448,142 @@ function addRemoteVideo(userId, stream, userName = 'Unknown') {
     videoContainer = document.createElement('div');
     videoContainer.id = `video-${userId}`;
     videoContainer.className = 'video-container';
+    videoContainer.dataset.userId = String(userId);
 
     const video = document.createElement('video');
     video.autoplay = true;
     video.playsinline = true;
     video.srcObject = stream;
 
+    const placeholder = document.createElement('div');
+    placeholder.className = 'video-placeholder';
+    const placeholderAvatar = document.createElement('div');
+    placeholderAvatar.className = 'placeholder-avatar';
+    placeholderAvatar.textContent = getInitials(userName);
+    placeholder.appendChild(placeholderAvatar);
+
     const overlay = document.createElement('div');
     overlay.className = 'video-overlay';
-    overlay.innerHTML = `
-        <span class="participant-name">${escapeHtml(userName)}</span>
-        <div class="participant-status">
-            <span class="status-icon active mic-status">🎤</span>
-            <span class="status-icon active video-status">📹</span>
-        </div>
-    `;
+
+    const overlayLeft = document.createElement('div');
+    overlayLeft.className = 'overlay-left';
+    const avatarEl = document.createElement('div');
+    avatarEl.className = 'overlay-avatar-initials';
+    avatarEl.style.background = stringToColor(userName);
+    avatarEl.textContent = getInitials(userName);
+    const nameEl = document.createElement('span');
+    nameEl.className = 'participant-name';
+    nameEl.textContent = userName;
+    overlayLeft.appendChild(avatarEl);
+    overlayLeft.appendChild(nameEl);
+
+    const overlayRight = document.createElement('div');
+    overlayRight.className = 'overlay-right';
+    const micPill = document.createElement('div');
+    micPill.className = 'status-pill mic-status';
+    micPill.textContent = '🎤';
+    const videoPill = document.createElement('div');
+    videoPill.className = 'status-pill video-status';
+    videoPill.textContent = '📹';
+    const pinBtn = document.createElement('button');
+    pinBtn.className = 'pin-btn';
+    pinBtn.title = 'Pin (spotlight)';
+    pinBtn.textContent = '📍';
+    pinBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        togglePin(String(userId));
+    });
+    overlayRight.appendChild(micPill);
+    overlayRight.appendChild(videoPill);
+    overlayRight.appendChild(pinBtn);
+
+    overlay.appendChild(overlayLeft);
+    overlay.appendChild(overlayRight);
 
     videoContainer.appendChild(video);
+    videoContainer.appendChild(placeholder);
     videoContainer.appendChild(overlay);
-    document.getElementById('videoGrid').appendChild(videoContainer);
+
+    // In spotlight mode new remote participants go to filmstrip
+    if (pinnedTiles.size > 0) {
+        document.getElementById('filmstrip').appendChild(videoContainer);
+        updateFilmstripLabel();
+    } else {
+        document.getElementById('videoGrid').appendChild(videoContainer);
+    }
 
     if (remoteMediaStates[userId]) {
         const { audio, video: videoEnabled } = remoteMediaStates[userId];
-        const micStatus = videoContainer.querySelector('.mic-status');
-        const videoStatus = videoContainer.querySelector('.video-status');
-        if (micStatus) micStatus.textContent = audio ? '🎤' : '🔇';
-        if (videoStatus) videoStatus.textContent = videoEnabled ? '📹' : '📵';
+        micPill.textContent = audio ? '🎤' : '🔇';
+        videoPill.textContent = videoEnabled ? '📹' : '📵';
     }
 
     updateParticipantCount();
+}
+
+function togglePin(userId) {
+    if (pinnedTiles.has(userId)) {
+        pinnedTiles.delete(userId);
+    } else {
+        pinnedTiles.add(userId);
+    }
+    applyPinLayout();
+}
+
+function applyPinLayout() {
+    const grid = document.getElementById('videoGrid');
+    const filmstrip = document.getElementById('filmstrip');
+    const filmstripSection = document.getElementById('filmstripSection');
+
+    const allContainers = [
+        ...document.querySelectorAll('#videoGrid .video-container'),
+        ...document.querySelectorAll('#filmstrip .video-container')
+    ];
+
+    if (pinnedTiles.size === 0) {
+        allContainers.forEach(c => grid.appendChild(c));
+        filmstripSection.classList.add('hidden');
+        // Reset strip-collapsed so it opens fresh next time
+        filmstripSection.classList.remove('strip-collapsed');
+        const toggleBtn = document.getElementById('filmstripToggleBtn');
+        if (toggleBtn) toggleBtn.textContent = 'Hide';
+    } else {
+        allContainers.forEach(c => {
+            const uid = c.dataset.userId;
+            if (pinnedTiles.has(uid)) {
+                grid.appendChild(c);
+            } else {
+                filmstrip.appendChild(c);
+            }
+        });
+        filmstripSection.classList.remove('hidden');
+        updateFilmstripLabel();
+    }
+
+    // Sync pin button appearance
+    allContainers.forEach(c => {
+        const uid = c.dataset.userId;
+        const isPinned = pinnedTiles.has(uid);
+        c.classList.toggle('pinned', isPinned);
+        const btn = c.querySelector('.pin-btn');
+        if (btn) {
+            btn.title = isPinned ? 'Unpin' : 'Pin (spotlight)';
+            btn.textContent = isPinned ? '📌' : '📍';
+        }
+    });
+}
+
+function updateFilmstripLabel() {
+    const count = document.querySelectorAll('#filmstrip .video-container').length;
+    const label = document.getElementById('filmstripLabel');
+    if (label) label.textContent = `${count} other${count !== 1 ? 's' : ''}`;
+}
+
+function toggleStrip() {
+    const section = document.getElementById('filmstripSection');
+    const btn = document.getElementById('filmstripToggleBtn');
+    const collapsed = section.classList.toggle('strip-collapsed');
+    btn.textContent = collapsed ? 'Show' : 'Hide';
 }
 
 function setupEventListeners() {
@@ -481,6 +597,11 @@ function setupEventListeners() {
         updateChatBadge(0);
     });
     document.getElementById('leaveBtn').addEventListener('click', leaveConference);
+
+    document.getElementById('localPinBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        togglePin('local');
+    });
 }
 
 function setMicEnabled(enabled, { emit = true } = {}) {
@@ -837,3 +958,5 @@ window.hostChatBan = hostChatBan;
 window.hostKick = hostKick;
 window.hostPromoteCoHost = hostPromoteCoHost;
 window.hostDemoteCoHost = hostDemoteCoHost;
+window.togglePin = togglePin;
+window.toggleStrip = toggleStrip;
