@@ -73,7 +73,7 @@ const uploadAvatar = async (req, res) => {
     // Delete old avatar file if exists
     const user = await User.findById(userId);
     if (user.avatar_url) {
-      const oldPath = path.join(__dirname, '../../', user.avatar_url);
+      const oldPath = path.join('/app', user.avatar_url);
       if (fs.existsSync(oldPath)) {
         fs.unlinkSync(oldPath);
       }
@@ -102,7 +102,7 @@ const deleteAvatar = async (req, res) => {
     const user = await User.findById(userId);
 
     if (user.avatar_url) {
-      const filePath = path.join(__dirname, '../../', user.avatar_url);
+      const filePath = path.join('/app', user.avatar_url);
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
@@ -172,7 +172,7 @@ const deleteAccount = async (req, res) => {
 
     // Delete avatar file if exists
     if (user.avatar_url) {
-      const filePath = path.join(__dirname, '../../', user.avatar_url);
+      const filePath = path.join('/app', user.avatar_url);
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
