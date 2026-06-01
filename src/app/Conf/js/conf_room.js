@@ -22,6 +22,18 @@ const roomScreenShareState = new Set();
 // Pin / spotlight state
 const pinnedTiles = new Set();
 
+// Conference mode ('p2p' | 'sfu')
+let conferenceMode = 'p2p';
+
+// SFU state (only used for Group calls)
+let sfuDevice        = null;
+let sfuSendTransport = null;
+let sfuRecvTransport = null;
+const sfuProducers   = {};   // { audio, video, screen }
+const sfuConsumers   = {};   // consumerId -> consumer
+const sfuProdInfo    = {};   // producerId -> { userId, userName, kind }
+const remoteStreams   = {};  // userId -> MediaStream
+
 // Host / moderation state
 let isHost = false;
 let hostId = null;
@@ -120,8 +132,9 @@ async function loadConferenceDetails() {
 
         const data = await response.json();
 
-        isHost = data.conference.isHost || false;
-        hostId = data.conference.host_id || null;
+        isHost         = data.conference.isHost || false;
+        hostId         = data.conference.host_id || null;
+        conferenceMode = data.conference.mode || 'p2p';
 
         // Прямой заход по URL без участия — редирект
         if (!data.conference.isParticipant && !data.conference.isHost) {
@@ -240,11 +253,15 @@ async function initSocket() {
 
         await initLocalMedia({ audio: joinAudio, video: joinVideo });
 
-        for (const p of participants) {
-            if (p.userId !== currentUser.id) {
-                await createPeerConnection(p.userId, true, p.userName);
-                if (p.mediaState) {
-                    updateRemoteMediaState(p.userId, p.mediaState.audio, p.mediaState.video);
+        if (conferenceMode === 'sfu') {
+            await initSfu();
+        } else {
+            for (const p of participants) {
+                if (p.userId !== currentUser.id) {
+                    await createPeerConnection(p.userId, true, p.userName);
+                    if (p.mediaState) {
+                        updateRemoteMediaState(p.userId, p.mediaState.audio, p.mediaState.video);
+                    }
                 }
             }
         }
@@ -351,9 +368,12 @@ async function initSocket() {
         cleanupAndRedirect(message || 'You have been removed from the conference.');
     });
 
-    // Rejected on re-join after kick
-    socket.on('join-rejected', () => {
-        cleanupAndRedirect('You have been kicked from this conference.');
+    // Rejected on re-join after kick, or P2P room full
+    socket.on('join-rejected', ({ reason } = {}) => {
+        const msg = reason === 'full'
+            ? 'This Private call is full (max 8 participants).'
+            : 'You have been kicked from this conference.';
+        cleanupAndRedirect(msg);
     });
 
     // Another participant was kicked — update UI
@@ -651,17 +671,29 @@ async function toggleScreenShare() {
                 video: { cursor: 'always' },
                 audio: false
             });
-
             const screenTrack = screenStream.getVideoTracks()[0];
 
-            Object.values(peers).forEach(peer => {
-                const sender = peer.getSenders().find(s => s.track?.kind === 'video');
-                if (sender) sender.replaceTrack(screenTrack);
-            });
+            if (conferenceMode === 'sfu') {
+                // SFU: close camera producer, produce screen track
+                if (sfuProducers.video) {
+                    socket.emit('sfu:close-producer', { producerId: sfuProducers.video.id });
+                    sfuProducers.video.close();
+                    delete sfuProducers.video;
+                }
+                sfuProducers.screen = await sfuSendTransport.produce({
+                    track: screenTrack,
+                    appData: { share: true }
+                });
+            } else {
+                // P2P: replaceTrack on every peer connection
+                Object.values(peers).forEach(peer => {
+                    const sender = peer.getSenders().find(s => s.track?.kind === 'video');
+                    if (sender) sender.replaceTrack(screenTrack);
+                });
+            }
 
             document.getElementById('localVideo').srcObject = screenStream;
             screenTrack.onended = () => stopScreenShare();
-
             isScreenSharing = true;
             btn.classList.add('sharing');
             btn.textContent = '⏹️';
@@ -672,21 +704,35 @@ async function toggleScreenShare() {
             showNotification('Failed to share screen', 'error');
         }
     } else {
-        stopScreenShare();
+        await stopScreenShare();
     }
 }
 
-function stopScreenShare() {
+async function stopScreenShare() {
     if (screenStream) {
-        screenStream.getTracks().forEach(track => track.stop());
+        screenStream.getTracks().forEach(t => t.stop());
         screenStream = null;
     }
 
-    const videoTrack = localStream.getVideoTracks()[0];
-    Object.values(peers).forEach(peer => {
-        const sender = peer.getSenders().find(s => s.track?.kind === 'video');
-        if (sender) sender.replaceTrack(videoTrack);
-    });
+    if (conferenceMode === 'sfu') {
+        // SFU: close screen producer, re-produce camera
+        if (sfuProducers.screen) {
+            socket.emit('sfu:close-producer', { producerId: sfuProducers.screen.id });
+            sfuProducers.screen.close();
+            delete sfuProducers.screen;
+        }
+        const videoTrack = localStream.getVideoTracks()[0];
+        if (videoTrack && sfuSendTransport) {
+            sfuProducers.video = await sfuSendTransport.produce({ track: videoTrack });
+        }
+    } else {
+        // P2P: replaceTrack back to camera
+        const videoTrack = localStream.getVideoTracks()[0];
+        Object.values(peers).forEach(peer => {
+            const sender = peer.getSenders().find(s => s.track?.kind === 'video');
+            if (sender) sender.replaceTrack(videoTrack);
+        });
+    }
 
     document.getElementById('localVideo').srcObject = localStream;
     isScreenSharing = false;
@@ -845,12 +891,20 @@ function startRoomTimer() {
     }, 1000);
 }
 
+function cleanupSfu() {
+    Object.values(sfuProducers).forEach(p => { try { p?.close(); } catch {} });
+    Object.values(sfuConsumers).forEach(c => { try { c?.close(); } catch {} });
+    try { sfuSendTransport?.close(); } catch {}
+    try { sfuRecvTransport?.close(); } catch {}
+}
+
 function cleanupAndRedirect(reason) {
     if (roomTimer) clearInterval(roomTimer);
     if (localStream) localStream.getTracks().forEach(t => t.stop());
     if (screenStream) screenStream.getTracks().forEach(t => t.stop());
     Object.values(peers).forEach(p => p.close());
     peers = {};
+    cleanupSfu();
     if (socket) socket.disconnect();
     alert(reason);
     window.location.href = 'conf.html';
@@ -929,6 +983,7 @@ async function leaveConference() {
 
     Object.values(peers).forEach(peer => peer.close());
     peers = {};
+    cleanupSfu();
 
     if (socket) {
         socket.emit('leave-conference', { conferenceId });
@@ -949,6 +1004,131 @@ window.addEventListener('beforeunload', () => {
     }
     if (socket) socket.disconnect();
 });
+
+// ============================================================
+// SFU (mediasoup) — Group call implementation
+// ============================================================
+
+function socketAck(event, data) {
+    return new Promise(resolve => socket.emit(event, data, resolve));
+}
+
+function waitForMediasoup() {
+    if (window.MediasoupDevice) return Promise.resolve();
+    return new Promise(resolve => window.addEventListener('mediasoup-ready', resolve, { once: true }));
+}
+
+async function initSfu() {
+    await waitForMediasoup();
+    if (!window.MediasoupDevice) {
+        showNotification('mediasoup-client failed to load — Group call unavailable', 'error');
+        return;
+    }
+
+    sfuDevice = new window.MediasoupDevice();
+
+    // 1. Get router RTP capabilities and load device
+    const { rtpCapabilities, error: capErr } = await socketAck('sfu:get-rtp-capabilities', { conferenceId });
+    if (capErr) throw new Error(capErr);
+    await sfuDevice.load({ routerRtpCapabilities: rtpCapabilities });
+
+    // 2. Create send transport
+    const sendParams = await socketAck('sfu:create-transport', { conferenceId });
+    if (sendParams.error) throw new Error(sendParams.error);
+
+    sfuSendTransport = sfuDevice.createSendTransport(sendParams);
+    sfuSendTransport.on('connect', ({ dtlsParameters }, cb, eb) => {
+        socketAck('sfu:connect-transport', { transportId: sfuSendTransport.id, dtlsParameters })
+            .then(() => cb()).catch(eb);
+    });
+    sfuSendTransport.on('produce', async ({ kind, rtpParameters, appData }, cb, eb) => {
+        const { id, error } = await socketAck('sfu:produce', {
+            transportId: sfuSendTransport.id, kind, rtpParameters, appData
+        });
+        if (error) return eb(new Error(error));
+        cb({ id });
+    });
+
+    // 3. Produce local audio and video
+    const audioTrack = localStream.getAudioTracks()[0];
+    const videoTrack = localStream.getVideoTracks()[0];
+    if (audioTrack) sfuProducers.audio = await sfuSendTransport.produce({ track: audioTrack });
+    if (videoTrack) sfuProducers.video = await sfuSendTransport.produce({ track: videoTrack });
+
+    // 4. Create recv transport
+    const recvParams = await socketAck('sfu:create-transport', { conferenceId });
+    if (recvParams.error) throw new Error(recvParams.error);
+
+    sfuRecvTransport = sfuDevice.createRecvTransport(recvParams);
+    sfuRecvTransport.on('connect', ({ dtlsParameters }, cb, eb) => {
+        socketAck('sfu:connect-transport', { transportId: sfuRecvTransport.id, dtlsParameters })
+            .then(() => cb()).catch(eb);
+    });
+
+    // 5. Consume all existing producers in the room
+    const { producers } = await socketAck('sfu:get-producers', { conferenceId });
+    for (const info of producers) await sfuConsume(info);
+
+    // 6. React to new producers (others who join later or start screen share)
+    socket.on('sfu:new-producer', async info => { await sfuConsume(info); });
+
+    // 7. Handle producers closed remotely (user left, stopped screen share)
+    socket.on('sfu:producer-closed', ({ producerId }) => {
+        const info = sfuProdInfo[producerId];
+        if (!info) return;
+        delete sfuProdInfo[producerId];
+
+        const { userId } = info;
+        const stream = remoteStreams[userId];
+        if (stream) {
+            // Remove the track that belonged to this producer from the stream
+            stream.getTracks().forEach(t => {
+                if (!Object.values(sfuProdInfo).some(pi => pi.userId === userId)) {
+                    stream.removeTrack(t);
+                }
+            });
+        }
+        // If user has no remaining producers, remove their tile
+        const stillHasProducer = Object.values(sfuProdInfo).some(pi => pi.userId === userId);
+        if (!stillHasProducer) {
+            document.getElementById(`video-${userId}`)?.remove();
+            pinnedTiles.delete(String(userId));
+            applyPinLayout();
+            updateParticipantCount();
+            delete remoteStreams[userId];
+        }
+    });
+
+    // 8. Handle consumer closed server-side
+    socket.on('sfu:consumer-closed', ({ consumerId }) => {
+        const consumer = sfuConsumers[consumerId];
+        if (consumer) { consumer.close(); delete sfuConsumers[consumerId]; }
+    });
+}
+
+async function sfuConsume({ producerId, userId, userName, kind }) {
+    if (!sfuDevice.canConsume({ producerId, rtpCapabilities: sfuDevice.rtpCapabilities })) return;
+
+    const params = await socketAck('sfu:consume', {
+        transportId:    sfuRecvTransport.id,
+        producerId,
+        rtpCapabilities: sfuDevice.rtpCapabilities,
+        conferenceId
+    });
+    if (params.error) { console.error('[SFU] consume error:', params.error); return; }
+
+    const consumer = await sfuRecvTransport.consume(params);
+    sfuConsumers[consumer.id] = consumer;
+    sfuProdInfo[producerId]   = { userId, userName, kind };
+
+    // Resume (starts paused by server)
+    await socketAck('sfu:resume-consumer', { consumerId: consumer.id });
+
+    // Group audio+video into one MediaStream per user, then render tile
+    if (!remoteStreams[userId]) remoteStreams[userId] = new MediaStream();
+    remoteStreams[userId].addTrack(consumer.track);
+    addRemoteVideo(userId, remoteStreams[userId], userName);
+}
 
 window.closeSidebar = closeSidebar;
 window.sendMessage = sendMessage;

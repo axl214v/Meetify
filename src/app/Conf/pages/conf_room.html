@@ -954,6 +954,17 @@
 <script src="/Conf/js/conf_utils.js"></script>
 <script src="/Conf/components/chat.js"></script>
 <script src="/js/theme.js"></script>
+<!-- mediasoup-client for SFU (Group) calls — async ESM, conf_room.js waits for 'mediasoup-ready' event -->
+<script type="module">
+    try {
+        const { Device } = await import('https://esm.sh/mediasoup-client@3');
+        window.MediasoupDevice = Device;
+    } catch (e) {
+        console.warn('[mediasoup] Client load failed:', e.message);
+    } finally {
+        window.dispatchEvent(new Event('mediasoup-ready'));
+    }
+</script>
 <script src="/Conf/js/conf_room.js"></script>
 <script src="/err/error-logger.js"></script>
 </body>
