@@ -48,22 +48,22 @@ const initDatabase = async () => {
           ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         `, 'Users table');
 
-        // Add missing columns to existing users table (MySQL 8.0 compatible — check information_schema first)
-        const addColumnIfMissing = async (column, definition) => {
+        // Generic helper: add a column to any table if it doesn't exist yet
+        const addColumnIfMissing = async (table, column, definition) => {
           const [cols] = await db.promise().query(
             `SELECT 1 FROM information_schema.COLUMNS
-             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = ?`,
-            [column]
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
+            [table, column]
           );
           if (!cols.length) {
-            await executeQuery(`ALTER TABLE users ADD COLUMN ${column} ${definition}`, `users.${column}`);
+            await executeQuery(`ALTER TABLE \`${table}\` ADD COLUMN ${column} ${definition}`, `${table}.${column}`);
           }
         };
-        await addColumnIfMissing('role', "VARCHAR(20) DEFAULT 'user'");
-        await addColumnIfMissing('email_verified', 'BOOLEAN DEFAULT FALSE');
-        await addColumnIfMissing('email_verification_token', 'VARCHAR(255)');
-        await addColumnIfMissing('email_verification_expires', 'DATETIME');
-        await addColumnIfMissing('trust_level', 'TINYINT DEFAULT 0');
+        await addColumnIfMissing('users', 'role', "VARCHAR(20) DEFAULT 'user'");
+        await addColumnIfMissing('users', 'email_verified', 'BOOLEAN DEFAULT FALSE');
+        await addColumnIfMissing('users', 'email_verification_token', 'VARCHAR(255)');
+        await addColumnIfMissing('users', 'email_verification_expires', 'DATETIME');
+        await addColumnIfMissing('users', 'trust_level', 'TINYINT DEFAULT 0');
 
         // Create conferences table
         await executeQuery(`
@@ -77,6 +77,7 @@ const initDatabase = async () => {
             description TEXT,
             start_time DATETIME,
             end_time DATETIME,
+            mode VARCHAR(10) DEFAULT 'p2p',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             FOREIGN KEY (host_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -162,6 +163,9 @@ const initDatabase = async () => {
                 console.log('[Database] ✓ notifications.created_by migrated to ON DELETE SET NULL');
             }
         }
+
+        // Migrate existing conferences table: add mode column
+        await addColumnIfMissing('conferences', 'mode', "VARCHAR(10) DEFAULT 'p2p'");
 
         console.log('[Database] ✅ Database initialization complete!');
         resolve(true);

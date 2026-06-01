@@ -3,8 +3,12 @@ const User = require('../models/User');
 const bcrypt = require('bcrypt');
 
 // Вспомогательная функция для валидации
+const P2P_MAX = 8;
+const SFU_MAX = 100;
+
 const validateConferenceData = (data) => {
   const errors = [];
+  const mode = data.mode === 'sfu' ? 'sfu' : 'p2p';
 
   if (!data.name || data.name.trim().length === 0) {
     errors.push('Conference name is required');
@@ -18,10 +22,15 @@ const validateConferenceData = (data) => {
     errors.push('Description is too long (max 1000 characters)');
   }
 
-  if (data.maxParticipants) {
+  if (data.maxParticipants !== null && data.maxParticipants !== undefined && data.maxParticipants !== '') {
     const max = parseInt(data.maxParticipants);
-    if (isNaN(max) || max < 2 || max > 1000) {
-      errors.push('Max participants must be between 2 and 1000');
+    const cap = mode === 'p2p' ? P2P_MAX : SFU_MAX;
+    if (isNaN(max) || max < 2) {
+      errors.push('Max participants must be at least 2');
+    } else if (max > cap) {
+      errors.push(mode === 'p2p'
+        ? `Private calls are limited to ${P2P_MAX} participants`
+        : `Group calls are limited to ${SFU_MAX} participants`);
     }
   }
 
@@ -39,30 +48,37 @@ const validateConferenceData = (data) => {
 // Создание новой конференции
 const createConference = async (req, res) => {
   try {
-    const { name, password, maxParticipants, isPublic, description, startTime, endTime } = req.body;
+    const { name, password, maxParticipants, isPublic, description, startTime, endTime, mode } = req.body;
     const hostId = req.user.userId;
+    const conferenceMode = mode === 'sfu' ? 'sfu' : 'p2p';
 
     // Валидация данных
     const validationErrors = validateConferenceData(req.body);
     if (validationErrors.length > 0) {
-      return res.status(400).json({ 
-        message: 'Validation failed', 
-        errors: validationErrors 
+      return res.status(400).json({
+        message: 'Validation failed',
+        errors: validationErrors
       });
     }
 
     const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
+
+    // Enforce hard cap server-side regardless of what client sent
+    const cap = conferenceMode === 'p2p' ? P2P_MAX : SFU_MAX;
+    let parsedMax = maxParticipants ? parseInt(maxParticipants) : null;
+    if (parsedMax === null || parsedMax > cap) parsedMax = cap;
 
     // Создаем конференцию
     const conference = await Conference.create({
       name: name.trim(),
       hostId,
       password: hashedPassword,
-      maxParticipants: maxParticipants ? parseInt(maxParticipants) : null,
+      maxParticipants: parsedMax,
       isPublic: isPublic !== undefined ? isPublic : true,
       description: description ? description.trim() : null,
       startTime,
-      endTime
+      endTime,
+      mode: conferenceMode
     });
 
     // Автоматически добавляем хоста как участника

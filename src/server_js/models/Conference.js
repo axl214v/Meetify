@@ -3,30 +3,32 @@ const db = require('../config/database');
 const Conference = {
   // Создание новой конференции
   create: async (conferenceData) => {
-    const { 
-      name, 
-      hostId, 
-      password, 
-      maxParticipants, 
+    const {
+      name,
+      hostId,
+      password,
+      maxParticipants,
       isPublic,
       description,
       startTime,
-      endTime 
+      endTime,
+      mode
     } = conferenceData;
 
     const query = `
       INSERT INTO conferences (
-        name, 
-        host_id, 
-        password, 
-        max_participants, 
+        name,
+        host_id,
+        password,
+        max_participants,
         is_public,
         description,
         start_time,
         end_time,
+        mode,
         created_at,
         updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
     `;
 
     try {
@@ -38,7 +40,8 @@ const Conference = {
         isPublic !== undefined ? isPublic : true,
         description ? description.trim() : null,
         startTime || null,
-        endTime || null
+        endTime || null,
+        mode === 'sfu' ? 'sfu' : 'p2p'
       ]);
 
       // Возвращаем созданную конференцию
@@ -276,7 +279,8 @@ const Conference = {
       'isPublic': 'is_public',
       'description': 'description',
       'startTime': 'start_time',
-      'endTime': 'end_time'
+      'endTime': 'end_time',
+      'mode': 'mode'
     };
 
     const fields = [];
