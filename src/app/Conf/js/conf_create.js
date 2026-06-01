@@ -4,7 +4,35 @@
 
 const API_BASE = window.location.origin;
 
+const P2P_MAX = 8;
+const SFU_MAX = 100;
+
 document.addEventListener('DOMContentLoaded', () => {
+
+    // Mode card toggle
+    const modeCards  = document.querySelectorAll('.mode-card');
+    const modeInputs = document.querySelectorAll('input[name="mode"]');
+    modeInputs.forEach(radio => {
+        radio.addEventListener('change', () => {
+            modeCards.forEach(c => c.classList.remove('mode-card--active'));
+            radio.closest('.mode-card').classList.add('mode-card--active');
+            applyModeCap();
+        });
+    });
+
+    function getMode() {
+        return document.querySelector('input[name="mode"]:checked')?.value || 'p2p';
+    }
+
+    function applyModeCap() {
+        const maxInput = document.getElementById('maxParticipants');
+        if (!maxInput) return;
+        const cap = getMode() === 'p2p' ? P2P_MAX : SFU_MAX;
+        maxInput.max = cap;
+        maxInput.placeholder = `Max ${cap} (leave empty for default)`;
+        if (maxInput.value && parseInt(maxInput.value) > cap) maxInput.value = cap;
+    }
+    applyModeCap();
 
     // Set minimum datetime to now
     const now = new Date();
@@ -54,6 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const startTimeInput       = document.getElementById('startTime');
         const endTimeInput         = document.getElementById('endTime');
 
+        const mode            = getMode();
         const name            = nameInput.value.trim();
         const description     = descriptionInput.value.trim();
         const maxParticipants = maxParticipantsInput.value ? parseInt(maxParticipantsInput.value) : null;
@@ -93,8 +122,9 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (maxParticipants !== null && (maxParticipants < 2 || maxParticipants > 1000)) {
-            showNotification('Max participants must be between 2 and 1000', 'error');
+        const cap = mode === 'p2p' ? P2P_MAX : SFU_MAX;
+        if (maxParticipants !== null && (maxParticipants < 2 || maxParticipants > cap)) {
+            showNotification(`Max participants must be between 2 and ${cap}`, 'error');
             maxParticipantsInput.classList.add('error');
             return;
         }
@@ -116,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
-                body: JSON.stringify({ name, description: description || undefined, maxParticipants, isPublic, password, startTime, endTime })
+                body: JSON.stringify({ name, description: description || undefined, maxParticipants, isPublic, password, startTime, endTime, mode })
             });
 
             const data = await response.json();

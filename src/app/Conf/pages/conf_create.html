@@ -8,6 +8,33 @@
     <link rel="stylesheet" href="/styles/theme-additions.css">
     <link rel="icon" href="/assets/logo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <style>
+        .mode-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 6px;
+        }
+        .mode-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 14px 16px;
+            border: 1.5px solid var(--border, rgba(255,255,255,0.08));
+            border-radius: 12px;
+            cursor: pointer;
+            transition: border-color 0.18s, background 0.18s;
+            background: transparent;
+        }
+        .mode-card:hover { border-color: var(--accent, #3b82f6); }
+        .mode-card--active {
+            border-color: var(--accent, #3b82f6);
+            background: rgba(59,130,246,0.08);
+        }
+        .mode-card-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+        .mode-card-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .mode-card-desc  { font-size: 11px; line-height: 1.5; opacity: 0.65; }
+    </style>
 </head>
 <body>
     <header>
@@ -19,6 +46,29 @@
             <h3>📹 Conference Details</h3>
             
             <form id="createConferenceForm">
+                <!-- Mode selector -->
+                <div class="form-group">
+                    <label class="conference-label">Call Type</label>
+                    <div class="mode-cards">
+                        <label class="mode-card mode-card--active" id="modeCardP2p">
+                            <input type="radio" name="mode" id="modeP2p" value="p2p" checked hidden>
+                            <div class="mode-card-icon">🔒</div>
+                            <div class="mode-card-body">
+                                <div class="mode-card-title">Private call</div>
+                                <div class="mode-card-desc">End-to-end · max 8 people<br>Media never touches the server</div>
+                            </div>
+                        </label>
+                        <label class="mode-card" id="modeCardSfu">
+                            <input type="radio" name="mode" id="modeSfu" value="sfu" hidden>
+                            <div class="mode-card-icon">📡</div>
+                            <div class="mode-card-body">
+                                <div class="mode-card-title">Group call</div>
+                                <div class="mode-card-desc">Server-powered · up to 100 people<br>Scales to large audiences</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
                 <!-- Conference Name -->
                 <div class="form-group">
                     <label for="name" class="conference-label">Conference Name *</label>
