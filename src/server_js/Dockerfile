@@ -4,7 +4,7 @@
 # ==========================================
 
 # Debian slim — mediasoup uses prebuilt binaries on glibc (Alpine/musl is unreliable)
-FROM node:18-bookworm-slim
+FROM node:22-bookworm-slim
 
 WORKDIR /app
 
