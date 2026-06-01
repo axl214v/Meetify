@@ -21,3 +21,5 @@ Thumbs.db
 *.log
 .claude
 deploy.sh
+docker-compose.prod.yml
+src/app/nginx.prod.conf
