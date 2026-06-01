@@ -135,12 +135,33 @@ const initDatabase = async () => {
             title VARCHAR(255) NOT NULL,
             message TEXT NOT NULL,
             category ENUM('info', 'update', 'maintenance', 'warning') DEFAULT 'info',
-            created_by INT NOT NULL,
+            created_by INT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
             INDEX idx_created (created_at)
           ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         `, 'Notifications table');
+
+        // Migrate existing notifications table: change created_by FK to ON DELETE SET NULL
+        const [notifFkRows] = await db.promise().query(`
+            SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE
+            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'notifications'
+              AND COLUMN_NAME = 'created_by' AND REFERENCED_TABLE_NAME = 'users'
+        `);
+        if (notifFkRows.length) {
+            const [colRows] = await db.promise().query(`
+                SELECT IS_NULLABLE FROM information_schema.COLUMNS
+                WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'notifications'
+                  AND COLUMN_NAME = 'created_by'
+            `);
+            if (colRows.length && colRows[0].IS_NULLABLE === 'NO') {
+                const fkName = notifFkRows[0].CONSTRAINT_NAME;
+                await db.promise().query(`ALTER TABLE notifications DROP FOREIGN KEY \`${fkName}\``);
+                await db.promise().query(`ALTER TABLE notifications MODIFY COLUMN created_by INT NULL`);
+                await db.promise().query(`ALTER TABLE notifications ADD FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL`);
+                console.log('[Database] ✓ notifications.created_by migrated to ON DELETE SET NULL');
+            }
+        }
 
         console.log('[Database] ✅ Database initialization complete!');
         resolve(true);
