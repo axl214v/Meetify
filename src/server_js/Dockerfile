@@ -1,55 +1,38 @@
 # ==========================================
 # Meetify Backend Dockerfile
-# Node.js + Express + Socket.IO
+# Node.js + Express + Socket.IO + mediasoup
 # ==========================================
 
-# Use official Node.js LTS image
-FROM node:18-alpine
+# Debian slim — mediasoup uses prebuilt binaries on glibc (Alpine/musl is unreliable)
+FROM node:18-bookworm-slim
 
-# Set working directory
 WORKDIR /app
 
-# Install system dependencies
-RUN apk add --no-cache \
-    curl \
-    bash \
-    python3 \
-    make \
-    g++
+# Build tools needed by mediasoup native workers
+RUN apt-get update && apt-get install -y \
+    python3 make g++ curl \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy package files
+# Install deps first (layer caching)
 COPY package*.json ./
-
-# Install dependencies
 RUN npm ci --only=production && \
     npm cache clean --force
 
 # Copy application code
 COPY . .
 
-# Create logs directory
-RUN mkdir -p /app/logs && \
-    chmod 755 /app/logs
+# Create runtime directories
+RUN mkdir -p /app/logs && chmod 755 /app/logs && \
+    mkdir -p uploads/avatars && chmod -R 775 uploads && \
+    chown -R node:node /app
 
-# Create uploads directory with proper permissions
-RUN mkdir -p uploads/avatars \
-    && chmod -R 775 uploads \
-    && chown -R node:node uploads
+# Run as the built-in non-root node user
+USER node
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001 && \
-    chown -R nodejs:nodejs /app
-
-# Switch to non-root user
-USER nodejs
-
-# Expose port
+# HTTP port (RTC media ports 40000-40059 are published by docker-compose)
 EXPOSE 3000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:3000/check-status || exit 1
 
-# Start application
 CMD ["node", "index.js"]

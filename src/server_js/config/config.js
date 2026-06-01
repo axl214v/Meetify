@@ -80,6 +80,14 @@ const config = {
     screenSharingEnabled: process.env.SCREEN_SHARING_ENABLED === 'true' || true
   },
 
+  // mediasoup SFU
+  mediasoup: {
+    numWorkers:  parseInt(process.env.MEDIASOUP_NUM_WORKERS) || require('os').cpus().length,
+    announcedIp: process.env.MEDIASOUP_ANNOUNCED_IP || '127.0.0.1',
+    minPort:     parseInt(process.env.MEDIASOUP_MIN_PORT)  || 40000,
+    maxPort:     parseInt(process.env.MEDIASOUP_MAX_PORT)  || 40059
+  },
+
   // Типы окружений
   environment: {
     development: process.env.NODE_ENV === 'development',

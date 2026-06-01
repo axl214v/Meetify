@@ -2,6 +2,7 @@
 const { server } = require('./app');
 const config = require('./config/config');
 const initDatabase = require('./utils/initDatabase');
+const { createWorkers } = require('./sfu/mediasoup');
 
 // ============================================
 // Initialize Database
@@ -13,7 +14,10 @@ const initDatabase = require('./utils/initDatabase');
     
     // Initialize database schema
     await initDatabase();
-    
+
+    // Start mediasoup workers for SFU (Group) calls
+    await createWorkers();
+
     // Start server
     startServer();
   } catch (error) {

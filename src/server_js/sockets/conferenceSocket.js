@@ -1,4 +1,7 @@
 const Conference = require('../models/Conference');
+const { registerSfuHandlers, cleanupPeer } = require('./sfuSocket');
+
+const P2P_MAX = 8;
 
 // Active conference rooms and participants
 const conferenceRooms = new Map();    // conferenceId -> Set<socketId>
@@ -47,6 +50,9 @@ function handleUserDisconnect(socket, conferenceId) {
         }
     }
 
+    // Clean up SFU transports/producers/consumers for this peer
+    cleanupPeer(socket, socketUsers);
+
     socketUsers.delete(socket.id);
     userSockets.delete(user.userId);
 
@@ -72,6 +78,9 @@ function initializeConferenceSocket(io) {
     io.on('connection', (socket) => {
         console.log(`[Socket] Client connected: ${socket.id}`);
 
+        // Register mediasoup SFU handlers (no-ops for P2P rooms)
+        registerSfuHandlers(io, socket, socketUsers);
+
         // Join Conference
         socket.on('join-conference', async ({ conferenceId, userName }) => {
             try {
@@ -87,6 +96,15 @@ function initializeConferenceSocket(io) {
                 if (!conference) {
                     socket.emit('error', { message: 'Conference not found' });
                     return;
+                }
+
+                // P2P hard cap: reject if room is already at the limit
+                if (conference.mode !== 'sfu') {
+                    const currentSize = conferenceRooms.get(conferenceId)?.size || 0;
+                    if (currentSize >= P2P_MAX) {
+                        socket.emit('join-rejected', { reason: 'full' });
+                        return;
+                    }
                 }
 
                 socket.join(`conference-${conferenceId}`);
