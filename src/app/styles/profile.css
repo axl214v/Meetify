@@ -1,47 +1,8 @@
+/* variables from brand.css */
+
 /* ============================================ */
 /* Profile Page Layout                          */
 /* ============================================ */
-
-.profile-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 1.5rem;
-    margin-bottom: 2rem;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-}
-
-.header-left {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.header-title {
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: var(--text);
-    background: none;
-    -webkit-text-fill-color: var(--text);
-    margin: 0;
-}
-
-.back-btn {
-    background: var(--bg-2);
-    color: var(--text-2);
-    border: 1px solid var(--border);
-    padding: 0.4rem 0.9rem;
-    font-size: 0.85rem;
-    min-height: auto;
-}
-
-.back-btn:hover {
-    color: var(--text);
-    transform: translateX(-2px);
-    box-shadow: none;
-}
 
 .header-email {
     font-family: var(--font-mono);
@@ -56,6 +17,7 @@
 .profile-main {
     max-width: 1100px;
     margin: 0 auto;
+    padding: 2rem 1.5rem;
     display: grid;
     grid-template-columns: 280px 1fr;
     gap: 1.5rem;
@@ -517,48 +479,12 @@
         grid-template-columns: 1fr;
     }
 
-    .profile-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.5rem;
-    }
-
     .card-header-row {
         flex-direction: column;
         align-items: flex-start;
     }
 }
 
-/* Theme toggle in profile header */
-.profile-header #themeToggleBtn {
-    width: 36px;
-    height: 36px;
-    padding: 0;
-    border-radius: 50%;
-    background: var(--surface-2, #1c2540);
-    border: 1px solid var(--border);
-    color: var(--text);
-    cursor: pointer;
-    font-size: 0.95rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: auto;
-    transition: all 0.18s;
-    flex-shrink: 0;
-}
-
-.profile-header #themeToggleBtn:hover {
-    transform: rotate(20deg) scale(1.1);
-    box-shadow: none;
-    border-color: var(--border-hover, rgba(255,255,255,0.14));
-}
-
-.profile-header .header-right {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
 
 /* ── Email Verification Banner ── */
 .verification-banner {

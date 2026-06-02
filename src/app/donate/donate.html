@@ -9,18 +9,18 @@
     <script>(function(){document.documentElement.setAttribute('data-theme',localStorage.getItem('theme')||'dark')})();</script>
     <style>
         :root,[data-theme="dark"]{
-            --bg:#080c14;--bg2:#0d1220;--surface:#161d2e;--surface2:#1c2540;
-            --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.14);
-            --text:#f1f5f9;--text2:#94a3b8;--text3:#475569;
-            --accent:#3b82f6;--accent2:#6366f1;--accent-rgb:59,130,246;
-            --danger:#ef4444;--success:#10b981;
+            --bg:#020c1a;--bg2:#061221;--surface:#081828;--surface2:#0d2040;
+            --border:rgba(37,99,235,0.13);--border2:rgba(37,99,235,0.28);
+            --text:#e8f0fe;--text2:#7a96be;--text3:#3d5a7a;
+            --accent:#2563eb;--accent2:#0ea5e9;--accent-rgb:37,99,235;
+            --danger:#ef4444;--success:#22c55e;
         }
         [data-theme="light"]{
-            --bg:#f1f5f9;--bg2:#fff;--surface:#fff;--surface2:#f8fafc;
-            --border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.14);
-            --text:#1e293b;--text2:#64748b;--text3:#94a3b8;
-            --accent:#3b82f6;--accent2:#6366f1;--accent-rgb:59,130,246;
-            --danger:#ef4444;--success:#10b981;
+            --bg:#f0f6ff;--bg2:#fff;--surface:#fff;--surface2:#eef5ff;
+            --border:rgba(37,99,235,0.12);--border2:rgba(37,99,235,0.28);
+            --text:#0f1f38;--text2:#3d5878;--text3:#7a96be;
+            --accent:#2563eb;--accent2:#0284c7;--accent-rgb:37,99,235;
+            --danger:#ef4444;--success:#22c55e;
         }
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
         html{color-scheme:dark light}
@@ -55,17 +55,16 @@
             font-weight: 700;
             font-size: 18px;
         }
-        .sp-logo-mark {
-            width: 32px;
-            height: 32px;
-            background: var(--accent);
-            border-radius: 9px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 17px;
-            font-weight: 800;
-            color: #fff;
+        .sp-logo-img {
+            height: 44px;
+            width: auto;
+            display: block;
+            mix-blend-mode: lighten;
+            filter: brightness(1.05) contrast(1.02);
+        }
+        [data-theme="light"] .sp-logo-img {
+            mix-blend-mode: normal;
+            filter: none;
         }
         .sp-nav-actions { display: flex; gap: 10px; align-items: center; }
         .sp-btn {
@@ -259,8 +258,7 @@
 
     <nav class="sp-nav">
         <a class="sp-logo" href="/">
-            <div class="sp-logo-mark">M</div>
-            Meetify
+            <img class="sp-logo-img" src="/assets/logo.png" alt="Meetify">
         </a>
         <div class="sp-nav-actions">
             <a class="sp-btn" href="/support/support.html">Support</a>

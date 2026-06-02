@@ -1,37 +1,17 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+/* variables from brand.css */
 
 /* ============================================ */
-/* CSS Variables                                */
+/* Local tokens not in brand.css               */
 /* ============================================ */
 
 :root {
-  --bg:           #080c14;
-  --bg-2:         #0d1220;
-  --bg-3:         #111827;
-  --surface:      #161d2e;
-  --surface-2:    #1c2540;
-  --border:       rgba(255,255,255,0.07);
-  --border-hover: rgba(255,255,255,0.14);
+  --border-hover: var(--border-h);
+  --accent-glow:  var(--glow);
+  --accent-2:     var(--accent-2, #6366f1);
 
-  --accent:       #3b82f6;
-  --accent-glow:  rgba(59,130,246,0.35);
-  --accent-2:     #6366f1;
-  --success:      #10b981;
-  --danger:       #ef4444;
-  --warn:         #f59e0b;
-
-  --text:         #f1f5f9;
-  --text-2:       #94a3b8;
-  --text-3:       #475569;
-
-  --radius:       14px;
   --radius-sm:    8px;
   --radius-lg:    20px;
 
-  --shadow:       0 4px 24px rgba(0,0,0,0.4);
-  --shadow-lg:    0 12px 48px rgba(0,0,0,0.6);
-
-  --font:         'Outfit', sans-serif;
   --font-mono:    'JetBrains Mono', monospace;
 
   --transition:   all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -50,27 +30,10 @@
 html { scroll-behavior: smooth; }
 
 body {
-  min-height: 100vh;
-  font-family: var(--font);
-  background: var(--bg);
-  color: var(--text);
-  line-height: 1.6;
-  padding: 24px;
-  -webkit-font-smoothing: antialiased;
+  padding: 0;
 }
 
-/* Subtle grid background */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
-  background-size: 48px 48px;
-  z-index: -1;
-  pointer-events: none;
-}
+/* dot-grid — handled by brand.css body::before */
 
 /* ============================================ */
 /* Typography                                   */
@@ -122,7 +85,7 @@ p {
 
 main {
   max-width: 860px;
-  margin: 0 auto;
+  margin: 2rem auto;
   padding: 2.5rem;
   background: var(--surface);
   border-radius: var(--radius-lg);
@@ -152,8 +115,9 @@ button {
   cursor: pointer;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
-  background: var(--accent);
+  background: var(--grad);
   color: #fff;
+  box-shadow: 0 0 14px var(--glow);
   transition: var(--transition);
   position: relative;
   overflow: hidden;
@@ -172,7 +136,7 @@ button::after {
 
 button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px var(--accent-glow);
+  box-shadow: 0 6px 20px var(--glow);
 }
 
 button:hover::after {
@@ -200,10 +164,11 @@ button.secondary {
   background: var(--surface-2);
   color: var(--text-2);
   border-color: var(--border);
+  box-shadow: none;
 }
 
 button.secondary:hover {
-  border-color: var(--border-hover);
+  border-color: var(--border-h);
   color: var(--text);
   box-shadow: none;
 }
@@ -270,7 +235,7 @@ textarea:focus,
 select:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+  box-shadow: 0 0 0 3px var(--glow);
 }
 
 input.error {
@@ -391,9 +356,9 @@ input[type="radio"] {
 }
 
 .filter-tab.active {
-  background: rgba(59,130,246,0.15);
-  color: #60a5fa;
-  border-color: rgba(59,130,246,0.35);
+  background: var(--glow);
+  color: var(--text);
+  border-color: var(--border-h);
   box-shadow: none;
 }
 
@@ -440,13 +405,13 @@ input[type="radio"] {
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  background: var(--grad);
   opacity: 0;
   transition: opacity 0.2s;
 }
 
 .conference-card:hover {
-  border-color: var(--border-hover);
+  border-color: var(--border-h);
   transform: translateY(-3px);
   box-shadow: var(--shadow-lg);
 }
@@ -585,7 +550,7 @@ input[type="radio"] {
 .spinner {
   width: 36px;
   height: 36px;
-  border: 3px solid rgba(59,130,246,0.15);
+  border: 3px solid var(--border);
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -858,7 +823,7 @@ input[type="radio"] {
 }
 
 .recent-item:hover {
-  border-color: var(--border-hover);
+  border-color: var(--border-h);
   transform: translateX(3px);
 }
 
@@ -875,9 +840,9 @@ input[type="radio"] {
 }
 
 .quick-join-btn {
-  background: rgba(59,130,246,0.12);
-  color: #60a5fa;
-  border: 1px solid rgba(59,130,246,0.25);
+  background: var(--border);
+  color: var(--text-2);
+  border: 1px solid var(--border);
   padding: 0.35rem 0.9rem;
   border-radius: var(--radius-sm);
   font-size: 0.8rem;
@@ -885,10 +850,13 @@ input[type="radio"] {
   cursor: pointer;
   transition: var(--transition);
   min-height: auto;
+  box-shadow: none;
 }
 
 .quick-join-btn:hover {
-  background: rgba(59,130,246,0.2);
+  background: var(--border-h);
+  border-color: var(--border-h);
+  color: var(--text);
   transform: none;
   box-shadow: none;
 }
@@ -912,7 +880,7 @@ input[type="radio"] {
   background: var(--surface-2);
   border-radius: 10px;
 }
-::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
+::-webkit-scrollbar-thumb:hover { background: var(--border-h); }
 
 /* ============================================ */
 /* Links                                        */
@@ -967,14 +935,13 @@ a:hover { color: #93c5fd; }
 /* ============================================ */
 
 @media (max-width: 768px) {
-  body { padding: 12px; }
-
-  h1 { font-size: 1.9rem; }
-
   main {
+    margin: 1rem;
     padding: 1.25rem;
     border-radius: var(--radius);
   }
+
+  h1 { font-size: 1.9rem; }
 
   .conferences-grid {
     grid-template-columns: 1fr;
@@ -1154,3 +1121,12 @@ a:hover { color: #93c5fd; }
 @media (max-width: 500px) {
   .form-row { grid-template-columns: 1fr; }
 }
+
+/* ============================================ */
+/* Theme icon visibility (brand-nav)            */
+/* ============================================ */
+
+.icon-sun  { display: none; }
+.icon-moon { display: block; }
+[data-theme="light"] .icon-sun  { display: block; }
+[data-theme="light"] .icon-moon { display: none; }

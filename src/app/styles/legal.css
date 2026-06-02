@@ -1,23 +1,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
-:root {
-  --bg:       #080c14;
-  --surface:  #111827;
-  --border:   rgba(255,255,255,0.07);
-  --accent:   #3b82f6;
-  --text:     #f1f5f9;
-  --text-2:   #94a3b8;
-  --text-3:   #475569;
+:root,[data-theme="dark"] {
+  --bg:       #020c1a;
+  --surface:  #081828;
+  --border:   rgba(37,99,235,0.13);
+  --accent:   #2563eb;
+  --text:     #e8f0fe;
+  --text-2:   #7a96be;
+  --text-3:   #3d5a7a;
   --font:     'Outfit', sans-serif;
 }
-
-html[data-theme="light"] {
-  --bg:      #f8fafc;
+[data-theme="light"] {
+  --bg:      #f0f6ff;
   --surface: #ffffff;
-  --border:  rgba(0,0,0,0.08);
-  --text:    #0f172a;
-  --text-2:  #475569;
-  --text-3:  #94a3b8;
+  --border:  rgba(37,99,235,0.12);
+  --accent:  #2563eb;
+  --text:    #0f1f38;
+  --text-2:  #3d5878;
+  --text-3:  #7a96be;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -53,46 +53,42 @@ html[data-theme="light"] code {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 2rem;
+  padding: 0 2rem;
+  height: 68px;
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
-  background: rgba(8,12,20,0.85);
-  backdrop-filter: blur(12px);
+  background: rgba(2,12,26,0.78);
+  backdrop-filter: blur(20px);
   z-index: 10;
 }
-
-html[data-theme="light"] .legal-nav {
-  background: rgba(248,250,252,0.9);
-}
+[data-theme="light"] .legal-nav { background: rgba(240,246,255,0.85); }
 
 .legal-nav-brand {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--text);
   text-decoration: none;
 }
-
-.legal-nav-brand:hover { text-decoration: none; color: var(--text); }
+.legal-nav-logo-img {
+  height: 44px; width: auto;
+  mix-blend-mode: lighten;
+  filter: brightness(1.05) contrast(1.02);
+}
+[data-theme="light"] .legal-nav-logo-img { mix-blend-mode: normal; filter: none; }
+.legal-nav-brand:hover { text-decoration: none; }
 
 .legal-nav-theme {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid var(--border);
-  cursor: pointer;
-  font-size: 0.95rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.18s;
+  width: 36px; height: 36px; border-radius: 9px;
+  background: transparent;
+  border: 1px solid var(--border); color: var(--text-2);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: border-color .15s, color .15s;
 }
-
-.legal-nav-theme:hover { transform: rotate(20deg) scale(1.1); }
+.legal-nav-theme:hover { border-color: rgba(37,99,235,0.32); color: var(--text); }
+.icon-sun  { display: none; }
+.icon-moon { display: block; }
+[data-theme="light"] .icon-sun  { display: block; }
+[data-theme="light"] .icon-moon { display: none; }
 
 /* ── Main ── */
 .legal-main {

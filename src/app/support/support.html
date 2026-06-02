@@ -9,18 +9,18 @@
     <script>(function(){document.documentElement.setAttribute('data-theme',localStorage.getItem('theme')||'dark')})();</script>
     <style>
         :root,[data-theme="dark"]{
-            --bg:#080c14;--bg2:#0d1220;--surface:#161d2e;--surface2:#1c2540;
-            --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.14);
-            --text:#f1f5f9;--text2:#94a3b8;--text3:#475569;
-            --accent:#3b82f6;--accent2:#6366f1;--accent-rgb:59,130,246;
-            --danger:#ef4444;--success:#10b981;--warn:#f59e0b;
+            --bg:#020c1a;--bg2:#061221;--surface:#081828;--surface2:#0d2040;
+            --border:rgba(37,99,235,0.13);--border2:rgba(37,99,235,0.28);
+            --text:#e8f0fe;--text2:#7a96be;--text3:#3d5a7a;
+            --accent:#2563eb;--accent2:#0ea5e9;--accent-rgb:37,99,235;
+            --danger:#ef4444;--success:#22c55e;--warn:#f59e0b;
         }
         [data-theme="light"]{
-            --bg:#f1f5f9;--bg2:#fff;--surface:#fff;--surface2:#f8fafc;
-            --border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.14);
-            --text:#1e293b;--text2:#64748b;--text3:#94a3b8;
-            --accent:#3b82f6;--accent2:#6366f1;--accent-rgb:59,130,246;
-            --danger:#ef4444;--success:#10b981;--warn:#f59e0b;
+            --bg:#f0f6ff;--bg2:#fff;--surface:#fff;--surface2:#eef5ff;
+            --border:rgba(37,99,235,0.12);--border2:rgba(37,99,235,0.28);
+            --text:#0f1f38;--text2:#3d5878;--text3:#7a96be;
+            --accent:#2563eb;--accent2:#0284c7;--accent-rgb:37,99,235;
+            --danger:#ef4444;--success:#22c55e;--warn:#f59e0b;
         }
 
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -30,7 +30,8 @@
         /* ── Nav ── */
         .nav{display:flex;align-items:center;justify-content:space-between;padding:14px 32px;border-bottom:1px solid var(--border);background:var(--bg2);position:sticky;top:0;z-index:20}
         .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text);font-weight:700;font-size:17px}
-        .nav-logo-mark{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;box-shadow:0 0 12px rgba(var(--accent-rgb),.35)}
+        .nav-logo-img{height:44px;width:auto;display:block;mix-blend-mode:lighten;filter:brightness(1.05) contrast(1.02)}
+        [data-theme="light"] .nav-logo-img{mix-blend-mode:normal;filter:none}
         .nav-links{display:flex;gap:8px;align-items:center}
         .nav-btn{padding:6px 14px;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2);text-decoration:none;transition:color .15s,border-color .15s,background .15s}
         .nav-btn:hover{color:var(--text);border-color:var(--border2)}
@@ -107,8 +108,7 @@
 
 <nav class="nav">
     <a class="nav-logo" href="/">
-        <div class="nav-logo-mark">M</div>
-        Meetify
+        <img class="nav-logo-img" src="/assets/logo.png" alt="Meetify">
     </a>
     <div class="nav-links">
         <a class="nav-btn" href="/Conf/pages/conf.html">Conferences</a>

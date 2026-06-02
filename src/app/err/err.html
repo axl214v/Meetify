@@ -1,16 +1,38 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/styles/err.css">
+    <title>Something went wrong — Meetify</title>
     <link rel="icon" href="/assets/logo.png">
-    <title>Ops. Something went wrong.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>(function(){var t=localStorage.getItem('theme')||'dark';document.documentElement.setAttribute('data-theme',t)})();</script>
+    <style>
+        :root,[data-theme="dark"]{--bg:#020c1a;--surface:#081828;--border:rgba(37,99,235,0.13);--text:#e8f0fe;--text-2:#7a96be;--text-3:#3d5a7a;--grad:linear-gradient(135deg,#2563eb,#0ea5e9)}
+        [data-theme="light"]{--bg:#f0f6ff;--surface:#fff;--border:rgba(37,99,235,0.12);--text:#0f1f38;--text-2:#3d5878;--text-3:#7a96be}
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        html{color-scheme:dark light}
+        body{font-family:'Outfit',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;-webkit-font-smoothing:antialiased}
+        body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;background-image:radial-gradient(circle,rgba(37,99,235,0.10) 1px,transparent 1px);background-size:32px 32px}
+        .err-box{text-align:center;max-width:480px}
+        .err-code{font-size:96px;font-weight:900;letter-spacing:-4px;background:linear-gradient(135deg,#60a5fa,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;margin-bottom:8px}
+        .err-title{font-size:22px;font-weight:700;color:var(--text);margin-bottom:12px}
+        .err-sub{font-size:15px;color:var(--text-2);line-height:1.65;margin-bottom:32px}
+        .err-btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;background:var(--grad);color:#fff;font-size:14px;font-weight:700;font-family:inherit;text-decoration:none;border:none;cursor:pointer;box-shadow:0 0 20px rgba(37,99,235,0.3);transition:transform .15s,box-shadow .15s}
+        .err-btn:hover{transform:translateY(-2px);box-shadow:0 4px 28px rgba(37,99,235,0.45)}
+        .err-logo{margin-bottom:40px}
+        .err-logo img{height:40px;mix-blend-mode:lighten;filter:brightness(1.05) contrast(1.02)}
+        [data-theme="light"] .err-logo img{mix-blend-mode:normal;filter:none}
+    </style>
 </head>
 <body>
-    <div>
-        Ops. Something went wrong.
-        Working on fixing it.
+    <div class="err-logo"><a href="/"><img src="/assets/logo.png" alt="Meetify"></a></div>
+    <div class="err-box">
+        <div class="err-code">500</div>
+        <h1 class="err-title">Something went wrong</h1>
+        <p class="err-sub">We're working on fixing this. Please try again in a moment.</p>
+        <a class="err-btn" href="/">← Back to Home</a>
     </div>
     <script src="/err/error-logger.js"></script>
 </body>
