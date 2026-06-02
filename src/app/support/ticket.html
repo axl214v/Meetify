@@ -6,72 +6,90 @@
     <title>Ticket — Meetify Support</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/styles/styles.css">
-    <script>
-        (function() {
-            const t = localStorage.getItem('theme') || 'dark';
-            document.documentElement.setAttribute('data-theme', t);
-        })();
-    </script>
+    <script>(function(){document.documentElement.setAttribute('data-theme',localStorage.getItem('theme')||'dark')})();</script>
     <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Outfit', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
-
-        .nav { display: flex; align-items: center; justify-content: space-between; padding: 14px 32px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg); z-index: 10; }
-        .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); font-weight: 700; font-size: 17px; }
-        .nav-logo-mark { width: 30px; height: 30px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; color: #fff; }
-        .btn { padding: 7px 16px; border-radius: 9px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text); text-decoration: none; transition: border-color 0.15s; }
-        .btn:hover { border-color: var(--accent); }
-        .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-        .btn-primary:hover { opacity: 0.88; }
-        .btn-danger { background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.3); color: #ef4444; }
-        .btn-danger:hover { background: rgba(239,68,68,0.2); }
-
-        .page { max-width: 720px; margin: 0 auto; padding: 32px 24px 80px; flex: 1; width: 100%; }
-
-        /* Ticket header */
-        .back-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text2); text-decoration: none; margin-bottom: 20px; transition: color 0.15s; }
-        .back-btn:hover { color: var(--accent); }
-        .ticket-hd { margin-bottom: 24px; }
-        .ticket-hd-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-        .ticket-title-big { font-size: 20px; font-weight: 700; line-height: 1.3; }
-        .ticket-meta-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 8px; font-size: 12px; color: var(--text3); }
-        .status-badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 99px; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
-        .badge-open        { background: rgba(59,130,246,0.12);  color: #3b82f6; }
-        .badge-in_progress { background: rgba(245,158,11,0.12);  color: #f59e0b; }
-        .badge-closed      { background: rgba(128,128,128,0.12); color: var(--text3); }
-        .cat-badge { padding: 3px 8px; border-radius: 6px; background: var(--surface); border: 1px solid var(--border); font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
-        .admin-actions { display: flex; gap: 8px; align-items: center; }
-        .status-select { padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
-
-        /* Thread */
-        .thread { display: flex; flex-direction: column; gap: 14px; }
-        .msg { display: flex; gap: 12px; }
-        .msg-avatar { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; }
-        .msg-user-av { background: var(--surface); border: 1px solid var(--border); color: var(--text2); }
-        .msg-admin-av { background: var(--accent); color: #fff; }
-        .msg-body { flex: 1; min-width: 0; }
-        .msg-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-        .msg-name { font-size: 13px; font-weight: 600; }
-        .msg-admin-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); }
-        .msg-time { font-size: 11px; color: var(--text3); }
-        .msg-text { font-size: 13px; line-height: 1.65; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; white-space: pre-wrap; word-break: break-word; }
-        .msg-admin .msg-text { border-color: rgba(var(--accent-rgb,99,102,241),0.3); background: rgba(var(--accent-rgb,99,102,241),0.06); }
-
-        /* Divider */
-        .divider { height: 1px; background: var(--border); margin: 20px 0; }
-
-        /* Reply form */
-        .reply-form { margin-top: 20px; }
-        .reply-form textarea { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-family: inherit; font-size: 13px; resize: vertical; min-height: 90px; transition: border-color 0.15s; }
-        .reply-form textarea:focus { outline: none; border-color: var(--accent); }
-        .reply-actions { display: flex; gap: 10px; margin-top: 10px; align-items: center; }
-        .closed-notice { font-size: 13px; color: var(--text3); background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; text-align: center; }
-
-        @media (max-width: 560px) {
-            .nav { padding: 12px 16px; }
-            .page { padding: 20px 16px 60px; }
+        :root,[data-theme="dark"]{
+            --bg:#080c14;--bg2:#0d1220;--surface:#161d2e;--surface2:#1c2540;
+            --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.14);
+            --text:#f1f5f9;--text2:#94a3b8;--text3:#475569;
+            --accent:#3b82f6;--accent2:#6366f1;--accent-rgb:59,130,246;
+            --danger:#ef4444;--success:#10b981;--warn:#f59e0b;
         }
+        [data-theme="light"]{
+            --bg:#f1f5f9;--bg2:#fff;--surface:#fff;--surface2:#f8fafc;
+            --border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.14);
+            --text:#1e293b;--text2:#64748b;--text3:#94a3b8;
+            --accent:#3b82f6;--accent2:#6366f1;--accent-rgb:59,130,246;
+            --danger:#ef4444;--success:#10b981;--warn:#f59e0b;
+        }
+
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        html{color-scheme:dark light}
+        body{font-family:'Outfit',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+
+        /* ── Nav ── */
+        .nav{display:flex;align-items:center;justify-content:space-between;padding:14px 32px;border-bottom:1px solid var(--border);background:var(--bg2);position:sticky;top:0;z-index:20}
+        .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text);font-weight:700;font-size:17px}
+        .nav-logo-mark{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;box-shadow:0 0 12px rgba(var(--accent-rgb),.35)}
+        .btn{padding:7px 16px;border-radius:9px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2);text-decoration:none;transition:color .15s,border-color .15s,background .15s}
+        .btn:hover{color:var(--text);border-color:var(--border2)}
+        .btn:disabled{opacity:.5;cursor:not-allowed}
+        .btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+        .btn-primary:hover:not(:disabled){background:rgba(59,130,246,.85)}
+        .btn-danger{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.25);color:var(--danger)}
+        .btn-danger:hover{background:rgba(239,68,68,.18)}
+        .btn-sm{padding:5px 12px;font-size:12px}
+
+        /* ── Layout ── */
+        .page{max-width:720px;margin:0 auto;padding:32px 24px 80px;flex:1;width:100%}
+
+        /* ── Back ── */
+        .back{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--text3);text-decoration:none;margin-bottom:20px;transition:color .15s}
+        .back:hover{color:var(--accent)}
+
+        /* ── Ticket header ── */
+        .ticket-hd{margin-bottom:28px}
+        .ticket-hd-row{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:10px}
+        .ticket-title{font-size:20px;font-weight:700;line-height:1.3;flex:1}
+        .admin-tools{display:flex;gap:8px;align-items:center;flex-shrink:0}
+        .status-select{padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:border-color .15s}
+        .status-select:focus{outline:none;border-color:var(--accent)}
+        .meta-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--text3)}
+        .sbadge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+        .sb-open{background:rgba(var(--accent-rgb),.12);color:var(--accent)}
+        .sb-in_progress{background:rgba(245,158,11,.12);color:var(--warn)}
+        .sb-closed{background:rgba(128,128,128,.1);color:var(--text3)}
+        .cat-pill{padding:3px 9px;border-radius:6px;background:var(--surface);border:1px solid var(--border);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+
+        /* ── Divider ── */
+        .divider{height:1px;background:var(--border);margin:24px 0}
+
+        /* ── Messages ── */
+        .thread{display:flex;flex-direction:column;gap:16px}
+        .msg{display:flex;gap:10px}
+        .msg-av{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;user-select:none}
+        .av-user{background:var(--surface2);border:1px solid var(--border);color:var(--text2)}
+        .av-admin{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 0 8px rgba(var(--accent-rgb),.3)}
+        .msg-body{flex:1;min-width:0}
+        .msg-hd{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+        .msg-name{font-size:13px;font-weight:600}
+        .msg-admin-tag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);background:rgba(var(--accent-rgb),.1);padding:2px 6px;border-radius:4px}
+        .msg-time{font-size:11px;color:var(--text3);margin-left:auto}
+        .msg-bubble{font-size:13px;line-height:1.65;padding:12px 14px;border-radius:12px;white-space:pre-wrap;word-break:break-word}
+        .bubble-user{background:var(--surface);border:1px solid var(--border)}
+        .bubble-admin{background:rgba(var(--accent-rgb),.07);border:1px solid rgba(var(--accent-rgb),.2)}
+
+        /* ── Reply form ── */
+        .reply-wrap{margin-top:4px}
+        .reply-wrap textarea{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;font-size:13px;resize:vertical;min-height:90px;transition:border-color .15s;display:block}
+        .reply-wrap textarea:focus{outline:none;border-color:var(--accent)}
+        .reply-actions{display:flex;gap:8px;margin-top:10px;align-items:center}
+        .reply-hint{font-size:11px;color:var(--text3);margin-left:auto}
+        .closed-notice{font-size:13px;color:var(--text3);background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px;text-align:center}
+        .closed-notice a{color:var(--accent);text-decoration:none}
+        .closed-notice a:hover{text-decoration:underline}
+
+        @media(max-width:560px){.nav{padding:12px 16px}.page{padding:20px 16px 60px}}
     </style>
 </head>
 <body>
@@ -81,9 +99,7 @@
         <div class="nav-logo-mark">M</div>
         Meetify
     </a>
-    <div>
-        <a class="btn" href="/support/support.html">← My Tickets</a>
-    </div>
+    <a class="btn" href="/support/support.html">← Support</a>
 </nav>
 
 <div class="page" id="page">

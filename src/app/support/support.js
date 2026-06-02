@@ -1,6 +1,9 @@
 const API = window.location.origin;
 let currentUser = null;
 
+const STATUS_LABEL = { open: 'Open', in_progress: 'In Progress', closed: 'Closed' };
+const CAT_LABEL    = { technical: 'Technical', account: 'Account', general: 'General', other: 'Other' };
+
 function esc(str) {
     const d = document.createElement('div');
     d.textContent = String(str ?? '');
@@ -18,66 +21,77 @@ function timeAgo(ts) {
     return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-const STATUS_LABEL = { open: 'Open', in_progress: 'In Progress', closed: 'Closed' };
-const CAT_LABEL    = { technical: 'Technical', account: 'Account', general: 'General', other: 'Other' };
-
 async function init() {
     try {
         const res  = await fetch(API + '/api/auth/me', { credentials: 'include' });
         const data = await res.json();
-        if (!res.ok || !data.user) { showAuthWall(); return; }
+        if (!res.ok || !data.user) {
+            document.getElementById('authWall').style.display = 'block';
+            return;
+        }
         currentUser = data.user;
         document.getElementById('navAuthBtn')?.remove();
-        showTicketsView();
+        document.getElementById('ticketsView').style.display = 'block';
+        loadTickets();
+        wireForm();
     } catch {
-        showAuthWall();
+        document.getElementById('authWall').style.display = 'block';
     }
 }
 
-function showAuthWall() {
-    document.getElementById('authWall').style.display = 'block';
+function wireForm() {
+    document.getElementById('btnNewTicket').addEventListener('click', () => {
+        document.getElementById('formCard').classList.add('open');
+        document.getElementById('btnNewTicket').style.display = 'none';
+        document.getElementById('fTitle').focus();
+    });
+
+    document.getElementById('btnCancelForm').addEventListener('click', closeForm);
+
+    document.getElementById('btnSubmitForm').addEventListener('click', doCreateTicket);
+
+    document.getElementById('fMessage').addEventListener('keydown', e => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') doCreateTicket();
+    });
 }
 
-function showTicketsView() {
-    document.getElementById('authWall').style.display = 'none';
-    document.getElementById('ticketsView').style.display = 'block';
-    loadTickets();
-
-    document.getElementById('newTicketToggle').addEventListener('click', () => {
-        document.getElementById('newTicketWrap').classList.add('open');
-        document.getElementById('newTicketToggle').style.display = 'none';
-    });
-    document.getElementById('cancelTicket').addEventListener('click', () => {
-        document.getElementById('newTicketWrap').classList.remove('open');
-        document.getElementById('newTicketToggle').style.display = '';
-    });
-    document.getElementById('submitTicket').addEventListener('click', submitTicket);
+function closeForm() {
+    document.getElementById('formCard').classList.remove('open');
+    document.getElementById('btnNewTicket').style.display = '';
+    document.getElementById('fTitle').value = '';
+    document.getElementById('fMessage').value = '';
+    document.getElementById('fCategory').value = 'technical';
 }
 
 async function loadTickets() {
-    const list = document.getElementById('ticketsList');
+    const list = document.getElementById('ticketList');
     try {
         const res   = await fetch(API + '/api/support/tickets', { credentials: 'include' });
         const data  = await res.json();
         const items = data.tickets || [];
 
         if (!items.length) {
-            list.innerHTML = `<div class="empty"><div class="empty-icon">📭</div><p>No tickets yet. Create one if you need help.</p></div>`;
+            list.innerHTML = `<div class="empty"><div class="empty-icon">📭</div><p>No tickets yet.</p><a class="btn btn-primary" id="emptyNewBtn" href="#">+ Create your first ticket</a></div>`;
+            document.getElementById('emptyNewBtn')?.addEventListener('click', e => {
+                e.preventDefault();
+                document.getElementById('btnNewTicket').click();
+            });
             return;
         }
+
         list.innerHTML = items.map(t => `
-            <a class="ticket-card" href="/support/ticket.html?id=${t.id}">
-                <div class="ticket-status ${t.status}"></div>
-                <div class="ticket-info">
-                    <div class="ticket-title">${esc(t.title)}</div>
-                    <div class="ticket-meta">
+            <a class="ticket-row" href="/support/ticket.html?id=${t.id}">
+                <div class="t-dot ${t.status}"></div>
+                <div class="t-info">
+                    <div class="t-title">${esc(t.title)}</div>
+                    <div class="t-meta">
                         <span>${timeAgo(t.updated_at)}</span>
                         <span>${esc(CAT_LABEL[t.category] || t.category)}</span>
                     </div>
                 </div>
-                <span class="ticket-badge badge-${t.status}">${esc(STATUS_LABEL[t.status] || t.status)}</span>
-                <span class="ticket-replies">💬 ${t.reply_count}</span>
-                <span class="ticket-arrow">→</span>
+                <span class="t-badge b-${t.status}">${esc(STATUS_LABEL[t.status] || t.status)}</span>
+                <span class="t-replies">💬 ${t.reply_count}</span>
+                <span class="t-arrow">→</span>
             </a>
         `).join('');
     } catch {
@@ -85,11 +99,11 @@ async function loadTickets() {
     }
 }
 
-async function submitTicket() {
-    const title    = document.getElementById('ticketTitle').value.trim();
-    const category = document.getElementById('ticketCategory').value;
-    const message  = document.getElementById('ticketMessage').value.trim();
-    const btn      = document.getElementById('submitTicket');
+async function doCreateTicket() {
+    const title    = document.getElementById('fTitle').value.trim();
+    const category = document.getElementById('fCategory').value;
+    const message  = document.getElementById('fMessage').value.trim();
+    const btn      = document.getElementById('btnSubmitForm');
 
     if (!title)   { alert('Title is required'); return; }
     if (!message) { alert('Message is required'); return; }
@@ -98,16 +112,16 @@ async function submitTicket() {
     btn.textContent = 'Submitting...';
     try {
         const res  = await fetch(API + '/api/support/tickets', {
-            method: 'POST',
+            method:      'POST',
             credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title, category, message })
+            headers:     { 'Content-Type': 'application/json' },
+            body:        JSON.stringify({ title, category, message })
         });
         const data = await res.json();
         if (!res.ok) { alert(data.error || 'Failed to create ticket'); return; }
         window.location.href = `/support/ticket.html?id=${data.ticketId}`;
     } catch {
-        alert('Network error');
+        alert('Network error. Please try again.');
     } finally {
         btn.disabled = false;
         btn.textContent = 'Submit Ticket';
