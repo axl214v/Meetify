@@ -25,4 +25,7 @@ router.get   ('/notifications',       c.getNotifications);
 router.post  ('/notifications',       c.sendNotification);
 router.delete('/notifications/:id',   c.deleteNotification);
 
+router.get   ('/settings/socials',    c.getSocials);
+router.put   ('/settings/socials',    c.updateSocials);
+
 module.exports = router;

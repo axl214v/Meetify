@@ -271,6 +271,33 @@ const adminController = {
         } catch (e) {
             res.status(500).json({ error: e.message });
         }
+    },
+
+    getSocials: async (req, res) => {
+        try {
+            const [[row]] = await db.promise().query(
+                'SELECT value FROM app_settings WHERE `key` = ?', ['social_links']
+            );
+            const links = row ? JSON.parse(row.value) : [];
+            res.json({ links });
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
+    },
+
+    updateSocials: async (req, res) => {
+        try {
+            const { links } = req.body;
+            if (!Array.isArray(links)) return res.status(400).json({ error: 'links must be an array' });
+            const json = JSON.stringify(links);
+            await db.promise().query(
+                'INSERT INTO app_settings (`key`, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = ?',
+                ['social_links', json, json]
+            );
+            res.json({ success: true, links });
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
     }
 };
 

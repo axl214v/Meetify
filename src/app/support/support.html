@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support Meetify</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles/styles.css">
+    <script>
+        (function() {
+            const t = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Outfit', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Nav ── */
+        .sp-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 32px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .sp-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--text);
+            font-weight: 700;
+            font-size: 18px;
+        }
+        .sp-logo-mark {
+            width: 32px;
+            height: 32px;
+            background: var(--accent);
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            font-weight: 800;
+            color: #fff;
+        }
+        .sp-nav-actions { display: flex; gap: 10px; align-items: center; }
+        .sp-btn {
+            padding: 8px 18px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            text-decoration: none;
+            transition: border-color 0.15s, background 0.15s;
+        }
+        .sp-btn:hover { border-color: var(--accent); background: var(--hover); }
+        .sp-btn-primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+        .sp-btn-primary:hover { opacity: 0.88; background: var(--accent); }
+
+        /* ── Hero ── */
+        .sp-hero {
+            text-align: center;
+            padding: 80px 24px 56px;
+            max-width: 640px;
+            margin: 0 auto;
+        }
+        .sp-hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 14px;
+            border-radius: 99px;
+            background: rgba(var(--accent-rgb, 99,102,241), 0.12);
+            border: 1px solid rgba(var(--accent-rgb, 99,102,241), 0.25);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 24px;
+        }
+        .sp-hero h1 {
+            font-size: clamp(32px, 5vw, 52px);
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 16px;
+            letter-spacing: -0.02em;
+        }
+        .sp-hero h1 span { color: var(--accent); }
+        .sp-hero p {
+            font-size: 16px;
+            color: var(--text2);
+            line-height: 1.65;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        /* ── Sections ── */
+        .sp-main {
+            flex: 1;
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 24px 80px;
+        }
+        .sp-section { margin-bottom: 56px; }
+        .sp-section-hd {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .sp-section-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+        }
+        .sp-section-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+        .sp-section-sub {
+            font-size: 13px;
+            color: var(--text3);
+        }
+        .sp-divider {
+            height: 1px;
+            background: var(--border);
+            margin-bottom: 24px;
+        }
+
+        /* ── Cards ── */
+        .sp-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 14px;
+        }
+        .sp-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 18px;
+            border-radius: 14px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            text-decoration: none;
+            color: var(--text);
+            transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+            cursor: pointer;
+        }
+        .sp-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+        }
+        .sp-card-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: var(--hover);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+        .sp-card-body { min-width: 0; }
+        .sp-card-label {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .sp-card-url {
+            font-size: 11px;
+            color: var(--text3);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .sp-card-arrow {
+            margin-left: auto;
+            color: var(--text3);
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+
+        /* Donate cards — slightly highlighted */
+        .sp-card-donate { border-color: rgba(var(--accent-rgb, 99,102,241), 0.2); }
+        .sp-card-donate .sp-card-icon { background: rgba(var(--accent-rgb, 99,102,241), 0.1); }
+        .sp-card-donate:hover { border-color: var(--accent); box-shadow: 0 8px 24px rgba(var(--accent-rgb, 99,102,241), 0.15); }
+
+        /* ── Empty ── */
+        .sp-empty {
+            text-align: center;
+            color: var(--text3);
+            padding: 40px 0;
+            font-size: 14px;
+        }
+
+        /* ── Footer ── */
+        .sp-footer {
+            text-align: center;
+            padding: 28px 24px;
+            border-top: 1px solid var(--border);
+            font-size: 12px;
+            color: var(--text3);
+        }
+
+        @media (max-width: 540px) {
+            .sp-nav { padding: 12px 16px; }
+            .sp-hero { padding: 56px 16px 40px; }
+            .sp-main { padding: 0 16px 60px; }
+            .sp-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="sp-nav">
+        <a class="sp-logo" href="/">
+            <div class="sp-logo-mark">M</div>
+            Meetify
+        </a>
+        <div class="sp-nav-actions">
+            <a class="sp-btn" href="/Conf/pages/conf.html">Conferences</a>
+            <a class="sp-btn sp-btn-primary" href="/auth/Auth.html">Sign In</a>
+        </div>
+    </nav>
+
+    <div class="sp-hero">
+        <div class="sp-hero-badge">❤ Support</div>
+        <h1>Help us keep<br><span>Meetify</span> running</h1>
+        <p>Meetify is an open-source video conferencing platform. Every bit of support helps us improve the product and keep the servers online.</p>
+    </div>
+
+    <main class="sp-main">
+
+        <!-- Donate -->
+        <section class="sp-section" id="section-donate">
+            <div class="sp-section-hd">
+                <div class="sp-section-icon">💰</div>
+                <div>
+                    <div class="sp-section-title">Donate</div>
+                    <div class="sp-section-sub">Support development directly</div>
+                </div>
+            </div>
+            <div class="sp-divider"></div>
+            <div class="sp-grid" id="donate-grid">
+                <div class="sp-empty">Loading...</div>
+            </div>
+        </section>
+
+        <!-- Socials -->
+        <section class="sp-section" id="section-social">
+            <div class="sp-section-hd">
+                <div class="sp-section-icon">◎</div>
+                <div>
+                    <div class="sp-section-title">Follow Us</div>
+                    <div class="sp-section-sub">Stay up to date</div>
+                </div>
+            </div>
+            <div class="sp-divider"></div>
+            <div class="sp-grid" id="social-grid">
+                <div class="sp-empty">Loading...</div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="sp-footer">
+        &copy; <span id="sp-year"></span> Meetify. Open-source video conferencing.
+    </footer>
+
+    <script src="/js/theme.js"></script>
+    <script src="support.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="/js/notifications.js"></script>
+</body>
+</html>

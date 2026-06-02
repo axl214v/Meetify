@@ -1,6 +1,7 @@
 // routes/healthRoutes.js
 const express = require('express');
-const router = express.Router();
+const router  = express.Router();
+const db      = require('../config/database');
 
 // Health check endpoint
 router.get('/check-status', (req, res) => {
@@ -28,6 +29,20 @@ router.get('/', (req, res) => {
     version: '1.0.0',
     status: 'running'
   });
+});
+
+// Public — no auth required
+router.get('/public/socials', async (req, res) => {
+    try {
+        const [[row]] = await db.promise().query(
+            'SELECT value FROM app_settings WHERE `key` = ?', ['social_links']
+        );
+        const all   = row ? JSON.parse(row.value) : [];
+        const links = all.filter(l => l.visible !== false);
+        res.json({ links });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
 });
 
 module.exports = router;

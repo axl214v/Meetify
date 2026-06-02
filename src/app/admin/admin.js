@@ -80,6 +80,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('sendTestEmail').addEventListener('click',  sendTestEmail);
     document.getElementById('sendNotif').addEventListener('click',      sendNotification);
     document.getElementById('refreshNotifs').addEventListener('click',  loadNotifications);
+    document.getElementById('addSocialBtn').addEventListener('click',   addSocialLink);
+    document.getElementById('refreshSocials').addEventListener('click', loadSocials);
+    document.getElementById('socialPreset').addEventListener('change',  e => {
+        const preset = SOCIAL_PRESETS[e.target.value];
+        if (!preset) return;
+        document.getElementById('socialLabel').value    = preset.label;
+        document.getElementById('socialIcon').value     = preset.icon;
+        document.getElementById('socialCategory').value = preset.category;
+    });
 
     // Search (debounced)
     document.getElementById('confSearch').addEventListener('input',  debounce(e => {
@@ -125,6 +134,7 @@ function switchTab(tab) {
     if (tab === 'users'       && state.users.total === 0)  loadUsers(0);
     if (tab === 'settings')       loadSmtpSettings();
     if (tab === 'notifications')  loadNotifications();
+    if (tab === 'socials')        loadSocials();
 }
 
 function setupNav() {}  // placeholder — tabs wired in DOMContentLoaded
@@ -678,6 +688,118 @@ async function deleteNotification(id) {
 
 function confirmDeleteNotif(id, title) {
     showConfirmModal('🗑', 'Delete Notification', `Delete "${title}"? Users will no longer see it in history.`, () => deleteNotification(id));
+}
+
+// ── Socials ───────────────────────────────────────────────────────────────
+const SOCIAL_PRESETS = {
+    github:       { label: 'GitHub',           icon: '⌗',  category: 'social'  },
+    telegram:     { label: 'Telegram',          icon: '✈',  category: 'social'  },
+    discord:      { label: 'Discord',           icon: '◈',  category: 'social'  },
+    twitter:      { label: 'Twitter / X',       icon: '✕',  category: 'social'  },
+    instagram:    { label: 'Instagram',         icon: '◉',  category: 'social'  },
+    youtube:      { label: 'YouTube',           icon: '▶',  category: 'social'  },
+    vk:           { label: 'VK',               icon: '◎',  category: 'social'  },
+    linkedin:     { label: 'LinkedIn',          icon: '◆',  category: 'social'  },
+    boosty:       { label: 'Boosty',           icon: '⚡', category: 'donate'  },
+    patreon:      { label: 'Patreon',          icon: '❤',  category: 'donate'  },
+    kofi:         { label: 'Ko-fi',            icon: '☕', category: 'donate'  },
+    buymeacoffee: { label: 'Buy Me a Coffee',   icon: '☕', category: 'donate'  },
+    yoomoney:     { label: 'ЮMoney',           icon: '₽',  category: 'donate'  },
+    tinkoff:      { label: 'Tinkoff',          icon: '💳', category: 'donate'  },
+    paypal:       { label: 'PayPal',           icon: '💰', category: 'donate'  },
+};
+
+let socialsData = [];
+
+async function loadSocials() {
+    try {
+        const res  = await apiFetch('/api/admin/settings/socials');
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        socialsData = data.links || [];
+        renderSocials();
+    } catch (e) {
+        toast('Failed to load social links: ' + e.message, 'error');
+    }
+}
+
+function renderSocials() {
+    const tbody = document.getElementById('socialsBody');
+    if (!socialsData.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text2);padding:24px;">No links added yet</td></tr>';
+        return;
+    }
+    tbody.innerHTML = socialsData.map((s, i) => `
+        <tr>
+            <td style="font-size:18px;text-align:center;">${escHtml(s.icon || '🔗')}</td>
+            <td style="font-weight:500;">${escHtml(s.label)}</td>
+            <td class="mono" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                <a href="${escAttr(s.url)}" target="_blank" rel="noopener" style="color:var(--accent);">${escHtml(s.url)}</a>
+            </td>
+            <td>
+                <span class="badge badge-${s.category === 'donate' ? 'active' : 'ended'}" style="font-size:10px;">
+                    ${s.category === 'donate' ? 'Donate' : 'Social'}
+                </span>
+            </td>
+            <td>
+                <button class="btn-sm btn-sm-neutral" onclick="toggleSocialVisible(${i})">
+                    ${s.visible !== false ? '👁 Visible' : '— Hidden'}
+                </button>
+            </td>
+            <td>
+                <button class="btn-sm btn-sm-danger" onclick="confirmDeleteSocial(${i}, '${escAttr(s.label)}')">Delete</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+async function persistSocials() {
+    try {
+        const res = await apiFetch('/api/admin/settings/socials', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ links: socialsData })
+        });
+        if (!res.ok) throw new Error((await res.json()).error);
+        toast('Saved', 'success');
+        renderSocials();
+    } catch (e) {
+        toast('Error: ' + e.message, 'error');
+    }
+}
+
+function addSocialLink() {
+    const label    = document.getElementById('socialLabel').value.trim();
+    const icon     = document.getElementById('socialIcon').value.trim() || '🔗';
+    const url      = document.getElementById('socialUrl').value.trim();
+    const category = document.getElementById('socialCategory').value;
+    const preset   = document.getElementById('socialPreset').value;
+
+    if (!label) { toast('Label is required', 'error'); return; }
+    if (!url)   { toast('URL is required',   'error'); return; }
+    try { new URL(url); } catch { toast('Invalid URL', 'error'); return; }
+
+    socialsData.push({ id: Date.now(), platform: preset || 'custom', label, icon, url, category, visible: true });
+    persistSocials();
+
+    document.getElementById('socialPreset').value   = '';
+    document.getElementById('socialLabel').value    = '';
+    document.getElementById('socialIcon').value     = '';
+    document.getElementById('socialUrl').value      = '';
+    document.getElementById('socialCategory').value = 'social';
+}
+
+function toggleSocialVisible(index) {
+    if (!socialsData[index]) return;
+    socialsData[index].visible = socialsData[index].visible === false;
+    persistSocials();
+}
+
+function confirmDeleteSocial(index, label) {
+    showConfirmModal('⚠', 'Delete Link', `Remove "${label}" from social links?`, () => {
+        socialsData.splice(index, 1);
+        persistSocials();
+    });
 }
 
 function isActive(conf) {

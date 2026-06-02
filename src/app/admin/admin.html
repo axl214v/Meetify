@@ -48,6 +48,10 @@
                 <span class="nav-icon">◎</span>
                 <span>Notifications</span>
             </button>
+            <button class="nav-item" data-tab="socials">
+                <span class="nav-icon">⬡</span>
+                <span>Socials</span>
+            </button>
         </nav>
 
         <div class="sidebar-footer">
@@ -423,6 +427,93 @@
                         </tr>
                     </thead>
                     <tbody id="notifsBody">
+                        <tr><td colspan="6" style="text-align:center;color:var(--text2);padding:24px;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ── SOCIALS ── -->
+        <section class="tab-panel" id="tab-socials">
+            <header class="panel-header">
+                <div>
+                    <h1>Social Links</h1>
+                    <p class="panel-sub">Official social networks and donation links shown on the support page</p>
+                </div>
+            </header>
+
+            <!-- Add form -->
+            <div class="panel-card">
+                <div class="card-header"><span>Add Link</span></div>
+                <div class="settings-grid">
+                    <div class="setting-row">
+                        <label class="setting-label">Preset</label>
+                        <select class="setting-input" id="socialPreset">
+                            <option value="">— Select platform —</option>
+                            <optgroup label="Social">
+                                <option value="github">GitHub</option>
+                                <option value="telegram">Telegram</option>
+                                <option value="discord">Discord</option>
+                                <option value="twitter">Twitter / X</option>
+                                <option value="instagram">Instagram</option>
+                                <option value="youtube">YouTube</option>
+                                <option value="vk">VK</option>
+                                <option value="linkedin">LinkedIn</option>
+                            </optgroup>
+                            <optgroup label="Donate">
+                                <option value="boosty">Boosty</option>
+                                <option value="patreon">Patreon</option>
+                                <option value="kofi">Ko-fi</option>
+                                <option value="buymeacoffee">Buy Me a Coffee</option>
+                                <option value="yoomoney">ЮMoney</option>
+                                <option value="tinkoff">Tinkoff</option>
+                                <option value="paypal">PayPal</option>
+                            </optgroup>
+                            <option value="custom">Custom</option>
+                        </select>
+                    </div>
+                    <div class="setting-row">
+                        <label class="setting-label">Label</label>
+                        <input class="setting-input" type="text" id="socialLabel" placeholder="Display name" maxlength="64">
+                    </div>
+                    <div class="setting-row">
+                        <label class="setting-label">Icon (emoji)</label>
+                        <input class="setting-input" type="text" id="socialIcon" placeholder="🔗" maxlength="4" style="max-width:80px;">
+                    </div>
+                    <div class="setting-row">
+                        <label class="setting-label">Category</label>
+                        <select class="setting-input" id="socialCategory">
+                            <option value="social">Social</option>
+                            <option value="donate">Donate</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="margin-top:12px;">
+                    <input class="setting-input" type="url" id="socialUrl" placeholder="https://..." style="width:100%;">
+                </div>
+                <div class="settings-actions" style="margin-top:12px;">
+                    <button class="btn-refresh" id="addSocialBtn">+ Add Link</button>
+                </div>
+            </div>
+
+            <!-- Existing links -->
+            <div class="panel-card">
+                <div class="card-header">
+                    <span>Current Links</span>
+                    <button class="btn-refresh" id="refreshSocials" style="font-size:11px;padding:4px 10px;">↻ Reload</button>
+                </div>
+                <table class="data-table full" id="socialsTable">
+                    <thead>
+                        <tr>
+                            <th>Icon</th>
+                            <th>Label</th>
+                            <th>URL</th>
+                            <th>Category</th>
+                            <th>Visible</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="socialsBody">
                         <tr><td colspan="6" style="text-align:center;color:var(--text2);padding:24px;">Loading...</td></tr>
                     </tbody>
                 </table>
