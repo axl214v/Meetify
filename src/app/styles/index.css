@@ -61,15 +61,18 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
 }
 [data-theme="light"] .navbar{background:rgba(240,246,255,0.82);}
 
-.nav-brand{display:flex;align-items:center;gap:10px}
-.nav-logo-icon{
-    width:34px;height:34px;border-radius:9px;
-    background:var(--grad);
-    display:flex;align-items:center;justify-content:center;
-    font-size:17px;font-weight:900;color:#fff;letter-spacing:-0.5px;
-    box-shadow:0 0 18px var(--glow);flex-shrink:0;
+.nav-brand{display:flex;align-items:center;text-decoration:none}
+.nav-logo-img{
+    height:30px;width:auto;display:block;
+    border-radius:6px;
+    /* On dark bg: multiply removes white, leaving only the coloured logo */
+    mix-blend-mode:lighten;
+    filter:brightness(1.05) contrast(1.02);
 }
-.nav-name{font-size:17px;font-weight:700;letter-spacing:-0.3px}
+[data-theme="light"] .nav-logo-img{
+    mix-blend-mode:normal;
+    filter:none;
+}
 
 .nav-actions{display:flex;align-items:center;gap:8px}
 .nav-theme-btn{
