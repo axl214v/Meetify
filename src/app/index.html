@@ -1,38 +1,36 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meetify — Video Conferences Made Simple</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/styles/index.css">
     <link rel="icon" href="/assets/logo.png">
+    <script>(function(){var t=localStorage.getItem('theme')||'dark';document.documentElement.setAttribute('data-theme',t)})();</script>
 </head>
 <body>
 
-    <!-- Navbar -->
+    <!-- ── NAV ── -->
     <nav class="navbar">
         <div class="nav-brand">
-            <span class="nav-logo">🎥</span>
+            <div class="nav-logo-icon">M</div>
             <span class="nav-name">Meetify</span>
         </div>
         <div class="nav-actions">
-            <button class="nav-theme-btn" id="themeToggleBtn" title="Switch theme">☀️</button>
+            <button class="nav-theme-btn" id="themeToggleBtn" title="Toggle theme" aria-label="Toggle theme">
+                <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>
+                <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            </button>
 
-            <!-- Guest -->
             <div id="navGuest" class="nav-guest hidden">
-                <button class="nav-btn nav-btn-ghost" onclick="window.location.href='/auth/Auth.html'">
-                    Log in
-                </button>
-                <button class="nav-btn nav-btn-primary" onclick="window.location.href='/auth/Reg.html'">
-                    Sign up
-                </button>
+                <button class="nav-btn nav-btn-ghost" onclick="location.href='/auth/Auth.html'">Sign In</button>
+                <button class="nav-btn nav-btn-primary" onclick="location.href='/auth/Reg.html'">Get Started</button>
             </div>
 
-            <!-- Logged in -->
             <div id="navUser" class="nav-user hidden">
-                <button class="nav-btn nav-btn-ghost" onclick="window.location.href='/Conf/pages/conf.html'">
-                    📋 My Conferences
-                </button>
+                <button class="nav-btn nav-btn-ghost" onclick="location.href='/Conf/pages/conf.html'">Conferences</button>
                 <a class="nav-profile" href="/profile/profile.html">
                     <div class="nav-avatar" id="navAvatar">?</div>
                     <span class="nav-profile-name" id="navUserName">—</span>
@@ -41,76 +39,173 @@
         </div>
     </nav>
 
-    <!-- Hero -->
+    <!-- ── HERO ── -->
     <main>
         <section class="hero">
-            <div class="hero-badge">✨ Free to Use</div>
-            <h1 class="hero-title">Video Conferences<br>Made Simple</h1>
-            <p class="hero-sub">
-                Connect with anyone, anywhere. High-quality video and real-time chat
-                — all in your browser. No plugins, no fees.
-            </p>
-            <div class="hero-actions">
-                <button class="hero-cta" id="heroCta">🚀 Get Started</button>
-                <button class="hero-secondary" id="heroLogin" onclick="window.location.href='/auth/Auth.html'">
-                    Log in
-                </button>
-            </div>
-            <div class="status-bar" id="statusBar">
-                <span class="status-dot" id="statusDot"></span>
-                <span id="statusText">Checking…</span>
+            <div class="hero-grid-bg"></div>
+            <div class="hero-orb hero-orb-1"></div>
+            <div class="hero-orb hero-orb-2"></div>
+            <div class="hero-orb hero-orb-3"></div>
+
+            <div class="hero-inner">
+
+                <!-- Left: text -->
+                <div class="hero-text">
+                    <div class="hero-badge">
+                        <span class="badge-pulse"></span>
+                        Free &amp; Open Source
+                    </div>
+
+                    <h1 class="hero-title">
+                        Crystal&#8209;clear<br>
+                        <span class="hero-grad">video calls</span>
+                    </h1>
+
+                    <p class="hero-sub">
+                        Browser-native WebRTC conferencing. No downloads,
+                        no subscriptions, no tracking. Open a room and start talking.
+                    </p>
+
+                    <div class="hero-actions">
+                        <button class="hero-cta" id="heroCta">
+                            Get Started Free
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="cta-arrow">
+                                <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                        <button class="hero-secondary" onclick="location.href='/auth/Auth.html'">Sign In</button>
+                    </div>
+
+                    <div class="status-bar" id="statusBar">
+                        <span class="status-dot" id="statusDot"></span>
+                        <span id="statusText">Checking…</span>
+                    </div>
+                </div>
+
+                <!-- Right: product mockup -->
+                <div class="hero-visual">
+                    <div class="visual-glow"></div>
+                    <div class="call-mockup">
+                        <div class="mockup-bar">
+                            <div class="m-dots"><span></span><span></span><span></span></div>
+                            <span class="m-room-name">Team Standup</span>
+                            <span class="m-live"><span class="live-dot"></span>LIVE</span>
+                        </div>
+                        <div class="m-grid">
+                            <div class="m-tile t-blue">
+                                <div class="t-av">A</div>
+                                <div class="t-name">Alex</div>
+                                <div class="t-speaking-ring"></div>
+                            </div>
+                            <div class="m-tile t-cyan">
+                                <div class="t-av">S</div>
+                                <div class="t-name">Sara</div>
+                            </div>
+                            <div class="m-tile t-purple">
+                                <div class="t-av">M</div>
+                                <div class="t-name">Mike</div>
+                            </div>
+                            <div class="m-tile t-teal">
+                                <div class="t-av">J</div>
+                                <div class="t-name">Julia</div>
+                            </div>
+                        </div>
+                        <div class="m-controls">
+                            <div class="m-ctrl">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>
+                            </div>
+                            <div class="m-ctrl">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="14" height="10" rx="2"/><path d="M22 8l-4 3 4 3V8z"/></svg>
+                            </div>
+                            <div class="m-ctrl m-ctrl-end">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </section>
 
-        <!-- Features -->
+        <!-- ── FEATURES ── -->
         <section class="features">
-            <div class="feature-card">
-                <span class="feature-icon">🎥</span>
-                <h3>HD Video</h3>
-                <p>Crystal-clear WebRTC peer-to-peer video and audio. No plugins required.</p>
-            </div>
-            <div class="feature-card">
-                <span class="feature-icon">💬</span>
-                <h3>Real-time Chat</h3>
-                <p>Instant messaging during conferences with unread message badges.</p>
-            </div>
-            <div class="feature-card">
-                <span class="feature-icon">🛡️</span>
-                <h3>Privacy First</h3>
-                <p>Peer-to-peer connections — your calls don't pass through our servers. What you share stays between you.</p>
-            </div>
-            <div class="feature-card">
-                <span class="feature-icon">🔐</span>
-                <h3>Secure</h3>
-                <p>JWT auth, bcrypt passwords, rate limiting and CORS protection.</p>
-            </div>
-            <div class="feature-card">
-                <span class="feature-icon">⚡</span>
-                <h3>Fast</h3>
-                <p>Lightweight frontend, connection pooling, optimized signaling.</p>
-            </div>
-            <div class="feature-card">
-                <span class="feature-icon">🆓</span>
-                <h3>Free Forever</h3>
-                <p>No subscriptions, no hidden fees. Free to use for everyone.</p>
+            <p class="feat-eyebrow">Why Meetify</p>
+            <h2 class="feat-heading">Everything you need,<br>nothing you don't</h2>
+
+            <div class="features-grid">
+
+                <div class="feature-card">
+                    <div class="feat-icon fi-blue">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="14" height="10" rx="2"/><path d="M22 8l-4 3 4 3V8z"/></svg>
+                    </div>
+                    <h3>HD Video</h3>
+                    <p>Crystal-clear WebRTC peer-to-peer video. No plugins, no installs, no middlemen.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feat-icon fi-sky">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    </div>
+                    <h3>Real-time Chat</h3>
+                    <p>Instant messaging during calls with unread badges and full message history.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feat-icon fi-cyan">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    </div>
+                    <h3>Privacy First</h3>
+                    <p>Peer-to-peer connections — your calls never pass through our servers.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feat-icon fi-blue">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    </div>
+                    <h3>Secure by Design</h3>
+                    <p>JWT auth, bcrypt passwords, rate limiting, and strict CORS protection.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feat-icon fi-sky">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    </div>
+                    <h3>Blazing Fast</h3>
+                    <p>Lightweight frontend, connection pooling, and optimized WebRTC signaling.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feat-icon fi-cyan">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    </div>
+                    <h3>Free Forever</h3>
+                    <p>No subscriptions, no hidden fees. Open-source and free for everyone, always.</p>
+                </div>
+
             </div>
         </section>
     </main>
 
+    <!-- ── FOOTER ── -->
     <footer class="site-footer">
-        <span>© 2026 Meetify</span>
-        <span class="footer-sep">·</span>
-        <a href="/profile/profile.html">Profile</a>
-        <span class="footer-sep">·</span>
-        <a href="/legal/privacy.html">Privacy</a>
-        <span class="footer-sep">·</span>
-        <a href="/legal/terms.html">Terms</a>
-        <span class="footer-sep">·</span>
-        <a href="/support/support.html">Support</a>
-        <span class="footer-sep">·</span>
-        <a href="/donate/donate.html">Donate</a>
-        <span class="footer-sep">·</span>
-        <a href="https://github.com/axl214v/meetify" target="_blank">GitHub</a>
+        <div class="footer-brand">
+            <div class="footer-logo-icon">M</div>
+            <span>Meetify</span>
+        </div>
+        <div class="footer-links">
+            <a href="/profile/profile.html">Profile</a>
+            <span class="footer-sep">·</span>
+            <a href="/legal/privacy.html">Privacy</a>
+            <span class="footer-sep">·</span>
+            <a href="/legal/terms.html">Terms</a>
+            <span class="footer-sep">·</span>
+            <a href="/support/support.html">Support</a>
+            <span class="footer-sep">·</span>
+            <a href="/donate/donate.html">Donate</a>
+            <span class="footer-sep">·</span>
+            <a href="https://github.com/axl214v/meetify" target="_blank" rel="noopener">GitHub</a>
+        </div>
+        <span class="footer-copy">© 2026 Meetify</span>
     </footer>
 
     <script src="/js/theme.js"></script>
