@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Support Meetify</title>
+    <title>Support — Meetify</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/styles/styles.css">
     <script>
         (function() {
@@ -16,296 +16,154 @@
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        body {
-            font-family: 'Outfit', system-ui, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
+        body { font-family: 'Outfit', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
 
-        /* ── Nav ── */
-        .sp-nav {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 16px 32px;
-            border-bottom: 1px solid var(--border);
-            background: var(--bg);
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-        .sp-logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            text-decoration: none;
-            color: var(--text);
-            font-weight: 700;
-            font-size: 18px;
-        }
-        .sp-logo-mark {
-            width: 32px;
-            height: 32px;
-            background: var(--accent);
-            border-radius: 9px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 17px;
-            font-weight: 800;
-            color: #fff;
-        }
-        .sp-nav-actions { display: flex; gap: 10px; align-items: center; }
-        .sp-btn {
-            padding: 8px 18px;
-            border-radius: 10px;
-            font-size: 13px;
-            font-weight: 600;
-            font-family: inherit;
-            cursor: pointer;
-            border: 1px solid var(--border);
-            background: var(--surface);
-            color: var(--text);
-            text-decoration: none;
-            transition: border-color 0.15s, background 0.15s;
-        }
-        .sp-btn:hover { border-color: var(--accent); background: var(--hover); }
-        .sp-btn-primary {
-            background: var(--accent);
-            border-color: var(--accent);
-            color: #fff;
-        }
-        .sp-btn-primary:hover { opacity: 0.88; background: var(--accent); }
+        /* Nav */
+        .nav { display: flex; align-items: center; justify-content: space-between; padding: 14px 32px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg); z-index: 10; }
+        .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); font-weight: 700; font-size: 17px; }
+        .nav-logo-mark { width: 30px; height: 30px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; color: #fff; }
+        .nav-actions { display: flex; gap: 10px; align-items: center; }
+        .btn { padding: 7px 16px; border-radius: 9px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text); text-decoration: none; transition: border-color 0.15s, background 0.15s; }
+        .btn:hover { border-color: var(--accent); }
+        .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .btn-primary:hover { opacity: 0.88; }
 
-        /* ── Hero ── */
-        .sp-hero {
-            text-align: center;
-            padding: 80px 24px 56px;
-            max-width: 640px;
-            margin: 0 auto;
-        }
-        .sp-hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 5px 14px;
-            border-radius: 99px;
-            background: rgba(var(--accent-rgb, 99,102,241), 0.12);
-            border: 1px solid rgba(var(--accent-rgb, 99,102,241), 0.25);
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            color: var(--accent);
-            margin-bottom: 24px;
-        }
-        .sp-hero h1 {
-            font-size: clamp(32px, 5vw, 52px);
-            font-weight: 700;
-            line-height: 1.1;
-            margin-bottom: 16px;
-            letter-spacing: -0.02em;
-        }
-        .sp-hero h1 span { color: var(--accent); }
-        .sp-hero p {
-            font-size: 16px;
-            color: var(--text2);
-            line-height: 1.65;
-            max-width: 480px;
-            margin: 0 auto;
-        }
+        /* Layout */
+        .page { max-width: 820px; margin: 0 auto; padding: 40px 24px 80px; flex: 1; width: 100%; }
 
-        /* ── Sections ── */
-        .sp-main {
-            flex: 1;
-            width: 100%;
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 0 24px 80px;
-        }
-        .sp-section { margin-bottom: 56px; }
-        .sp-section-hd {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 24px;
-        }
-        .sp-section-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 17px;
-        }
-        .sp-section-title {
-            font-size: 18px;
-            font-weight: 700;
-        }
-        .sp-section-sub {
-            font-size: 13px;
-            color: var(--text3);
-        }
-        .sp-divider {
-            height: 1px;
-            background: var(--border);
-            margin-bottom: 24px;
-        }
+        /* Header */
+        .page-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; gap: 16px; flex-wrap: wrap; }
+        .page-hd h1 { font-size: 24px; font-weight: 700; }
+        .page-hd p { font-size: 13px; color: var(--text2); margin-top: 4px; }
 
-        /* ── Cards ── */
-        .sp-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 14px;
-        }
-        .sp-card {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            padding: 16px 18px;
-            border-radius: 14px;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            text-decoration: none;
-            color: var(--text);
-            transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
-            cursor: pointer;
-        }
-        .sp-card:hover {
-            border-color: var(--accent);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.25);
-        }
-        .sp-card-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            background: var(--hover);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 22px;
-            flex-shrink: 0;
-        }
-        .sp-card-body { min-width: 0; }
-        .sp-card-label {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 2px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .sp-card-url {
-            font-size: 11px;
-            color: var(--text3);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .sp-card-arrow {
-            margin-left: auto;
-            color: var(--text3);
-            font-size: 13px;
-            flex-shrink: 0;
-        }
+        /* New ticket form */
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+        .card + .card { margin-top: 14px; }
+        .card-hd { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+        .card-hd h2 { font-size: 14px; font-weight: 600; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 20px; }
+        .form-full { grid-column: 1 / -1; }
+        .form-label { font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: 0.04em; }
+        .form-input { width: 100%; padding: 9px 12px; border-radius: 9px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-family: inherit; font-size: 13px; transition: border-color 0.15s; }
+        .form-input:focus { outline: none; border-color: var(--accent); }
+        textarea.form-input { resize: vertical; min-height: 100px; }
+        .form-actions { padding: 0 20px 20px; display: flex; gap: 10px; }
 
-        /* Donate cards — slightly highlighted */
-        .sp-card-donate { border-color: rgba(var(--accent-rgb, 99,102,241), 0.2); }
-        .sp-card-donate .sp-card-icon { background: rgba(var(--accent-rgb, 99,102,241), 0.1); }
-        .sp-card-donate:hover { border-color: var(--accent); box-shadow: 0 8px 24px rgba(var(--accent-rgb, 99,102,241), 0.15); }
+        /* Tickets list */
+        .tickets-list { display: flex; flex-direction: column; gap: 10px; margin-top: 24px; }
+        .ticket-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; display: flex; align-items: center; gap: 14px; text-decoration: none; color: var(--text); transition: border-color 0.15s, transform 0.12s; cursor: pointer; }
+        .ticket-card:hover { border-color: var(--accent); transform: translateX(2px); }
+        .ticket-status { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .ticket-status.open        { background: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.2); }
+        .ticket-status.in_progress { background: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,0.2); }
+        .ticket-status.closed      { background: var(--text3); }
+        .ticket-info { flex: 1; min-width: 0; }
+        .ticket-title { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ticket-meta { font-size: 11px; color: var(--text3); margin-top: 3px; display: flex; gap: 10px; }
+        .ticket-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; flex-shrink: 0; }
+        .badge-open        { background: rgba(59,130,246,0.12);  color: #3b82f6; }
+        .badge-in_progress { background: rgba(245,158,11,0.12);  color: #f59e0b; }
+        .badge-closed      { background: rgba(128,128,128,0.12); color: var(--text3); }
+        .ticket-replies { font-size: 11px; color: var(--text3); flex-shrink: 0; }
+        .ticket-arrow { color: var(--text3); font-size: 13px; flex-shrink: 0; }
 
-        /* ── Empty ── */
-        .sp-empty {
-            text-align: center;
-            color: var(--text3);
-            padding: 40px 0;
-            font-size: 14px;
-        }
+        /* Empty state */
+        .empty { text-align: center; padding: 60px 20px; color: var(--text3); }
+        .empty-icon { font-size: 40px; margin-bottom: 12px; }
+        .empty p { font-size: 14px; }
 
-        /* ── Footer ── */
-        .sp-footer {
-            text-align: center;
-            padding: 28px 24px;
-            border-top: 1px solid var(--border);
-            font-size: 12px;
-            color: var(--text3);
-        }
+        /* Auth wall */
+        .auth-wall { text-align: center; padding: 80px 20px; }
+        .auth-wall h2 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+        .auth-wall p { color: var(--text2); font-size: 14px; margin-bottom: 24px; }
 
-        @media (max-width: 540px) {
-            .sp-nav { padding: 12px 16px; }
-            .sp-hero { padding: 56px 16px 40px; }
-            .sp-main { padding: 0 16px 60px; }
-            .sp-grid { grid-template-columns: 1fr; }
+        /* Toggle */
+        .new-ticket-wrap { display: none; }
+        .new-ticket-wrap.open { display: block; }
+
+        @media (max-width: 560px) {
+            .nav { padding: 12px 16px; }
+            .page { padding: 24px 16px 60px; }
+            .form-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
 
-    <nav class="sp-nav">
-        <a class="sp-logo" href="/">
-            <div class="sp-logo-mark">M</div>
-            Meetify
-        </a>
-        <div class="sp-nav-actions">
-            <a class="sp-btn" href="/Conf/pages/conf.html">Conferences</a>
-            <a class="sp-btn sp-btn-primary" href="/auth/Auth.html">Sign In</a>
-        </div>
-    </nav>
+<nav class="nav">
+    <a class="nav-logo" href="/">
+        <div class="nav-logo-mark">M</div>
+        Meetify
+    </a>
+    <div class="nav-actions">
+        <a class="btn" href="/Conf/pages/conf.html">Conferences</a>
+        <a class="btn btn-primary" href="/auth/Auth.html" id="navAuthBtn">Sign In</a>
+    </div>
+</nav>
 
-    <div class="sp-hero">
-        <div class="sp-hero-badge">❤ Support</div>
-        <h1>Help us keep<br><span>Meetify</span> running</h1>
-        <p>Meetify is an open-source video conferencing platform. Every bit of support helps us improve the product and keep the servers online.</p>
+<div class="page">
+
+    <!-- Auth wall (shown when not logged in) -->
+    <div class="auth-wall" id="authWall">
+        <div class="empty-icon">🔐</div>
+        <h2>Sign in to access support</h2>
+        <p>You need an account to create and view support tickets.</p>
+        <a class="btn btn-primary" href="/auth/Auth.html">Sign In</a>
     </div>
 
-    <main class="sp-main">
+    <!-- Ticket list (shown when logged in) -->
+    <div id="ticketsView" style="display:none;">
+        <div class="page-hd">
+            <div>
+                <h1>Support</h1>
+                <p>Your support tickets</p>
+            </div>
+            <button class="btn btn-primary" id="newTicketToggle">+ New Ticket</button>
+        </div>
 
-        <!-- Donate -->
-        <section class="sp-section" id="section-donate">
-            <div class="sp-section-hd">
-                <div class="sp-section-icon">💰</div>
-                <div>
-                    <div class="sp-section-title">Donate</div>
-                    <div class="sp-section-sub">Support development directly</div>
+        <!-- New ticket form -->
+        <div class="new-ticket-wrap" id="newTicketWrap">
+            <div class="card">
+                <div class="card-hd">
+                    <h2>New Ticket</h2>
+                    <button class="btn" id="cancelTicket" style="padding:4px 12px;font-size:12px;">Cancel</button>
+                </div>
+                <div class="form-grid">
+                    <div class="form-full">
+                        <label class="form-label">Title</label>
+                        <input class="form-input" type="text" id="ticketTitle" placeholder="Brief description of your issue" maxlength="255">
+                    </div>
+                    <div>
+                        <label class="form-label">Category</label>
+                        <select class="form-input" id="ticketCategory">
+                            <option value="technical">Technical Problem</option>
+                            <option value="account">Account</option>
+                            <option value="general">General Question</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-full">
+                        <label class="form-label">Message</label>
+                        <textarea class="form-input" id="ticketMessage" placeholder="Describe your issue in detail..." maxlength="5000"></textarea>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-primary" id="submitTicket">Submit Ticket</button>
                 </div>
             </div>
-            <div class="sp-divider"></div>
-            <div class="sp-grid" id="donate-grid">
-                <div class="sp-empty">Loading...</div>
-            </div>
-        </section>
+        </div>
 
-        <!-- Socials -->
-        <section class="sp-section" id="section-social">
-            <div class="sp-section-hd">
-                <div class="sp-section-icon">◎</div>
-                <div>
-                    <div class="sp-section-title">Follow Us</div>
-                    <div class="sp-section-sub">Stay up to date</div>
-                </div>
-            </div>
-            <div class="sp-divider"></div>
-            <div class="sp-grid" id="social-grid">
-                <div class="sp-empty">Loading...</div>
-            </div>
-        </section>
+        <!-- Tickets list -->
+        <div class="tickets-list" id="ticketsList">
+            <div class="empty"><div class="empty-icon">📭</div><p>Loading tickets...</p></div>
+        </div>
+    </div>
 
-    </main>
+</div>
 
-    <footer class="sp-footer">
-        &copy; <span id="sp-year"></span> Meetify. Open-source video conferencing.
-    </footer>
-
-    <script src="/js/theme.js"></script>
-    <script src="support.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
-    <script src="/js/notifications.js"></script>
+<script src="/js/theme.js"></script>
+<script src="support.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
+<script src="/js/notifications.js"></script>
 </body>
 </html>

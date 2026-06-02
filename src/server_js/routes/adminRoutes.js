@@ -28,4 +28,8 @@ router.delete('/notifications/:id',   c.deleteNotification);
 router.get   ('/settings/socials',    c.getSocials);
 router.put   ('/settings/socials',    c.updateSocials);
 
+router.get   ('/support/tickets',             c.getSupportTickets);
+router.patch ('/support/tickets/:id/status',  c.updateTicketStatus);
+router.delete('/support/tickets/:id',         c.deleteTicket);
+
 module.exports = router;

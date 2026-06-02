@@ -80,6 +80,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('sendTestEmail').addEventListener('click',  sendTestEmail);
     document.getElementById('sendNotif').addEventListener('click',      sendNotification);
     document.getElementById('refreshNotifs').addEventListener('click',  loadNotifications);
+    document.getElementById('refreshTickets').addEventListener('click',  loadAdminTickets);
+    document.getElementById('ticketStatusFilter').addEventListener('change', loadAdminTickets);
     document.getElementById('addSocialBtn').addEventListener('click',   addSocialLink);
     document.getElementById('refreshSocials').addEventListener('click', loadSocials);
     document.getElementById('socialPreset').addEventListener('change',  e => {
@@ -135,6 +137,7 @@ function switchTab(tab) {
     if (tab === 'settings')       loadSmtpSettings();
     if (tab === 'notifications')  loadNotifications();
     if (tab === 'socials')        loadSocials();
+    if (tab === 'support')        loadAdminTickets();
 }
 
 function setupNav() {}  // placeholder — tabs wired in DOMContentLoaded
@@ -688,6 +691,65 @@ async function deleteNotification(id) {
 
 function confirmDeleteNotif(id, title) {
     showConfirmModal('🗑', 'Delete Notification', `Delete "${title}"? Users will no longer see it in history.`, () => deleteNotification(id));
+}
+
+// ── Admin Support Tickets ─────────────────────────────────────────────────
+const TICKET_STATUS = { open: 'Open', in_progress: 'In Progress', closed: 'Closed' };
+const TICKET_CAT    = { technical: 'Technical', account: 'Account', general: 'General', other: 'Other' };
+
+async function loadAdminTickets() {
+    const status = document.getElementById('ticketStatusFilter').value;
+    const tbody  = document.getElementById('ticketsBody');
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text2);padding:24px;">Loading...</td></tr>';
+
+    try {
+        const params = status ? `?status=${status}` : '';
+        const res    = await apiFetch(`/api/admin/support/tickets${params}`);
+        const data   = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        const list = data.tickets;
+        if (!list.length) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text2);padding:24px;">No tickets found</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = list.map(t => {
+            const statusColor = t.status === 'open' ? 'active' : t.status === 'in_progress' ? 'scheduled' : 'ended';
+            return `<tr>
+                <td class="mono">#${t.id}</td>
+                <td>${escHtml(t.username)}<br><small class="mono" style="color:var(--text3);">${escHtml(t.email)}</small></td>
+                <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escAttr(t.title)}">${escHtml(t.title)}</td>
+                <td>${escHtml(TICKET_CAT[t.category] || t.category)}</td>
+                <td><span class="badge badge-${statusColor}">${escHtml(TICKET_STATUS[t.status] || t.status)}</span></td>
+                <td>${timeAgo(t.updated_at)}</td>
+                <td class="mono">${t.reply_count}</td>
+                <td>
+                    <div class="actions">
+                        <a class="btn-sm btn-sm-neutral" href="/support/ticket.html?id=${t.id}" target="_blank">View</a>
+                        <button class="btn-sm btn-sm-danger" onclick="confirmDeleteTicket(${t.id})">Delete</button>
+                    </div>
+                </td>
+            </tr>`;
+        }).join('');
+    } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#f87171;padding:24px;">${escHtml(e.message)}</td></tr>`;
+    }
+}
+
+async function adminDeleteTicket(id) {
+    try {
+        const res = await apiFetch(`/api/admin/support/tickets/${id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error((await res.json()).error);
+        toast('Ticket deleted', 'success');
+        loadAdminTickets();
+    } catch (e) {
+        toast('Error: ' + e.message, 'error');
+    }
+}
+
+function confirmDeleteTicket(id) {
+    showConfirmModal('⚠', 'Delete Ticket', `Delete ticket #${id}? All replies will be lost.`, () => adminDeleteTicket(id));
 }
 
 // ── Socials ───────────────────────────────────────────────────────────────

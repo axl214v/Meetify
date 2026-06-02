@@ -164,6 +164,39 @@ const initDatabase = async () => {
             }
         }
 
+        // Create support_tickets table
+        await executeQuery(`
+          CREATE TABLE IF NOT EXISTS support_tickets (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            user_id INT NOT NULL,
+            title VARCHAR(255) NOT NULL,
+            category ENUM('technical','account','general','other') DEFAULT 'general',
+            status ENUM('open','in_progress','closed') DEFAULT 'open',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            INDEX idx_user (user_id),
+            INDEX idx_status (status),
+            INDEX idx_created (created_at)
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `, 'Support tickets table');
+
+        // Create ticket_replies table
+        await executeQuery(`
+          CREATE TABLE IF NOT EXISTS ticket_replies (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            ticket_id INT NOT NULL,
+            user_id INT NOT NULL,
+            is_admin TINYINT(1) DEFAULT 0,
+            message TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (ticket_id) REFERENCES support_tickets(id) ON DELETE CASCADE,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            INDEX idx_ticket (ticket_id),
+            INDEX idx_created (created_at)
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `, 'Ticket replies table');
+
         // Migrate existing conferences table: add mode column
         await addColumnIfMissing('conferences', 'mode', "VARCHAR(10) DEFAULT 'p2p'");
 

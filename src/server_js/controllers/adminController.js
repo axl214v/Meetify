@@ -298,6 +298,54 @@ const adminController = {
         } catch (e) {
             res.status(500).json({ error: e.message });
         }
+    },
+
+    getSupportTickets: async (req, res) => {
+        try {
+            const { status } = req.query;
+            const where = status ? 'WHERE t.status = ?' : '';
+            const params = status ? [status] : [];
+            const [tickets] = await db.promise().query(
+                `SELECT t.*, u.username, u.email,
+                        (SELECT COUNT(*) FROM ticket_replies WHERE ticket_id = t.id) AS reply_count
+                 FROM support_tickets t
+                 JOIN users u ON u.id = t.user_id
+                 ${where}
+                 ORDER BY t.updated_at DESC
+                 LIMIT 200`,
+                params
+            );
+            res.json({ tickets });
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
+    },
+
+    updateTicketStatus: async (req, res) => {
+        const { status } = req.body;
+        const VALID = ['open', 'in_progress', 'closed'];
+        if (!VALID.includes(status)) return res.status(400).json({ error: 'Invalid status' });
+        try {
+            const [r] = await db.promise().query(
+                'UPDATE support_tickets SET status = ? WHERE id = ?', [status, req.params.id]
+            );
+            if (!r.affectedRows) return res.status(404).json({ error: 'Ticket not found' });
+            res.json({ success: true });
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
+    },
+
+    deleteTicket: async (req, res) => {
+        try {
+            const [r] = await db.promise().query(
+                'DELETE FROM support_tickets WHERE id = ?', [req.params.id]
+            );
+            if (!r.affectedRows) return res.status(404).json({ error: 'Ticket not found' });
+            res.json({ success: true });
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
     }
 };
 

@@ -52,6 +52,10 @@
                 <span class="nav-icon">⬡</span>
                 <span>Socials</span>
             </button>
+            <button class="nav-item" data-tab="support">
+                <span class="nav-icon">◇</span>
+                <span>Support</span>
+            </button>
         </nav>
 
         <div class="sidebar-footer">
@@ -515,6 +519,44 @@
                     </thead>
                     <tbody id="socialsBody">
                         <tr><td colspan="6" style="text-align:center;color:var(--text2);padding:24px;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ── SUPPORT TICKETS ── -->
+        <section class="tab-panel" id="tab-support">
+            <header class="panel-header">
+                <div>
+                    <h1>Support Tickets</h1>
+                    <p class="panel-sub">Respond to user-submitted support requests</p>
+                </div>
+                <div class="header-controls">
+                    <select class="search-input" id="ticketStatusFilter" style="width:auto;">
+                        <option value="">All</option>
+                        <option value="open">Open</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="closed">Closed</option>
+                    </select>
+                    <button class="btn-refresh" id="refreshTickets">↻</button>
+                </div>
+            </header>
+            <div class="panel-card">
+                <table class="data-table full" id="ticketsTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>User</th>
+                            <th>Title</th>
+                            <th>Category</th>
+                            <th>Status</th>
+                            <th>Updated</th>
+                            <th>Replies</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ticketsBody">
+                        <tr><td colspan="8" style="text-align:center;color:var(--text2);padding:24px;">Loading...</td></tr>
                     </tbody>
                 </table>
             </div>
