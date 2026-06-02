@@ -292,6 +292,108 @@
         .nb-toast-bar     { position: absolute; bottom: 0; left: 0; height: 2px; opacity: 0.4; animation: nb-bar 6s linear forwards; }
         @keyframes nb-bar { from { width: 100%; } to { width: 0; } }
 
+        /* ── Modal ── */
+        #nb-modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            background: rgba(0,0,0,0.55);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+        #nb-modal-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        #nb-modal {
+            width: min(480px, calc(100vw - 32px));
+            background: var(--nb-bg);
+            border: 1px solid var(--nb-border-h);
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 32px 80px rgba(0,0,0,0.4);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transform: scale(0.94) translateY(8px);
+            transition: transform 0.22s cubic-bezier(0.4,0,0.2,1);
+            font-family: 'Outfit', system-ui, sans-serif;
+        }
+        #nb-modal-overlay.open #nb-modal {
+            transform: scale(1) translateY(0);
+        }
+        #nb-modal-stripe { height: 3px; flex-shrink: 0; }
+        #nb-modal-hd {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            padding: 18px 20px 14px;
+            gap: 12px;
+        }
+        #nb-modal-hd-left { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; }
+        #nb-modal-cat {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 2px 8px;
+            border-radius: 99px;
+            align-self: flex-start;
+        }
+        #nb-modal-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--nb-text);
+            line-height: 1.35;
+            word-break: break-word;
+        }
+        #nb-modal-close {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            background: var(--nb-hover);
+            border: 1px solid var(--nb-border);
+            color: var(--nb-text3);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+            transition: background 0.15s, color 0.15s;
+        }
+        #nb-modal-close:hover { background: var(--nb-border); color: var(--nb-text); }
+        #nb-modal-body {
+            padding: 0 20px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        #nb-modal-divider { height: 1px; background: var(--nb-border); }
+        #nb-modal-msg {
+            font-size: 13px;
+            color: var(--nb-text2);
+            line-height: 1.65;
+            word-break: break-word;
+            white-space: pre-wrap;
+            max-height: 40vh;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--nb-border-h) transparent;
+        }
+        #nb-modal-msg::-webkit-scrollbar       { width: 3px; }
+        #nb-modal-msg::-webkit-scrollbar-thumb { background: var(--nb-border-h); border-radius: 2px; }
+        #nb-modal-time {
+            font-size: 11px;
+            color: var(--nb-text3);
+        }
+
+        .nb-item { cursor: pointer; }
+
         @media (max-width: 480px) {
             #nb-panel { width: calc(100vw - 48px); }
             .nb-toast { width: calc(100vw - 32px); }
@@ -308,10 +410,28 @@
     const unreadCount = ()  => notifications.filter(n => n.id > getLastSeen()).length;
 
     // ── DOM ────────────────────────────────────────────────────────────────
-    const wrap  = Object.assign(document.createElement('div'),    { id: 'nb-wrap' });
-    const panel = Object.assign(document.createElement('div'),    { id: 'nb-panel' });
-    const btn   = Object.assign(document.createElement('button'), { id: 'nb-btn'   });
-    const tbox  = Object.assign(document.createElement('div'),    { id: 'nb-toasts' });
+    const wrap    = Object.assign(document.createElement('div'),    { id: 'nb-wrap' });
+    const panel   = Object.assign(document.createElement('div'),    { id: 'nb-panel' });
+    const btn     = Object.assign(document.createElement('button'), { id: 'nb-btn'   });
+    const tbox    = Object.assign(document.createElement('div'),    { id: 'nb-toasts' });
+    const overlay = Object.assign(document.createElement('div'),    { id: 'nb-modal-overlay' });
+
+    overlay.innerHTML = `
+        <div id="nb-modal">
+            <div id="nb-modal-stripe"></div>
+            <div id="nb-modal-hd">
+                <div id="nb-modal-hd-left">
+                    <span id="nb-modal-cat"></span>
+                    <div id="nb-modal-title"></div>
+                </div>
+                <button id="nb-modal-close" aria-label="Close">✕</button>
+            </div>
+            <div id="nb-modal-body">
+                <div id="nb-modal-divider"></div>
+                <div id="nb-modal-msg"></div>
+                <div id="nb-modal-time"></div>
+            </div>
+        </div>`;
 
     panel.innerHTML = `
         <div id="nb-accent"></div>
@@ -331,11 +451,12 @@
     btn.innerHTML = `${BELL_SVG(17, 'nb-icon')}<span id="nb-dot"></span>`;
 
     wrap.append(panel, btn);
-    document.body.append(wrap, tbox);
+    document.body.append(wrap, tbox, overlay);
 
-    const dotEl  = document.getElementById('nb-dot');
-    const listEl = document.getElementById('nb-list');
-    const metaEl = document.getElementById('nb-hd-meta');
+    const dotEl     = document.getElementById('nb-dot');
+    const listEl    = document.getElementById('nb-list');
+    const metaEl    = document.getElementById('nb-hd-meta');
+    const modalClose = document.getElementById('nb-modal-close');
 
     function BELL_SVG(size, id) {
         const idAttr = id ? ` id="${id}"` : '';
@@ -364,7 +485,7 @@
         listEl.innerHTML = notifications.map(n => {
             const cat   = CAT[n.category] || CAT.info;
             const isNew = n.id > last;
-            return `<div class="nb-item" style="border-left-color:${isNew ? cat.color : 'transparent'}">
+            return `<div class="nb-item" data-id="${n.id}" style="border-left-color:${isNew ? cat.color : 'transparent'}">
                 <div class="nb-item-top">
                     <span class="nb-cat" style="background:${cat.bg};color:${cat.color};">${cat.label}</span>
                     <span class="nb-title">${esc(n.title)}</span>
@@ -373,6 +494,14 @@
                 <div class="nb-msg">${esc(n.message)}</div>
             </div>`;
         }).join('');
+
+        listEl.querySelectorAll('.nb-item').forEach(el => {
+            el.addEventListener('click', () => {
+                const id = parseInt(el.dataset.id, 10);
+                const notif = notifications.find(n => n.id === id);
+                if (notif) openModal(notif);
+            });
+        });
     }
 
     function updateBadge() {
@@ -397,6 +526,26 @@
         updateBadge();
     }
 
+    // ── Modal ──────────────────────────────────────────────────────────────
+    function openModal(notif) {
+        const cat = CAT[notif.category] || CAT.info;
+        document.getElementById('nb-modal-stripe').style.background = cat.color;
+        document.getElementById('nb-modal-cat').textContent  = cat.label;
+        document.getElementById('nb-modal-cat').style.background = cat.bg;
+        document.getElementById('nb-modal-cat').style.color  = cat.color;
+        document.getElementById('nb-modal-title').textContent = notif.title || '';
+        document.getElementById('nb-modal-msg').textContent   = notif.message || '';
+        document.getElementById('nb-modal-time').textContent  = notif.created_at
+            ? new Date(notif.created_at).toLocaleString() : '';
+        overlay.classList.add('open');
+    }
+
+    function closeModal() { overlay.classList.remove('open'); }
+
+    modalClose.addEventListener('click', closeModal);
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
     // ── Panel toggle ───────────────────────────────────────────────────────
     btn.addEventListener('click', () => {
         panelOpen = !panelOpen;
@@ -410,7 +559,7 @@
     });
 
     document.addEventListener('click', e => {
-        if (panelOpen && !wrap.contains(e.target)) {
+        if (panelOpen && !wrap.contains(e.target) && !overlay.contains(e.target)) {
             panelOpen = false;
             panel.classList.remove('open');
         }
