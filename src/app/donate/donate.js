@@ -40,9 +40,7 @@ async function loadLinks() {
         renderGrid('donate-grid', donate, true);
         renderGrid('social-grid', social, false);
 
-        // Hide empty sections
         if (!donate.length) document.getElementById('section-donate').style.display = 'none';
-        if (!social.length) document.getElementById('section-social').style.display = 'none';
     } catch {
         document.getElementById('donate-grid').innerHTML = '<div class="sp-empty">Failed to load</div>';
         document.getElementById('social-grid').innerHTML = '<div class="sp-empty">Failed to load</div>';

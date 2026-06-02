@@ -50,7 +50,7 @@
         /* ── Ticket header ── */
         .ticket-hd{margin-bottom:28px}
         .ticket-hd-row{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:10px}
-        .ticket-title{font-size:20px;font-weight:700;line-height:1.3;flex:1}
+        .ticket-title,.ticket-title-big{font-size:20px;font-weight:700;line-height:1.3;flex:1}
         .admin-tools{display:flex;gap:8px;align-items:center;flex-shrink:0}
         .status-select{padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:border-color .15s}
         .status-select:focus{outline:none;border-color:var(--accent)}
@@ -67,22 +67,25 @@
         /* ── Messages ── */
         .thread{display:flex;flex-direction:column;gap:16px}
         .msg{display:flex;gap:10px}
-        .msg-av{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;user-select:none}
-        .av-user{background:var(--surface2);border:1px solid var(--border);color:var(--text2)}
-        .av-admin{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 0 8px rgba(var(--accent-rgb),.3)}
+        /* ticket.js outputs class="msg-avatar msg-user-av" or "msg-avatar msg-admin-av" */
+        .msg-avatar{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;user-select:none}
+        .msg-user-av{background:var(--surface2);border:1px solid var(--border2);color:var(--text2)}
+        .msg-admin-av{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 0 8px rgba(var(--accent-rgb),.3)}
         .msg-body{flex:1;min-width:0}
-        .msg-hd{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+        .msg-header{display:flex;align-items:center;gap:8px;margin-bottom:6px}
         .msg-name{font-size:13px;font-weight:600}
-        .msg-admin-tag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);background:rgba(var(--accent-rgb),.1);padding:2px 6px;border-radius:4px}
+        /* ticket.js uses class="msg-admin-label" */
+        .msg-admin-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);background:rgba(var(--accent-rgb),.1);padding:2px 6px;border-radius:4px}
         .msg-time{font-size:11px;color:var(--text3);margin-left:auto}
-        .msg-bubble{font-size:13px;line-height:1.65;padding:12px 14px;border-radius:12px;white-space:pre-wrap;word-break:break-word}
-        .bubble-user{background:var(--surface);border:1px solid var(--border)}
-        .bubble-admin{background:rgba(var(--accent-rgb),.07);border:1px solid rgba(var(--accent-rgb),.2)}
+        /* ticket.js uses class="msg-text" */
+        .msg-text{font-size:13px;line-height:1.65;padding:12px 14px;border-radius:12px;white-space:pre-wrap;word-break:break-word;background:var(--surface);border:1px solid var(--border)}
+        .msg-admin .msg-text{background:rgba(var(--accent-rgb),.07);border-color:rgba(var(--accent-rgb),.2)}
 
         /* ── Reply form ── */
         .reply-wrap{margin-top:4px}
-        .reply-wrap textarea{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;font-size:13px;resize:vertical;min-height:90px;transition:border-color .15s;display:block}
+        .reply-wrap textarea{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:var(--surface) !important;color:var(--text) !important;font-family:inherit;font-size:13px;resize:vertical;min-height:90px;transition:border-color .15s;display:block;-webkit-appearance:none;appearance:none}
         .reply-wrap textarea:focus{outline:none;border-color:var(--accent)}
+        textarea,select,input{color-scheme:dark}
         .reply-actions{display:flex;gap:8px;margin-top:10px;align-items:center}
         .reply-hint{font-size:11px;color:var(--text3);margin-left:auto}
         .closed-notice{font-size:13px;color:var(--text3);background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px;text-align:center}
