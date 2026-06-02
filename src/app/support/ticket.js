@@ -55,16 +55,16 @@ async function loadTicket() {
         ` : '';
 
         page.innerHTML = `
-            <a class="back-btn" href="/support/support.html">← My Tickets</a>
+            <a class="back" href="/support/support.html">← My Tickets</a>
 
             <div class="ticket-hd">
-                <div class="ticket-hd-top">
+                <div class="ticket-hd-row">
                     <div class="ticket-title-big">${esc(ticket.title)}</div>
                     ${adminActions}
                 </div>
-                <div class="ticket-meta-row">
-                    <span class="status-badge badge-${ticket.status}">${esc(STATUS_LABEL[ticket.status] || ticket.status)}</span>
-                    <span class="cat-badge">${esc(CAT_LABEL[ticket.category] || ticket.category)}</span>
+                <div class="meta-row">
+                    <span class="sbadge sb-${ticket.status}">${esc(STATUS_LABEL[ticket.status] || ticket.status)}</span>
+                    <span class="cat-pill">${esc(CAT_LABEL[ticket.category] || ticket.category)}</span>
                     <span>#${ticket.id}</span>
                     <span>by ${esc(ticket.username)}</span>
                     <span>${fmtDate(ticket.created_at)}</span>
@@ -80,14 +80,12 @@ async function loadTicket() {
             <div class="divider"></div>
 
             ${isClosed
-                ? `<div class="closed-notice">This ticket is closed. <a href="/support/support.html" style="color:var(--accent);">Open a new ticket</a> if you need further help.</div>`
-                : `<div class="reply-form">
+                ? `<div class="closed-notice">This ticket is closed. <a href="/support/support.html">Open a new ticket</a> if you need further help.</div>`
+                : `<div class="reply-wrap">
                     <textarea id="replyText" placeholder="Write your reply..."></textarea>
                     <div class="reply-actions">
                         <button class="btn btn-primary" id="sendReply">Send Reply</button>
-                        ${isAdmin ? `
-                            <button class="btn" id="sendAndClose" style="font-size:12px;">Send &amp; Close</button>
-                        ` : ''}
+                        ${isAdmin ? `<button class="btn btn-secondary" id="sendAndClose">Send &amp; Close</button>` : ''}
                     </div>
                    </div>`
             }
