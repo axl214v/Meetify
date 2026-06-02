@@ -53,7 +53,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
 /* ── Nav ─────────────────────────────────────────────── */
 .navbar{
     position:fixed;top:0;left:0;right:0;z-index:200;
-    height:62px;display:flex;align-items:center;
+    height:76px;display:flex;align-items:center;
     justify-content:space-between;padding:0 32px;
     background:rgba(2,12,26,0.72);
     backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
@@ -63,9 +63,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
 
 .nav-brand{display:flex;align-items:center;text-decoration:none}
 .nav-logo-img{
-    height:30px;width:auto;display:block;
-    border-radius:6px;
-    /* On dark bg: multiply removes white, leaving only the coloured logo */
+    height:64px;width:auto;display:block;
     mix-blend-mode:lighten;
     filter:brightness(1.05) contrast(1.02);
 }
