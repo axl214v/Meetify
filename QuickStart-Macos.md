@@ -1,164 +1,137 @@
 # 🍎 Meetify Quick Start for macOS
 
+The fastest path to a running Meetify on a Mac. For the full Docker reference see
+[Docker.md](Docker.md).
+
 ## Prerequisites
 
 1. **Install Docker Desktop for Mac**
    ```bash
-   # Download from: https://www.docker.com/products/docker-desktop
-   # Or install via Homebrew:
+   # Download from https://www.docker.com/products/docker-desktop
+   # or via Homebrew:
    brew install --cask docker
    ```
+2. **Start Docker Desktop** and wait for the whale icon in the menu bar to settle.
 
-2. **Start Docker Desktop**
-   - Open Docker Desktop app
-   - Wait for Docker to start (whale icon in menu bar)
-
-## 🚀 Quick Start (3 Commands)
+## 🚀 Quick Start (3 commands)
 
 ```bash
 # 1. Setup environment
 cp .env.example .env
-nano .env  # Change passwords
+nano .env                 # change DB_PASSWORD and JWT_SECRET
 
-# 2. First run (automatic setup)
+# 2. First run (build images + start everything)
 make first-run
 
-# 3. Done! Open browser
+# 3. Open the app
 open http://localhost
 ```
 
-## ⚡ Alternative Method
+## ⚡ Alternative (manual)
 
 ```bash
-# Build
-docker-compose build --no-cache
-
-# Start
-docker-compose up -d
-
-# Check status
-docker-compose ps
-
-# View logs
-docker-compose logs -f
+docker compose build --no-cache
+docker compose up -d
+docker compose ps
+docker compose logs -f
 ```
 
 ## 🔧 Troubleshooting
 
-### "Path not shared" Error (Fixed! ✅)
+### Port 80 already in use (XAMPP)
 
-We've already fixed this by removing volume mounts. The images now contain all files.
-
-### Port Already in Use
-
+macOS XAMPP runs Apache on port 80. Either stop it:
 ```bash
-# Check what's using port 80
 sudo lsof -i :80
-
-# If it's XAMPP Apache:
 sudo /Applications/XAMPP/xamppfiles/bin/apachectl stop
-
-# Or change port in docker-compose.yml:
+```
+…or remap Meetify's frontend in `docker-compose.yml`:
+```yaml
 ports:
-  - "8080:80"  # Use port 8080 instead
+  - "8080:80"     # then open http://localhost:8080
 ```
 
-### Database Connection Failed
+### "Path not shared" error
 
+Already handled — the images bake in all files instead of bind-mounting, so
+Docker Desktop file sharing isn't required.
+
+### Database connection failed
 ```bash
-# Wait a bit longer (first start takes ~30 seconds)
-docker-compose logs db
-
-# Restart database
-docker-compose restart db
+docker compose logs db        # first start takes ~20–30s for MySQL to init
+docker compose restart db
 ```
 
-### Can't Access localhost
-
+### Can't access localhost
 ```bash
-# Check container status
-docker-compose ps
+docker compose ps
+docker compose logs backend
+docker compose logs frontend
+docker compose restart
+```
 
-# Check logs
-docker-compose logs backend
-docker-compose logs frontend
+### Group (SFU) calls
 
-# Restart all
-docker-compose restart
+Private (P2P) calls work out of the box. **Group calls use mediasoup** and carry
+media over the published `40000–40059` UDP/TCP ports. On a single Mac the default
+`MEDIASOUP_ANNOUNCED_IP=127.0.0.1` is fine. To test group calls from **another
+device on your LAN**, set it to your Mac's LAN IP in `.env`:
+```bash
+ipconfig getifaddr en0        # your LAN IP, e.g. 192.168.1.20
+# .env:  MEDIASOUP_ANNOUNCED_IP=192.168.1.20
+docker compose up -d backend
 ```
 
 ## 📊 Service URLs
 
-- **Frontend**: http://localhost
-- **Backend**: http://localhost:3000
-- **Database**: localhost:3306
+- **Frontend:** http://localhost
+- **Backend:** http://localhost:3000
+- **Database:** localhost:3306
 
 ## 🛠️ Useful Commands
 
 ```bash
-# View all logs
-docker-compose logs -f
+docker compose logs -f                 # all logs
+docker compose logs -f backend         # one service
+docker compose down                    # stop
+docker compose restart
+docker compose exec backend sh         # shell into a container
 
-# View specific service
-docker-compose logs -f backend
-
-# Stop all
-docker-compose down
-
-# Restart
-docker-compose restart
-
-# Enter container shell
-docker-compose exec backend sh
-
-# Clean everything
-docker-compose down -v
+# Full reset (DELETES DB data):
+docker compose down -v
 docker system prune -af
 ```
 
-## 🔍 Check Everything is Working
+## 🔍 Verify everything works
 
 ```bash
-# Backend health
-curl http://localhost:3000/check-status
-
-# Frontend
-curl http://localhost/
-
-# Database
-docker-compose exec db mysql -u meetify_user -p meetify -e "SHOW TABLES;"
+curl http://localhost:3000/check-status                 # backend
+curl -o /dev/null -w "%{http_code}\n" http://localhost/ # frontend
+docker compose exec db mysql -u meetify_user -p meetify -e "SHOW TABLES;"
 ```
 
-## 📝 Notes for macOS Users
+## 📝 Notes for macOS users
 
-1. **Docker Desktop must be running** - Check the whale icon in menu bar
-2. **First start is slow** - Images need to download and build (~5-10 min)
-3. **Database takes time** - Wait 20-30 seconds for MySQL to initialize
-4. **XAMPP conflicts** - Stop XAMPP Apache/MySQL before starting Docker
+1. **Docker Desktop must be running** — check the whale icon.
+2. **First start is slow** — images build and mediasoup compiles (~5–10 min).
+3. **MySQL needs ~20–30s** on first boot before it accepts connections.
+4. **Stop XAMPP Apache/MySQL** before starting Docker to avoid port conflicts.
 
-## 🆘 Still Having Issues?
+## 🆘 Still stuck?
 
 ```bash
-# Complete reset
-docker-compose down -v
+# Complete reset and start fresh
+docker compose down -v
 docker system prune -af
-rm -rf node_modules
-
-# Start fresh
 make first-run
 ```
 
-## 🎉 Success!
+## 🎉 Success
 
-If you see:
-```
-✅ Database is ready
-✅ Backend is ready  
-✅ Frontend is ready
-```
-
-You're all set! Open http://localhost and start using Meetify!
+When the backend log shows the database initialized and `/check-status` returns
+`"status":"online"`, open **http://localhost** and start using Meetify.
 
 ---
 
-**Need help?** Check [DOCKER.md](DOCKER.md) for detailed documentation.
+**Need more detail?** See [Docker.md](Docker.md). Changes are tracked in
+[CHANGELOG.md](CHANGELOG.md).
