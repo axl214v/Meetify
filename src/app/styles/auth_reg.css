@@ -498,15 +498,9 @@ body::before {
 /* ============================================ */
 
 .auth-brand-logo-img {
-  height: 52px;
+  height: 40px;
   width: auto;
-  mix-blend-mode: lighten;
-  filter: brightness(1.05) contrast(1.02);
-}
-
-[data-theme="light"] .auth-brand-logo-img {
-  mix-blend-mode: normal;
-  filter: none;
+  display: block;
 }
 
 /* ============================================ */

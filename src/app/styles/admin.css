@@ -94,15 +94,9 @@ body { display: flex; }
 }
 
 .sidebar-logo-img {
-    height: 44px;
+    height: 30px;
     width: auto;
-    mix-blend-mode: lighten;
-    filter: brightness(1.05) contrast(1.02);
-}
-
-[data-theme="light"] .sidebar-logo-img {
-    mix-blend-mode: normal;
-    filter: none;
+    display: block;
 }
 
 .logo-badge {

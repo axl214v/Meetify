@@ -70,11 +70,8 @@ html[data-theme="light"] code {
   text-decoration: none;
 }
 .legal-nav-logo-img {
-  height: 44px; width: auto;
-  mix-blend-mode: lighten;
-  filter: brightness(1.05) contrast(1.02);
+  height: 32px; width: auto; display: block;
 }
-[data-theme="light"] .legal-nav-logo-img { mix-blend-mode: normal; filter: none; }
 .legal-nav-brand:hover { text-decoration: none; }
 
 .legal-nav-theme {
