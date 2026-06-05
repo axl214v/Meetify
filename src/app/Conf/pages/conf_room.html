@@ -6,7 +6,7 @@
     <title>Conference Room - Meetify</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="icon" href="/assets/logo.png">
+    <link rel="icon" href="/assets/logo-mark.png">
     <style>
         /* ============================================ */
         /* Variables                                    */
@@ -26,6 +26,9 @@
             --warn:         #f59e0b;
             --purple:       #8b5cf6;
             --cyan:         #06b6d4;
+            --grad:         linear-gradient(135deg,#2563eb 0%,#0ea5e9 100%);
+            --grad-text:    linear-gradient(135deg,#60a5fa 0%,#22d3ee 100%);
+            --glow:         rgba(37,99,235,0.30);
             --font:         'Outfit', sans-serif;
             --font-mono:    'JetBrains Mono', monospace;
         }
@@ -64,9 +67,23 @@
             justify-content: space-between;
             align-items: center;
             padding: 0 1.5rem;
-            background: var(--room-surface);
+            background: rgba(6,18,40,0.82);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
             border-bottom: 1px solid var(--room-border);
+            position: relative;
             z-index: 10;
+        }
+        /* hairline gradient accent under header — the "precision" touch */
+        .room-header::after {
+            content: '';
+            position: absolute;
+            left: 0; right: 0; bottom: -1px;
+            height: 1px;
+            background: linear-gradient(90deg,
+                transparent, rgba(37,99,235,0.55),
+                rgba(14,165,233,0.45), transparent);
+            pointer-events: none;
         }
 
         .room-header-left {
@@ -76,10 +93,14 @@
         }
 
         .room-logo {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--accent);
-            letter-spacing: -0.3px;
+            display: flex;
+            align-items: center;
+            height: 100%;
+        }
+        .room-logo img {
+            height: 26px;
+            width: auto;
+            display: block;
         }
 
         .room-divider {
@@ -147,6 +168,19 @@
             display: flex;
             flex-direction: column;
         }
+        /* Static dotted grid backdrop — same motif as the landing hero,
+           but no animation/blur so it never competes with video decode */
+        .video-area::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background-image: radial-gradient(circle, rgba(37,99,235,0.10) 1px, transparent 1px);
+            background-size: 28px 28px;
+            -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000, transparent 78%);
+            mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000, transparent 78%);
+        }
 
         .video-grid {
             display: grid;
@@ -157,6 +191,8 @@
             min-height: 0;
             align-content: start;
             overflow-y: auto;
+            position: relative;
+            z-index: 1;
         }
 
         /* Single participant — full width */
@@ -291,13 +327,27 @@
         /* ============================================ */
 
         .controls-bar {
-            background: var(--room-surface);
+            background: rgba(6,18,40,0.82);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
             border-top: 1px solid var(--room-border);
             display: flex;
             justify-content: center;
             align-items: center;
             gap: 0.75rem;
             padding: 0 1.5rem;
+            position: relative;
+            z-index: 10;
+        }
+        .controls-bar::before {
+            content: '';
+            position: absolute;
+            left: 0; right: 0; top: -1px;
+            height: 1px;
+            background: linear-gradient(90deg,
+                transparent, rgba(37,99,235,0.55),
+                rgba(14,165,233,0.45), transparent);
+            pointer-events: none;
         }
 
         .ctrl-group {
@@ -687,7 +737,7 @@
         .chat-input-container input::placeholder { color: var(--room-muted); }
 
         #sendBtn {
-            background: var(--accent);
+            background: var(--grad);
             border: none;
             color: white;
             padding: 0.6rem 1rem;
@@ -697,13 +747,15 @@
             font-weight: 600;
             font-family: var(--font);
             min-height: auto;
+            box-shadow: 0 0 14px var(--glow);
             transition: all 0.15s;
         }
 
         #sendBtn:hover {
-            background: #2563eb;
+            background: var(--grad);
             transform: none;
-            box-shadow: none;
+            box-shadow: 0 0 20px var(--glow);
+            opacity: 0.95;
         }
 
         /* ============================================ */
@@ -758,6 +810,8 @@
             flex-shrink: 0;
             background: var(--room-surface);
             border-top: 1px solid var(--room-border);
+            position: relative;
+            z-index: 1;
         }
 
         .filmstrip-section.hidden { display: none; }
@@ -846,7 +900,7 @@
     <!-- Header -->
     <header class="room-header">
         <div class="room-header-left">
-            <span class="room-logo">🎥 Meetify</span>
+            <span class="room-logo"><img src="/assets/logo.png" alt="Meetify"></span>
             <div class="room-divider"></div>
             <span class="room-title" id="conferenceName">Loading...</span>
         </div>
