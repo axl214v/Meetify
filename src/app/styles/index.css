@@ -55,21 +55,15 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
     position:fixed;top:0;left:0;right:0;z-index:200;
     height:76px;display:flex;align-items:center;
     justify-content:space-between;padding:0 32px;
-    background:rgba(2,12,26,0.72);
-    backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+    background:rgba(2,12,26,0.86);
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
     border-bottom:1px solid var(--border);
 }
 [data-theme="light"] .navbar{background:rgba(240,246,255,0.82);}
 
 .nav-brand{display:flex;align-items:center;text-decoration:none}
 .nav-logo-img{
-    height:64px;width:auto;display:block;
-    mix-blend-mode:lighten;
-    filter:brightness(1.05) contrast(1.02);
-}
-[data-theme="light"] .nav-logo-img{
-    mix-blend-mode:normal;
-    filter:none;
+    height:36px;width:auto;display:block;
 }
 
 .nav-actions{display:flex;align-items:center;gap:8px}
@@ -135,7 +129,10 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
 
 .hero-orb{
     position:absolute;pointer-events:none;
-    border-radius:50%;filter:blur(90px);
+    border-radius:50%;filter:blur(64px);
+    /* promote to its own GPU layer so the blur is rasterized once
+       and the float animation is a cheap transform, not a re-blur */
+    will-change:transform;transform:translateZ(0);
 }
 .hero-orb-1{
     width:700px;height:550px;top:-100px;left:18%;
@@ -245,19 +242,22 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
 .visual-glow{
     position:absolute;width:380px;height:380px;pointer-events:none;
     background:radial-gradient(circle,rgba(37,99,235,0.22) 0%,transparent 65%);
-    filter:blur(60px);animation:orb-a 9s ease-in-out infinite;
+    filter:blur(48px);animation:orb-a 9s ease-in-out infinite;
+    will-change:transform;transform:translateZ(0);
 }
 .call-mockup{
     position:relative;z-index:1;width:100%;max-width:440px;
-    background:rgba(6,18,40,0.84);
+    /* opaque bg instead of backdrop-filter: a blurred backdrop on a
+       transform-animated element re-blurs every frame (main Mac jank) */
+    background:#061226;
     border:1px solid rgba(37,99,235,0.22);
     border-radius:20px;padding:18px;
-    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
     box-shadow:0 28px 72px rgba(0,0,0,0.45),0 0 0 1px rgba(255,255,255,0.03) inset;
     animation:mockup-float 8s ease-in-out infinite;
+    will-change:transform;transform:translateZ(0);
 }
 [data-theme="light"] .call-mockup{
-    background:rgba(230,242,255,0.90);
+    background:#e8f2ff;
     border-color:rgba(37,99,235,0.18);
     box-shadow:0 20px 60px rgba(37,99,235,0.14),0 0 0 1px rgba(255,255,255,0.9) inset;
 }
@@ -294,7 +294,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
 
 .t-av{
     width:38px;height:38px;border-radius:50%;
-    background:rgba(255,255,255,0.15);backdrop-filter:blur(4px);
+    background:rgba(255,255,255,0.15);
     display:flex;align-items:center;justify-content:center;
     font-size:15px;font-weight:800;color:rgba(255,255,255,0.92);
 }
@@ -420,4 +420,15 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
     .features{padding:60px 20px 80px}
     .site-footer{flex-direction:column;text-align:center;padding:24px 20px}
     .call-mockup{max-width:100%}
+}
+
+/* ── Reduced motion ──────────────────────────────────────
+   Kills the infinite floating/pulse animations — both an
+   accessibility win and a CPU/GPU saver on weaker machines. */
+@media(prefers-reduced-motion:reduce){
+    .hero-orb,.visual-glow,.call-mockup,
+    .badge-pulse,.status-dot,.live-dot,.t-speaking-ring{
+        animation:none!important;
+    }
+    *{scroll-behavior:auto!important}
 }
