@@ -6,6 +6,7 @@
     <title>Support Meetify</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="/assets/logo-mark.png">
     <script>(function(){document.documentElement.setAttribute('data-theme',localStorage.getItem('theme')||'dark')})();</script>
     <style>
         :root,[data-theme="dark"]{
@@ -56,15 +57,9 @@
             font-size: 18px;
         }
         .sp-logo-img {
-            height: 44px;
+            height: 32px;
             width: auto;
             display: block;
-            mix-blend-mode: lighten;
-            filter: brightness(1.05) contrast(1.02);
-        }
-        [data-theme="light"] .sp-logo-img {
-            mix-blend-mode: normal;
-            filter: none;
         }
         .sp-nav-actions { display: flex; gap: 10px; align-items: center; }
         .sp-btn {
@@ -246,11 +241,97 @@
             color: var(--text3);
         }
 
+        /* ── Crypto cards ── */
+        .sp-crypto-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 14px;
+        }
+        .sp-crypto-card {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 18px;
+            border-radius: 14px;
+            background: var(--surface);
+            border: 1px solid rgba(var(--accent-rgb), 0.2);
+        }
+        .sp-crypto-head { display: flex; align-items: center; gap: 12px; }
+        .sp-crypto-head .sp-card-icon {
+            width: 42px; height: 42px; border-radius: 11px;
+            background: rgba(var(--accent-rgb), 0.1);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; flex-shrink: 0;
+        }
+        .sp-crypto-meta { min-width: 0; }
+        .sp-crypto-meta .sp-card-label { font-size: 15px; font-weight: 600; }
+        .sp-crypto-net { font-size: 11px; color: var(--text3); margin-top: 1px; }
+        .sp-crypto-addr {
+            font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+            font-size: 12px; color: var(--text2);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 9px; padding: 9px 11px;
+            word-break: break-all; line-height: 1.5;
+        }
+        .sp-crypto-actions { display: flex; gap: 8px; }
+        .sp-crypto-btn {
+            flex: 1;
+            display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            padding: 9px 12px; border-radius: 9px;
+            font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer;
+            border: 1px solid var(--border); background: var(--surface2); color: var(--text);
+            transition: border-color .15s, background .15s, color .15s, opacity .15s;
+        }
+        .sp-crypto-btn:hover { border-color: var(--accent); }
+        .sp-crypto-btn.copied { border-color: var(--success); color: var(--success); }
+        .sp-crypto-btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .sp-crypto-btn-primary:hover { opacity: .9; }
+
+        /* ── QR modal ── */
+        .qr-modal {
+            position: fixed; inset: 0; z-index: 100;
+            display: none; align-items: center; justify-content: center;
+            background: rgba(2,8,20,0.72);
+            backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+            padding: 20px;
+        }
+        .qr-modal.open { display: flex; }
+        .qr-card {
+            position: relative;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 18px; padding: 24px; width: 100%; max-width: 340px;
+            text-align: center;
+        }
+        .qr-close {
+            position: absolute; top: 12px; right: 12px;
+            width: 30px; height: 30px; border-radius: 8px;
+            border: 1px solid var(--border); background: var(--surface2);
+            color: var(--text2); cursor: pointer; font-size: 14px; line-height: 1;
+        }
+        .qr-close:hover { color: var(--text); border-color: var(--accent); }
+        .qr-title { font-size: 17px; font-weight: 700; }
+        .qr-net { font-size: 12px; color: var(--text3); margin-bottom: 16px; }
+        .qr-img {
+            background: #fff; border-radius: 12px; padding: 12px;
+            width: 220px; height: 220px; margin: 0 auto 16px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .qr-img svg { width: 100%; height: 100%; display: block; }
+        .qr-addr {
+            font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+            font-size: 11px; color: var(--text2);
+            background: var(--bg); border: 1px solid var(--border);
+            border-radius: 9px; padding: 9px 11px;
+            word-break: break-all; line-height: 1.5; margin-bottom: 14px;
+        }
+
         @media (max-width: 540px) {
             .sp-nav { padding: 12px 16px; }
             .sp-hero { padding: 56px 16px 40px; }
             .sp-main { padding: 0 16px 60px; }
             .sp-grid { grid-template-columns: 1fr; }
+            .sp-crypto-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -289,6 +370,21 @@
             </div>
         </section>
 
+        <!-- Crypto -->
+        <section class="sp-section" id="section-crypto">
+            <div class="sp-section-hd">
+                <div class="sp-section-icon">🪙</div>
+                <div>
+                    <div class="sp-section-title">Crypto</div>
+                    <div class="sp-section-sub">Send any amount — scan the QR or copy the address</div>
+                </div>
+            </div>
+            <div class="sp-divider"></div>
+            <div class="sp-crypto-grid" id="crypto-grid">
+                <div class="sp-empty">Loading...</div>
+            </div>
+        </section>
+
         <!-- Socials -->
         <section class="sp-section" id="section-social">
             <div class="sp-section-hd">
@@ -310,7 +406,20 @@
         &copy; <span id="sp-year"></span> Meetify. Open-source video conferencing.
     </footer>
 
+    <!-- QR modal -->
+    <div class="qr-modal" id="qrModal">
+        <div class="qr-card">
+            <button class="qr-close" id="qrClose" aria-label="Close">✕</button>
+            <div class="qr-title" id="qrTitle"></div>
+            <div class="qr-net" id="qrNet"></div>
+            <div class="qr-img" id="qrImg"></div>
+            <div class="qr-addr" id="qrAddr"></div>
+            <button class="sp-crypto-btn sp-crypto-btn-primary" id="qrCopy">📋 Copy address</button>
+        </div>
+    </div>
+
     <script src="/js/theme.js"></script>
+    <script src="/js/qrcode.js"></script>
     <script src="donate.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
     <script src="/js/notifications.js"></script>

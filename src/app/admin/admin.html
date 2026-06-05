@@ -473,6 +473,13 @@
                                 <option value="tinkoff">Tinkoff</option>
                                 <option value="paypal">PayPal</option>
                             </optgroup>
+                            <optgroup label="Crypto">
+                                <option value="btc">Bitcoin (BTC)</option>
+                                <option value="eth">Ethereum (ETH)</option>
+                                <option value="usdt_trc20">USDT (TRC-20)</option>
+                                <option value="ton">TON</option>
+                                <option value="sol">Solana (SOL)</option>
+                            </optgroup>
                             <option value="custom">Custom</option>
                         </select>
                     </div>
@@ -489,11 +496,16 @@
                         <select class="setting-input" id="socialCategory">
                             <option value="social">Social</option>
                             <option value="donate">Donate</option>
+                            <option value="crypto">Crypto</option>
                         </select>
                     </div>
                 </div>
-                <div style="margin-top:12px;">
+                <div style="margin-top:12px;" id="urlFieldWrap">
                     <input class="setting-input" type="url" id="socialUrl" placeholder="https://..." style="width:100%;">
+                </div>
+                <div style="margin-top:12px;display:none;gap:12px;" id="cryptoFieldWrap">
+                    <input class="setting-input" type="text" id="socialAddress" placeholder="Wallet address" style="flex:1;">
+                    <input class="setting-input" type="text" id="socialNetwork" placeholder="Network (e.g. TRC-20)" style="max-width:220px;">
                 </div>
                 <div class="settings-actions" style="margin-top:12px;">
                     <button class="btn-refresh" id="addSocialBtn">+ Add Link</button>

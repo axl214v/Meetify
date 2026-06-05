@@ -90,7 +90,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('socialLabel').value    = preset.label;
         document.getElementById('socialIcon').value     = preset.icon;
         document.getElementById('socialCategory').value = preset.category;
+        if (preset.network) document.getElementById('socialNetwork').value = preset.network;
+        toggleSocialFields();
     });
+    document.getElementById('socialCategory').addEventListener('change', toggleSocialFields);
 
     // Search (debounced)
     document.getElementById('confSearch').addEventListener('input',  debounce(e => {
@@ -769,6 +772,11 @@ const SOCIAL_PRESETS = {
     yoomoney:     { label: 'ЮMoney',           icon: '₽',  category: 'donate'  },
     tinkoff:      { label: 'Tinkoff',          icon: '💳', category: 'donate'  },
     paypal:       { label: 'PayPal',           icon: '💰', category: 'donate'  },
+    btc:          { label: 'Bitcoin',          icon: '₿',  category: 'crypto', network: 'Bitcoin' },
+    eth:          { label: 'Ethereum',         icon: 'Ξ',  category: 'crypto', network: 'Ethereum · ERC-20' },
+    usdt_trc20:   { label: 'USDT',             icon: '₮',  category: 'crypto', network: 'Tron · TRC-20' },
+    ton:          { label: 'TON',              icon: '💎', category: 'crypto', network: 'The Open Network' },
+    sol:          { label: 'Solana',           icon: '◎',  category: 'crypto', network: 'Solana' },
 };
 
 let socialsData = [];
@@ -791,17 +799,19 @@ function renderSocials() {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text2);padding:24px;">No links added yet</td></tr>';
         return;
     }
-    tbody.innerHTML = socialsData.map((s, i) => `
+    tbody.innerHTML = socialsData.map((s, i) => {
+        const catLabel = s.category === 'donate' ? 'Donate' : s.category === 'crypto' ? 'Crypto' : 'Social';
+        const catClass = s.category === 'social' ? 'ended' : 'active';
+        const target   = s.category === 'crypto'
+            ? `${escHtml(s.address || '')}${s.network ? ` <span style="color:var(--text3);">· ${escHtml(s.network)}</span>` : ''}`
+            : `<a href="${escAttr(s.url)}" target="_blank" rel="noopener" style="color:var(--accent);">${escHtml(s.url)}</a>`;
+        return `
         <tr>
             <td style="font-size:18px;text-align:center;">${escHtml(s.icon || '🔗')}</td>
             <td style="font-weight:500;">${escHtml(s.label)}</td>
-            <td class="mono" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                <a href="${escAttr(s.url)}" target="_blank" rel="noopener" style="color:var(--accent);">${escHtml(s.url)}</a>
-            </td>
+            <td class="mono" style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${target}</td>
             <td>
-                <span class="badge badge-${s.category === 'donate' ? 'active' : 'ended'}" style="font-size:10px;">
-                    ${s.category === 'donate' ? 'Donate' : 'Social'}
-                </span>
+                <span class="badge badge-${catClass}" style="font-size:10px;">${catLabel}</span>
             </td>
             <td>
                 <button class="btn-sm btn-sm-neutral" onclick="toggleSocialVisible(${i})">
@@ -811,8 +821,8 @@ function renderSocials() {
             <td>
                 <button class="btn-sm btn-sm-danger" onclick="confirmDeleteSocial(${i}, '${escAttr(s.label)}')">Delete</button>
             </td>
-        </tr>
-    `).join('');
+        </tr>`;
+    }).join('');
 }
 
 async function persistSocials() {
@@ -830,25 +840,47 @@ async function persistSocials() {
     }
 }
 
+function toggleSocialFields() {
+    const isCrypto = document.getElementById('socialCategory').value === 'crypto';
+    document.getElementById('urlFieldWrap').style.display    = isCrypto ? 'none' : 'block';
+    document.getElementById('cryptoFieldWrap').style.display = isCrypto ? 'flex' : 'none';
+}
+
 function addSocialLink() {
     const label    = document.getElementById('socialLabel').value.trim();
-    const icon     = document.getElementById('socialIcon').value.trim() || '🔗';
-    const url      = document.getElementById('socialUrl').value.trim();
+    let   icon     = document.getElementById('socialIcon').value.trim();
     const category = document.getElementById('socialCategory').value;
     const preset   = document.getElementById('socialPreset').value;
 
     if (!label) { toast('Label is required', 'error'); return; }
-    if (!url)   { toast('URL is required',   'error'); return; }
-    try { new URL(url); } catch { toast('Invalid URL', 'error'); return; }
 
-    socialsData.push({ id: Date.now(), platform: preset || 'custom', label, icon, url, category, visible: true });
+    if (category === 'crypto') {
+        const address = document.getElementById('socialAddress').value.trim();
+        const network = document.getElementById('socialNetwork').value.trim();
+        if (!address) { toast('Wallet address is required', 'error'); return; }
+        socialsData.push({
+            id: Date.now(), platform: preset || 'crypto', label,
+            icon: icon || '🪙', address, network, category, visible: true
+        });
+    } else {
+        const url = document.getElementById('socialUrl').value.trim();
+        if (!url) { toast('URL is required', 'error'); return; }
+        try { new URL(url); } catch { toast('Invalid URL', 'error'); return; }
+        socialsData.push({
+            id: Date.now(), platform: preset || 'custom', label,
+            icon: icon || '🔗', url, category, visible: true
+        });
+    }
     persistSocials();
 
     document.getElementById('socialPreset').value   = '';
     document.getElementById('socialLabel').value    = '';
     document.getElementById('socialIcon').value     = '';
     document.getElementById('socialUrl').value      = '';
+    document.getElementById('socialAddress').value  = '';
+    document.getElementById('socialNetwork').value  = '';
     document.getElementById('socialCategory').value = 'social';
+    toggleSocialFields();
 }
 
 function toggleSocialVisible(index) {
