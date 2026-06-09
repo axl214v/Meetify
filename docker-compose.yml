@@ -78,6 +78,7 @@ services:
       # Don't mount src for production, files are copied in Dockerfile
       - server_logs:/app/logs
       - uploads_data:/app/uploads
+      - backups_data:/app/backups
     depends_on:
       db:
         condition: service_healthy
@@ -142,4 +143,6 @@ volumes:
   server_logs:
     driver: local
   uploads_data:
+    driver: local
+  backups_data:
     driver: local

@@ -1,45 +1,11 @@
 const db       = require('../config/database');
 const os       = require('os');
-const path     = require('path');
-const archiver = require('archiver');
-const Conference = require('../models/Conference');
+const backupSvc    = require('../services/backupService');
+const backupSched  = require('../services/backupScheduler');
+const Conference   = require('../models/Conference');
 const Notification = require('../models/Notification');
 const EmailService = require('../services/emailService');
 const { forceDisconnectUser } = require('../sockets/conferenceSocket');
-
-async function generateSqlDump() {
-    const now = new Date().toISOString();
-    let sql = `-- Meetify Database Backup\n-- Created: ${now}\n-- ------------------------------------------------\n\nSET FOREIGN_KEY_CHECKS=0;\n\n`;
-
-    const [tableRows] = await db.promise().query('SHOW TABLES');
-    const tables = tableRows.map(r => Object.values(r)[0]);
-
-    for (const table of tables) {
-        const [[createRow]] = await db.promise().query(`SHOW CREATE TABLE \`${table}\``);
-        const createSql = createRow['Create Table'];
-        sql += `-- Table: ${table}\nDROP TABLE IF EXISTS \`${table}\`;\n${createSql};\n\n`;
-
-        const [rows] = await db.promise().query(`SELECT * FROM \`${table}\``);
-        if (rows.length === 0) continue;
-
-        const cols = Object.keys(rows[0]).map(c => `\`${c}\``).join(', ');
-        const valuesClause = rows.map(row =>
-            '(' + Object.values(row).map(v => {
-                if (v === null) return 'NULL';
-                if (typeof v === 'boolean') return v ? '1' : '0';
-                if (typeof v === 'number') return String(v);
-                if (v instanceof Date) return `'${v.toISOString().slice(0, 19).replace('T', ' ')}'`;
-                if (Buffer.isBuffer(v)) return `X'${v.toString('hex')}'`;
-                return `'${String(v).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/\r/g, '\\r')}'`;
-            }).join(', ') + ')'
-        ).join(',\n');
-
-        sql += `INSERT INTO \`${table}\` (${cols}) VALUES\n${valuesClause};\n\n`;
-    }
-
-    sql += `SET FOREIGN_KEY_CHECKS=1;\n`;
-    return sql;
-}
 
 const adminController = {
 
@@ -384,29 +350,74 @@ const adminController = {
         }
     },
 
+    // ── Backup: download to browser ──────────────────────────────────────────
     backup: async (req, res) => {
         try {
-            const date = new Date().toISOString().slice(0, 10);
-            const filename = `meetify-backup-${date}.zip`;
-
-            res.setHeader('Content-Type', 'application/zip');
-            res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-
-            const archive = archiver('zip', { zlib: { level: 6 } });
-            archive.on('error', err => { throw err; });
-            archive.pipe(res);
-
-            const sql = await generateSqlDump();
-            archive.append(sql, { name: 'database.sql' });
-
-            const uploadsDir = path.join(__dirname, '..', 'uploads');
-            archive.directory(uploadsDir, 'uploads');
-
-            await archive.finalize();
+            await backupSvc.streamToResponse(res);
         } catch (e) {
             if (!res.headersSent) res.status(500).json({ error: e.message });
         }
-    }
+    },
+
+    // ── Backup: run now → configured destination ─────────────────────────────
+    runBackupNow: async (req, res) => {
+        try {
+            const settings = await backupSvc.getSettings();
+            const filename = backupSvc.makeFilename();
+            if (settings.destination === 'ssh') {
+                await backupSvc.saveToSftp(filename, settings.ssh);
+            } else {
+                await backupSvc.saveToFile(filename);
+            }
+            res.json({ success: true, filename });
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
+    },
+
+    // ── Backup: settings ─────────────────────────────────────────────────────
+    getBackupSettings: async (req, res) => {
+        try {
+            const settings = await backupSvc.getSettings();
+            // Never send SSH password back to client
+            const safe = { ...settings, ssh: { ...settings.ssh, password: settings.ssh?.password ? '••••••••' : '' } };
+            res.json(safe);
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
+    },
+
+    saveBackupSettings: async (req, res) => {
+        try {
+            const current = await backupSvc.getSettings();
+            const incoming = req.body;
+            // Preserve stored password if client sends the masked placeholder
+            if (incoming.ssh?.password === '••••••••') incoming.ssh.password = current.ssh?.password || '';
+            await backupSvc.saveSettings({ ...current, ...incoming });
+            await backupSched.reschedule();
+            res.json({ success: true });
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
+    },
+
+    // ── Backup: history ──────────────────────────────────────────────────────
+    getBackupHistory: async (req, res) => {
+        try {
+            res.json(await backupSvc.getHistory());
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
+    },
+
+    deleteBackupFile: async (req, res) => {
+        try {
+            backupSvc.deleteBackup(req.params.filename);
+            res.json({ success: true });
+        } catch (e) {
+            res.status(e.message === 'File not found' ? 404 : 400).json({ error: e.message });
+        }
+    },
 };
 
 module.exports = adminController;

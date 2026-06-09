@@ -55,6 +55,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupThemeToggle();
     loadOverview();
     loadServerStats();
+    loadBackupSettings();
+    loadBackupHistory();
     startAutoRefresh('overview', loadOverview);
     startAutoRefresh('server', loadServerStats);
 
@@ -132,7 +134,11 @@ function switchTab(tab) {
     stopAutoRefresh('overview');
     stopAutoRefresh('server');
     if (tab === 'overview') startAutoRefresh('overview', loadOverview);
-    if (tab === 'server')   startAutoRefresh('server', loadServerStats);
+    if (tab === 'server') {
+        startAutoRefresh('server', loadServerStats);
+        loadBackupSettings();
+        loadBackupHistory();
+    }
 
     // Lazy load on first visit
     if (tab === 'conferences' && state.conf.total === 0)   loadConferences(0);
@@ -896,8 +902,9 @@ function confirmDeleteSocial(index, label) {
     });
 }
 
+// ── Backup ──────────────────────────────────────────────────────────────────
 async function downloadBackup() {
-    const btn = document.getElementById('backupBtn');
+    const btn = document.getElementById('backupDownloadBtn');
     btn.disabled = true;
     btn.textContent = 'Preparing…';
     try {
@@ -913,15 +920,137 @@ async function downloadBackup() {
         a.click();
         a.remove();
         URL.revokeObjectURL(url);
-        const now = new Date().toLocaleTimeString();
-        document.getElementById('backupLastTime').textContent = `Last: ${now}`;
         toast('Backup downloaded', 'success');
     } catch (e) {
         toast('Backup failed: ' + e.message, 'error');
     } finally {
         btn.disabled = false;
-        btn.textContent = '↓ Download Backup';
+        btn.textContent = '↓ Download to Browser';
     }
+}
+
+async function runBackupNow() {
+    const btn = document.getElementById('backupRunBtn');
+    btn.disabled = true;
+    btn.textContent = 'Running…';
+    try {
+        const res = await apiFetch('/api/admin/backup/run', { method: 'POST' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        toast(`Backup saved: ${data.filename}`, 'success');
+        loadBackupHistory();
+    } catch (e) {
+        toast('Backup failed: ' + e.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '▶ Run Now (save to dest)';
+    }
+}
+
+async function loadBackupSettings() {
+    try {
+        const res  = await apiFetch('/api/admin/backup/settings');
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        document.getElementById('bkpSchedule').value = data.schedule || 'off';
+        document.getElementById('bkpHour').value     = data.scheduleHour ?? 2;
+        document.getElementById('bkpDay').value      = data.scheduleDay  ?? 0;
+        document.getElementById('bkpDest').value     = data.destination || 'local';
+        const ssh = data.ssh || {};
+        document.getElementById('bkpSshHost').value  = ssh.host || '';
+        document.getElementById('bkpSshPort').value  = ssh.port || 22;
+        document.getElementById('bkpSshUser').value  = ssh.user || '';
+        document.getElementById('bkpSshPass').value  = ssh.password || '';
+        document.getElementById('bkpSshPath').value  = ssh.remotePath || '/backups';
+        onBkpScheduleChange();
+        onBkpDestChange();
+    } catch (e) {
+        console.error('loadBackupSettings:', e);
+    }
+}
+
+async function saveBackupSettings() {
+    const settings = {
+        schedule:    document.getElementById('bkpSchedule').value,
+        scheduleHour: parseInt(document.getElementById('bkpHour').value) || 0,
+        scheduleDay:  parseInt(document.getElementById('bkpDay').value)  || 0,
+        destination: document.getElementById('bkpDest').value,
+        ssh: {
+            host:       document.getElementById('bkpSshHost').value.trim(),
+            port:       parseInt(document.getElementById('bkpSshPort').value) || 22,
+            user:       document.getElementById('bkpSshUser').value.trim(),
+            password:   document.getElementById('bkpSshPass').value,
+            remotePath: document.getElementById('bkpSshPath').value.trim() || '/backups',
+        },
+    };
+    try {
+        const res = await apiFetch('/api/admin/backup/settings', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(settings),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        toast('Backup settings saved', 'success');
+    } catch (e) {
+        toast('Save failed: ' + e.message, 'error');
+    }
+}
+
+async function loadBackupHistory() {
+    const el = document.getElementById('backupHistoryList');
+    if (!el) return;
+    try {
+        const res  = await apiFetch('/api/admin/backup/history');
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        if (!data.length) {
+            el.innerHTML = '<p style="font-size:13px;color:var(--text2);">No local backups yet.</p>';
+            return;
+        }
+        el.innerHTML = `<table class="data-table" style="margin:0;">
+            <thead><tr><th>File</th><th>Size</th><th>Date</th><th></th></tr></thead>
+            <tbody>${data.map(b => `
+                <tr>
+                    <td class="mono" style="font-size:12px;">${escHtml(b.filename)}</td>
+                    <td>${fmtBytes(b.size)}</td>
+                    <td>${new Date(b.createdAt).toLocaleString()}</td>
+                    <td><button class="btn-sm btn-sm-danger" onclick="deleteBackupFile('${escAttr(b.filename)}')">Delete</button></td>
+                </tr>`).join('')}
+            </tbody></table>`;
+    } catch (e) {
+        el.innerHTML = `<p style="font-size:13px;color:var(--danger);">${escHtml(e.message)}</p>`;
+    }
+}
+
+async function deleteBackupFile(filename) {
+    if (!confirm(`Delete backup "${filename}"?`)) return;
+    try {
+        const res = await apiFetch(`/api/admin/backup/history/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        toast('Backup deleted', 'success');
+        loadBackupHistory();
+    } catch (e) {
+        toast('Delete failed: ' + e.message, 'error');
+    }
+}
+
+function fmtBytes(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+}
+
+function onBkpScheduleChange() {
+    const v = document.getElementById('bkpSchedule').value;
+    document.getElementById('bkpHourRow').style.display = (v === 'daily' || v === 'weekly') ? '' : 'none';
+    document.getElementById('bkpDayRow').style.display  = v === 'weekly' ? '' : 'none';
+}
+
+function onBkpDestChange() {
+    const v = document.getElementById('bkpDest').value;
+    document.getElementById('bkpSshSection').style.display = v === 'ssh' ? '' : 'none';
 }
 
 function isActive(conf) {

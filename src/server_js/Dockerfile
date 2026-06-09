@@ -24,6 +24,7 @@ COPY . .
 # Create runtime directories
 RUN mkdir -p /app/logs && chmod 755 /app/logs && \
     mkdir -p uploads/avatars && chmod -R 775 uploads && \
+    mkdir -p /app/backups && chmod 775 /app/backups && \
     chown -R node:node /app
 
 # Run as the built-in non-root node user

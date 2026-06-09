@@ -3,6 +3,7 @@ const { server } = require('./app');
 const config = require('./config/config');
 const initDatabase = require('./utils/initDatabase');
 const { createWorkers } = require('./sfu/mediasoup');
+const backupScheduler = require('./services/backupScheduler');
 
 // ============================================
 // Initialize Database
@@ -17,6 +18,9 @@ const { createWorkers } = require('./sfu/mediasoup');
 
     // Start mediasoup workers for SFU (Group) calls
     await createWorkers();
+
+    // Start backup scheduler
+    await backupScheduler.init();
 
     // Start server
     startServer();

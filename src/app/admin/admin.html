@@ -282,17 +282,95 @@
                 </div>
             </div>
 
+            <!-- ── Backup ── -->
             <div class="panel-card">
-                <div class="card-header">
-                    <span>Backup</span>
-                    <span class="card-tag" id="backupLastTime">Never</span>
+                <div class="card-header"><span>Backup</span></div>
+
+                <!-- Quick actions -->
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
+                    <button class="btn-primary" id="backupDownloadBtn" onclick="downloadBackup()">↓ Download to Browser</button>
+                    <button class="btn-secondary" id="backupRunBtn" onclick="runBackupNow()">▶ Run Now (save to dest)</button>
                 </div>
-                <p style="font-size:13px;color:var(--text2);margin:0 0 16px;">
-                    Downloads a ZIP archive with a full SQL dump of the database and all uploaded files.
-                </p>
-                <button class="btn-primary" id="backupBtn" onclick="downloadBackup()">
-                    ↓ Download Backup
-                </button>
+
+                <!-- Settings -->
+                <div style="border-top:1px solid var(--border);padding-top:16px;margin-bottom:16px;">
+                    <div class="card-header" style="margin-bottom:14px;"><span>Auto Backup Settings</span></div>
+                    <div class="settings-grid">
+                        <div class="setting-row">
+                            <label class="setting-label">Schedule</label>
+                            <select class="setting-input" id="bkpSchedule" onchange="onBkpScheduleChange()">
+                                <option value="off">Off</option>
+                                <option value="hourly">Every hour</option>
+                                <option value="daily">Every day</option>
+                                <option value="weekly">Every week</option>
+                            </select>
+                        </div>
+                        <div class="setting-row" id="bkpHourRow" style="display:none;">
+                            <label class="setting-label">At hour (0–23)</label>
+                            <input class="setting-input" type="number" id="bkpHour" min="0" max="23" value="2">
+                        </div>
+                        <div class="setting-row" id="bkpDayRow" style="display:none;">
+                            <label class="setting-label">Day of week</label>
+                            <select class="setting-input" id="bkpDay">
+                                <option value="0">Sunday</option>
+                                <option value="1">Monday</option>
+                                <option value="2">Tuesday</option>
+                                <option value="3">Wednesday</option>
+                                <option value="4">Thursday</option>
+                                <option value="5">Friday</option>
+                                <option value="6">Saturday</option>
+                            </select>
+                        </div>
+                        <div class="setting-row">
+                            <label class="setting-label">Destination</label>
+                            <select class="setting-input" id="bkpDest" onchange="onBkpDestChange()">
+                                <option value="local">Local (server)</option>
+                                <option value="ssh">Remote (SSH / SFTP)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- SSH config -->
+                    <div id="bkpSshSection" style="display:none;margin-top:14px;">
+                        <div class="settings-grid">
+                            <div class="setting-row">
+                                <label class="setting-label">SSH Host</label>
+                                <input class="setting-input" type="text" id="bkpSshHost" placeholder="192.168.1.100">
+                            </div>
+                            <div class="setting-row">
+                                <label class="setting-label">Port</label>
+                                <input class="setting-input" type="number" id="bkpSshPort" value="22" min="1" max="65535">
+                            </div>
+                            <div class="setting-row">
+                                <label class="setting-label">Username</label>
+                                <input class="setting-input" type="text" id="bkpSshUser" placeholder="backup_user">
+                            </div>
+                            <div class="setting-row">
+                                <label class="setting-label">Password</label>
+                                <input class="setting-input" type="password" id="bkpSshPass" placeholder="••••••••">
+                            </div>
+                            <div class="setting-row">
+                                <label class="setting-label">Remote path</label>
+                                <input class="setting-input" type="text" id="bkpSshPath" placeholder="/backups">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:14px;">
+                        <button class="btn-primary" onclick="saveBackupSettings()">Save Settings</button>
+                    </div>
+                </div>
+
+                <!-- History -->
+                <div style="border-top:1px solid var(--border);padding-top:16px;">
+                    <div class="card-header" style="margin-bottom:10px;">
+                        <span>Backup History</span>
+                        <button class="btn-refresh" onclick="loadBackupHistory()">↻</button>
+                    </div>
+                    <div id="backupHistoryList">
+                        <p style="font-size:13px;color:var(--text2);">Loading…</p>
+                    </div>
+                </div>
             </div>
         </section>
         <!-- ── SETTINGS ── -->

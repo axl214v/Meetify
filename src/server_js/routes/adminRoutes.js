@@ -33,5 +33,10 @@ router.patch ('/support/tickets/:id/status',  c.updateTicketStatus);
 router.delete('/support/tickets/:id',         c.deleteTicket);
 
 router.get   ('/backup',                      c.backup);
+router.post  ('/backup/run',                  c.runBackupNow);
+router.get   ('/backup/settings',             c.getBackupSettings);
+router.put   ('/backup/settings',             c.saveBackupSettings);
+router.get   ('/backup/history',              c.getBackupHistory);
+router.delete('/backup/history/:filename',    c.deleteBackupFile);
 
 module.exports = router;
