@@ -51,6 +51,7 @@
             align-items: flex-end;
             gap: 8px;
             font-family: 'Outfit', system-ui, sans-serif;
+            pointer-events: none;
         }
 
         /* ── Panel ── */
@@ -186,6 +187,7 @@
 
         /* ── Bell button ── */
         #nb-btn {
+            pointer-events: auto;
             width: 44px;
             height: 44px;
             border-radius: 50%;
