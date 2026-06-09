@@ -50,7 +50,7 @@ class EmailService {
             const transport = nodemailer.createTransport(transportConfig);
 
             await transport.sendMail({
-                from: s.smtp_from || 'Meetify <noreply@meetify.com>',
+                from: s.smtp_from || 'Meetify <noreply@meetify.cc>',
                 to,
                 subject,
                 html
