@@ -281,6 +281,19 @@
                     <div class="load-item"><span id="load15">—</span><small>15 min</small></div>
                 </div>
             </div>
+
+            <div class="panel-card">
+                <div class="card-header">
+                    <span>Backup</span>
+                    <span class="card-tag" id="backupLastTime">Never</span>
+                </div>
+                <p style="font-size:13px;color:var(--text2);margin:0 0 16px;">
+                    Downloads a ZIP archive with a full SQL dump of the database and all uploaded files.
+                </p>
+                <button class="btn-primary" id="backupBtn" onclick="downloadBackup()">
+                    ↓ Download Backup
+                </button>
+            </div>
         </section>
         <!-- ── SETTINGS ── -->
         <section class="tab-panel" id="tab-settings">

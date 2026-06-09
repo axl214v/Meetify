@@ -896,6 +896,34 @@ function confirmDeleteSocial(index, label) {
     });
 }
 
+async function downloadBackup() {
+    const btn = document.getElementById('backupBtn');
+    btn.disabled = true;
+    btn.textContent = 'Preparing…';
+    try {
+        const res = await apiFetch('/api/admin/backup');
+        if (!res.ok) throw new Error((await res.json()).error || res.statusText);
+        const blob = await res.blob();
+        const url  = URL.createObjectURL(blob);
+        const a    = Object.assign(document.createElement('a'), {
+            href: url,
+            download: `meetify-backup-${new Date().toISOString().slice(0, 10)}.zip`
+        });
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        const now = new Date().toLocaleTimeString();
+        document.getElementById('backupLastTime').textContent = `Last: ${now}`;
+        toast('Backup downloaded', 'success');
+    } catch (e) {
+        toast('Backup failed: ' + e.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '↓ Download Backup';
+    }
+}
+
 function isActive(conf) {
     const now = Date.now();
     const start = conf.start_time ? new Date(conf.start_time).getTime() : 0;

@@ -32,4 +32,6 @@ router.get   ('/support/tickets',             c.getSupportTickets);
 router.patch ('/support/tickets/:id/status',  c.updateTicketStatus);
 router.delete('/support/tickets/:id',         c.deleteTicket);
 
+router.get   ('/backup',                      c.backup);
+
 module.exports = router;

@@ -1,9 +1,45 @@
-const db = require('../config/database');
-const os = require('os');
+const db       = require('../config/database');
+const os       = require('os');
+const path     = require('path');
+const archiver = require('archiver');
 const Conference = require('../models/Conference');
 const Notification = require('../models/Notification');
 const EmailService = require('../services/emailService');
 const { forceDisconnectUser } = require('../sockets/conferenceSocket');
+
+async function generateSqlDump() {
+    const now = new Date().toISOString();
+    let sql = `-- Meetify Database Backup\n-- Created: ${now}\n-- ------------------------------------------------\n\nSET FOREIGN_KEY_CHECKS=0;\n\n`;
+
+    const [tableRows] = await db.promise().query('SHOW TABLES');
+    const tables = tableRows.map(r => Object.values(r)[0]);
+
+    for (const table of tables) {
+        const [[createRow]] = await db.promise().query(`SHOW CREATE TABLE \`${table}\``);
+        const createSql = createRow['Create Table'];
+        sql += `-- Table: ${table}\nDROP TABLE IF EXISTS \`${table}\`;\n${createSql};\n\n`;
+
+        const [rows] = await db.promise().query(`SELECT * FROM \`${table}\``);
+        if (rows.length === 0) continue;
+
+        const cols = Object.keys(rows[0]).map(c => `\`${c}\``).join(', ');
+        const valuesClause = rows.map(row =>
+            '(' + Object.values(row).map(v => {
+                if (v === null) return 'NULL';
+                if (typeof v === 'boolean') return v ? '1' : '0';
+                if (typeof v === 'number') return String(v);
+                if (v instanceof Date) return `'${v.toISOString().slice(0, 19).replace('T', ' ')}'`;
+                if (Buffer.isBuffer(v)) return `X'${v.toString('hex')}'`;
+                return `'${String(v).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/\r/g, '\\r')}'`;
+            }).join(', ') + ')'
+        ).join(',\n');
+
+        sql += `INSERT INTO \`${table}\` (${cols}) VALUES\n${valuesClause};\n\n`;
+    }
+
+    sql += `SET FOREIGN_KEY_CHECKS=1;\n`;
+    return sql;
+}
 
 const adminController = {
 
@@ -345,6 +381,30 @@ const adminController = {
             res.json({ success: true });
         } catch (e) {
             res.status(500).json({ error: e.message });
+        }
+    },
+
+    backup: async (req, res) => {
+        try {
+            const date = new Date().toISOString().slice(0, 10);
+            const filename = `meetify-backup-${date}.zip`;
+
+            res.setHeader('Content-Type', 'application/zip');
+            res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+            const archive = archiver('zip', { zlib: { level: 6 } });
+            archive.on('error', err => { throw err; });
+            archive.pipe(res);
+
+            const sql = await generateSqlDump();
+            archive.append(sql, { name: 'database.sql' });
+
+            const uploadsDir = path.join(__dirname, '..', 'uploads');
+            archive.directory(uploadsDir, 'uploads');
+
+            await archive.finalize();
+        } catch (e) {
+            if (!res.headersSent) res.status(500).json({ error: e.message });
         }
     }
 };
