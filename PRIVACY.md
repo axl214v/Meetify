@@ -1,6 +1,6 @@
 # Privacy Policy
 
-**Last updated: May 2026**
+**Last updated: June 2026**
 
 Meetify is an independent project maintained by a single developer. This policy explains what data we collect, why, and how we protect it.
 
@@ -15,7 +15,7 @@ Meetify is an independent project maintained by a single developer. This policy 
 | Username | Display name inside the app |
 | Avatar image | Optional, only if you upload one |
 
-We do **not** collect IP address logs, browser fingerprints, analytics events, or any data beyond what is listed above.
+We do **not** collect IP address logs, behavioral analytics, or advertising data.
 
 ---
 
@@ -34,6 +34,20 @@ All data is stored on a server located in **Switzerland**. Switzerland operates 
 ## How long we keep your data
 
 Your data is retained for as long as your account exists. When you delete your account, all associated data — email, password hash, username, avatar — is permanently and irreversibly removed from our database.
+
+---
+
+## Automatic error reporting
+
+When a JavaScript error occurs in your browser, the app automatically sends a diagnostic report to our server. This report includes:
+
+- the error message and stack trace
+- the URL of the page where the error occurred
+- your browser name, version, OS platform, and display language
+- your viewport size
+- your user ID (if you are logged in) and an anonymous session ID generated for the current tab
+
+This data is used exclusively to diagnose and fix bugs. It is stored on our server, accessible only to administrators, and is not shared with any third party. No report is sent if no error occurs.
 
 ---
 
