@@ -147,16 +147,54 @@ range must be open in your firewall (UDP and TCP).
 
 ### STUN / TURN
 
+Meetify bundles a **coturn** container that starts automatically. For local dev it
+works out of the box with `COTURN_PUBLIC_IP=127.0.0.1`. For production:
+
+**Option A — coturn on the same VPS (simple, IP is exposed)**
+
 ```env
-USE_OWN_STUN_SERVER=true
-STUN_SERVER_URL=stun:your-domain.com:3478
-TURN_SERVER_URL=turn:your-domain.com:3478
-TURN_USERNAME=meetify_user
-TURN_PASSWORD=secure_password
+COTURN_PUBLIC_IP=1.2.3.4        # your server's public IP
+STUN_SERVER_URL=stun:1.2.3.4:3478
+TURN_SERVER_URL=turn:1.2.3.4:3478
+TURN_USERNAME=meetify
+TURN_PASSWORD=<strong secret>   # openssl rand -hex 32
 ```
 
-A TURN server is needed for clients behind restrictive NATs. The coturn service is
-included but **commented out** in `docker-compose.yml`.
+Open ports `3478/udp`, `3478/tcp`, and `49152-49200/udp` in your firewall.
+
+> **Note on IP privacy:** the TURN URL is sent to WebRTC clients so they can
+> reach the relay. This means the IP in `COTURN_PUBLIC_IP` becomes visible to
+> call participants. If your main domain is hidden behind Cloudflare, TURN
+> traffic bypasses it — consider **Option B**.
+
+**Option B — coturn on a separate cheap VPS (recommended for IP privacy)**
+
+Run only coturn on a second VPS (€3–5/month) with its own IP:
+
+```bash
+# On the coturn VPS — no Docker required, just:
+docker run -d --network host coturn/coturn \
+  -n --log-file=stdout \
+  --external-ip=<COTURN_VPS_IP> \
+  --listening-port=3478 \
+  --min-port=49152 --max-port=49200 \
+  --user=meetify:<TURN_PASSWORD> \
+  --realm=meetify.local \
+  --lt-cred-mech --fingerprint --no-cli --no-multicast-peers
+```
+
+Then in your main server's `.env`:
+
+```env
+# Disable bundled coturn (comment out the coturn service in docker-compose.yml)
+COTURN_PUBLIC_IP=<COTURN_VPS_IP>
+STUN_SERVER_URL=stun:<COTURN_VPS_IP>:3478
+TURN_SERVER_URL=turn:<COTURN_VPS_IP>:3478
+TURN_USERNAME=meetify
+TURN_PASSWORD=<same secret>
+```
+
+Your main server IP stays hidden; only the coturn VPS IP is visible to clients.
 
 ## 🐛 Troubleshooting
 
