@@ -59,11 +59,11 @@ services:
       SERVER_URL: ${SERVER_URL:-http://localhost:3000}
       CLIENT_URL: ${CLIENT_URL:-http://localhost:3000}
       
-      # STUN/TURN
-      USE_OWN_STUN_SERVER: ${USE_OWN_STUN_SERVER:-false}
-      STUN_SERVER_URL: ${STUN_SERVER_URL:-stun:stun.l.google.com:19302}
-      TURN_SERVER_URL: ${TURN_SERVER_URL}
-      TURN_USERNAME: ${TURN_USERNAME}
+      # STUN/TURN — points to the bundled coturn container by default
+      USE_OWN_STUN_SERVER: ${USE_OWN_STUN_SERVER:-true}
+      STUN_SERVER_URL: ${STUN_SERVER_URL:-stun:${COTURN_PUBLIC_IP:-127.0.0.1}:3478}
+      TURN_SERVER_URL: ${TURN_SERVER_URL:-turn:${COTURN_PUBLIC_IP:-127.0.0.1}:3478}
+      TURN_USERNAME: ${TURN_USERNAME:-meetify}
       TURN_PASSWORD: ${TURN_PASSWORD}
       
       # Conference limits
@@ -113,19 +113,26 @@ services:
       retries: 3
 
   # ==========================================
-  # CoTURN Server (Optional - for production)
+  # CoTURN STUN/TURN Server
   # ==========================================
-  # Uncomment this section if you want to run your own TURN server
-  # coturn:
-  #   image: coturn/coturn:latest
-  #   container_name: meetify-coturn
-  #   restart: unless-stopped
-  #   network_mode: host
-  #   volumes:
-  #     - ./coturn/turnserver.conf:/etc/coturn/turnserver.conf:ro
-  #   environment:
-  #     TURN_USERNAME: ${TURN_USERNAME:-meetify_user}
-  #     TURN_PASSWORD: ${TURN_PASSWORD:-turn_secret}
+  coturn:
+    image: coturn/coturn:latest
+    container_name: meetify-coturn
+    restart: unless-stopped
+    ports:
+      - "3478:3478/udp"
+      - "3478:3478/tcp"
+      - "5349:5349/udp"
+      - "5349:5349/tcp"
+      - "49152-49200:49152-49200/udp"
+    volumes:
+      - ./coturn/turnserver.conf:/etc/coturn/turnserver.conf:ro
+    environment:
+      COTURN_PUBLIC_IP: ${COTURN_PUBLIC_IP:-127.0.0.1}
+      TURN_USERNAME: ${TURN_USERNAME:-meetify}
+      TURN_PASSWORD: ${TURN_PASSWORD:-change_me_turn_secret}
+    networks:
+      - meetify-network
 
 # ==========================================
 # Networks
