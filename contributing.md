@@ -30,4 +30,4 @@ If you have a big idea, please open an Issue first to discuss it with the mainta
 Please be respectful to other contributors. We aim to build a supportive and professional community.
 
 ---
-**Questions?** Reach out via axl214v@gmail.com.
+**Questions?** Reach out via [hello@meetify.cc](mailto:hello@meetify.cc).
