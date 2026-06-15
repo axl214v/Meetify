@@ -15,7 +15,7 @@ there are no long-term support branches yet. Always run the most recent version
 
 **Please do not open public GitHub issues for security problems.**
 
-Report privately by email to **axl214v@gmail.com** with the subject
+Report privately by email to **security@meetify.cc** with the subject
 `SECURITY: Meetify`. Where possible include:
 
 - A description of the issue and its impact.
