@@ -133,7 +133,8 @@ function initializeConferenceSocket(io) {
                         someoneIsScreenSharing: !!(sharingSet && sharingSet.size > 0),
                         coHosts: Array.from(coHosts.get(conferenceId) || []),
                         chatBanned: Array.from(chatBannedUsers.get(conferenceId) || [])
-                    }
+                    },
+                    iceServers: require('../config/stunServer').getIceServers()
                 });
 
                 socket.to(`conference-${conferenceId}`).emit('user-connected', {

@@ -41,13 +41,8 @@ let coHosts = new Set();
 let chatBanned = new Set();
 const isModerator = () => isHost || coHosts.has(currentUser?.id);
 
-// WebRTC Configuration
-const rtcConfig = {
-    iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' }
-    ]
-};
+// WebRTC Configuration — populated from server on join
+let rtcConfig = { iceServers: [] };
 
 function getCookie(name) {
     const value = `; ${document.cookie}`;
@@ -232,7 +227,8 @@ async function initSocket() {
     });
 
     // Existing participants — new user is initiator
-    socket.on('room-participants', async ({ participants, roomState }) => {
+    socket.on('room-participants', async ({ participants, roomState, iceServers }) => {
+        if (iceServers && iceServers.length > 0) rtcConfig = { iceServers };
         console.log('room-participants received:', JSON.stringify(participants), 'roomState:', roomState);
 
         if (roomState?.coHosts) coHosts = new Set(roomState.coHosts);

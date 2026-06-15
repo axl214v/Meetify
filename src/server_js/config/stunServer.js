@@ -31,23 +31,15 @@ const stunTurnConfig = {
   
   // Your own STUN server
   ownStunServer: {
-    urls: process.env.STUN_SERVER_URL || 'stun:your-server.com:3478',
-    // STUN typically doesn't need credentials
+    urls: process.env.STUN_SERVER_URL || 'stun:62.60.186.59:3478',
   },
-  
+
   // Your own TURN server (required for NAT traversal)
   ownTurnServer: [
     {
-      urls: process.env.TURN_SERVER_URL || 'turn:your-server.com:3478',
-      username: process.env.TURN_USERNAME || 'meetify_user',
-      credential: process.env.TURN_PASSWORD || 'axYz12345SecureSecretKey',
-      credentialType: 'password'
-    },
-    {
-      // TURN over TLS (more secure)
-      urls: process.env.TURNS_SERVER_URL || 'turns:your-server.com:5349',
-      username: process.env.TURN_USERNAME || 'meetify_user',
-      credential: process.env.TURN_PASSWORD || 'axYz12345SecureSecretKey',
+      urls: process.env.TURN_SERVER_URL || 'turn:62.60.186.59:3478',
+      username: process.env.TURN_USERNAME || 'meetify',
+      credential: process.env.TURN_PASSWORD || '',
       credentialType: 'password'
     }
   ],
