@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const fs = require('fs').promises;
 const path = require('path');
+const { authenticateToken, requireRole } = require('../middleware/auth');
 
 // ============================================
 // Error Logging Controller
@@ -59,7 +60,7 @@ router.post('/errors', async (req, res) => {
  * GET /api/logs/errors
  * Get error logs (admin only)
  */
-router.get('/errors', async (req, res) => {
+router.get('/errors', authenticateToken, requireRole('admin'), async (req, res) => {
   try {
     const { limit = 100, type, severity, date } = req.query;
 
@@ -106,9 +107,9 @@ router.get('/errors', async (req, res) => {
 
 /**
  * GET /api/logs/stats
- * Get error statistics
+ * Get error statistics (admin only)
  */
-router.get('/stats', async (req, res) => {
+router.get('/stats', authenticateToken, requireRole('admin'), async (req, res) => {
   try {
     const stats = await getErrorStats();
     res.json(stats);
@@ -122,7 +123,7 @@ router.get('/stats', async (req, res) => {
  * DELETE /api/logs/errors
  * Clear error logs (admin only)
  */
-router.delete('/errors', async (req, res) => {
+router.delete('/errors', authenticateToken, requireRole('admin'), async (req, res) => {
   try {
     await fs.writeFile(ERROR_LOG_FILE, '');
     await fs.writeFile(STATS_FILE, JSON.stringify({
