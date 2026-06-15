@@ -13,6 +13,56 @@ containers as `APP_VERSION` by `make up`.
 
 _Nothing yet._
 
+## [1.2.0-beta] — 2026-06-16
+
+### Added
+- **Self-hosted fonts.** Outfit and JetBrains Mono are now served from
+  `/assets/fonts/` as WOFF2 with proper `unicode-range` subsetting. All 13 HTML
+  pages no longer reference Google Fonts — zero third-party requests on page load.
+- **Bundled coturn STUN/TURN.** A `coturn/coturn` container starts automatically
+  alongside the app. Config is passed entirely via CLI args so Docker Compose
+  substitutes `COTURN_PUBLIC_IP` / `TURN_PASSWORD` before launch (coturn does not
+  support shell variable syntax in config files).
+- **ICE servers served from backend.** The server sends `iceServers` inside the
+  `room-participants` socket event; `conf_room.js` populates `rtcConfig` from that
+  response instead of hardcoding Google STUN addresses. Changing the STUN/TURN
+  endpoint requires only an `.env` update — no frontend rebuild.
+- **Auto-provision coturn in `deploy.sh`.** Step 5 SSHes into `meetify-mail`
+  (62.60.186.59), installs Docker if absent, opens ufw ports, and starts/restarts
+  the coturn container with credentials read from the main server's `.env`.
+  `TURN_PASSWORD` is now generated automatically on first deploy.
+- **Copyright notice** added to `LICENSE.md`
+  (`Copyright © 2024–2026 axl214v. All rights reserved.`).
+- **Repository made public** with branch protection on `main`: PRs require
+  1 approval, force-push and branch deletion are disabled. Owner can still push
+  directly.
+
+### Changed
+- `stunServer.js` defaults point to `62.60.186.59:3478`; TURNS/5349 entry
+  removed (not running); hardcoded fallback credential removed.
+- `Docker.md` STUN/TURN section rewritten: documents `COTURN_PUBLIC_IP`, Option
+  A (same VPS) vs Option B (dedicated VPS for IP privacy), and required firewall
+  ports.
+- `.env.example` STUN/TURN block updated with `COTURN_PUBLIC_IP` and production
+  guidance comments.
+
+### Fixed
+- **Unauthenticated log endpoints.** `GET /api/logs/errors`, `GET /api/logs/stats`,
+  and `DELETE /api/logs/errors` had no auth middleware despite containing user IDs
+  and user-agents. All three now require `authenticateToken + requireRole('admin')`.
+
+### Security
+- **20 Dependabot vulnerabilities patched** (0 remaining):
+  - `nodemailer` 6 → 9 (CRLF injection, DoS, SMTP command injection, TLS bypass)
+  - `bcrypt` 5 → 6 (drops `@mapbox/node-pre-gyp` and vulnerable `tar`)
+  - `path-to-regexp`, `qs`, `ws`, `ip-address`, `brace-expansion` via `npm audit fix`
+
+### Privacy
+- **Error telemetry disclosed.** `PRIVACY.md` and `/legal/privacy.html` now
+  document the automatic browser error reporting: what is collected (error message,
+  stack trace, URL, browser/OS, viewport, user ID, session ID), why, who can
+  access it, and that it is never shared with third parties.
+
 ## [1.1.0-beta] — 2026-06-06
 
 The first release tracked in this changelog. Covers everything between the
