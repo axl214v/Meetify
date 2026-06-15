@@ -1,5 +1,7 @@
 ## 📄 License
 
+Copyright © 2024–2026 axl214v. All rights reserved.
+
 Polyform Noncommercial License 1.0.0
 
 Author: [@axl214v](https://github.com/axl214v)
