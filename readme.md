@@ -244,6 +244,6 @@ See [contributing.md](contributing.md).
 
 Licensed under the **Polyform Noncommercial License 1.0.0** — see [LICENSE.md](LICENSE.md).
 - **Personal / educational use:** free.
-- **Commercial use:** requires a separate license — contact axl214v@gmail.com.
+- **Commercial use:** requires a separate license — contact [legal@meetify.cc](mailto:legal@meetify.cc).
 
 "Meetify" and its logo are trademarks — see [TRADEMARK.md](TRADEMARK.md).

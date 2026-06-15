@@ -38,4 +38,4 @@ Disclaimer of Warranties
 AS IS. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT 
 WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
 
-axl214v@gmail.com
+legal@meetify.cc
