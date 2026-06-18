@@ -1,91 +1,85 @@
-# Meetify 🎥
+<div align="center">
+  <img src="src/app/assets/logo.png" alt="Meetify" height="56" />
 
-**Meetify** — a self-hostable video conferencing platform built with WebRTC,
-Node.js and Socket.IO. It supports both peer-to-peer calls and **mediasoup SFU
-group calls**, and ships as a three-container Docker stack behind Nginx.
+  <p><strong>Privacy-focused open-source WebRTC video conferencing</strong><br/>
+  Self-hostable · No third-party services · P2P and SFU modes</p>
 
-[![Version](https://img.shields.io/badge/version-1.1.0--beta-blue)](version.txt)
-[![Node.js](https://img.shields.io/badge/node-%3E%3D22-brightgreen)](https://nodejs.org/)
-[![MySQL](https://img.shields.io/badge/MySQL-8.0-blue)](https://www.mysql.com/)
-[![Docker](https://img.shields.io/badge/Docker-Compose-blue)](https://www.docker.com/)
-[![License](https://img.shields.io/badge/license-Polyform%20Noncommercial-orange)](LICENSE.md)
+  <p>
+    <a href="https://meetify.cc">meetify.cc</a> &nbsp;·&nbsp;
+    <a href="Docker.md">Self-hosting guide</a> &nbsp;·&nbsp;
+    <a href="CHANGELOG.md">Changelog</a> &nbsp;·&nbsp;
+    <a href="https://github.com/axl214v/Meetify/discussions">Discussions</a>
+  </p>
 
-> Changes are tracked in [CHANGELOG.md](CHANGELOG.md). The current version is in
-> [`version.txt`](version.txt).
+  [![Version](https://img.shields.io/badge/version-1.2.0--beta-blue)](version.txt)
+  [![License](https://img.shields.io/badge/license-Polyform%20Noncommercial-orange)](LICENSE.md)
+  [![Node.js](https://img.shields.io/badge/node-%3E%3D22-brightgreen)](https://nodejs.org/)
+  [![Docker](https://img.shields.io/badge/Docker-Compose-blue)](https://www.docker.com/)
+</div>
 
-## ✨ Features
+---
 
-### 🎬 Conferencing
-- **Two call modes** — **Private (P2P)** full-mesh WebRTC for small calls, and
-  **Group (SFU)** routed through mediasoup for larger rooms. The host picks the
-  mode when creating a conference.
-- **Dynamic video grid** with a **pin / spotlight** mode for focusing one tile.
-- **Screen sharing** — `replaceTrack()` in P2P, a dedicated screen producer in SFU.
-- **Media controls** — mute/unmute mic, camera on/off, per-participant state.
+## What is Meetify?
 
-### 🛡️ Moderation
-- **Host & co-host roles** — kick, force-mute (audio/video/screen), chat-ban,
-  promote/demote co-host. Session-scoped, applied live over Socket.IO.
+Meetify is a self-hostable video conferencing platform built on WebRTC, Node.js, and Socket.IO. It ships as a three-container Docker stack (Nginx + Node.js + MySQL) and requires no third-party services to run.
 
-### 💬 Communication & engagement
-- **Real-time chat** with unread badge, **participant list**, media indicators.
-- **In-app notifications** — admin broadcasts with a real-time bell widget.
-- **Support tickets** — users open and track tickets with threaded replies.
-- **Donate page** — wallet addresses with copy + locally-generated QR codes
-  (no third-party requests) and social links, all configured from the admin panel.
+The project started as a personal tool and is now open-sourced for the community.
 
-### 🔐 Auth & security
-- **JWT authentication** in `httpOnly` cookies (and `Authorization: Bearer`).
-- **Email verification** and **password reset** via SMTP.
-- **bcrypt** hashing for user **and** conference passwords.
-- **Socket.IO connections require a valid JWT** (enforced, not optional).
-- **Rate limiting** on HTTP endpoints, Cloudflare-aware client-IP resolution.
-- **Admin panel** protected by Nginx `auth_request`.
+## Features
 
-### ⚙️ Conference management
-- Create / edit / delete conferences with name, description, schedule,
-  participant limit, public/private, optional password.
-- Status (Scheduled / Ongoing / Ended) computed from start/end timestamps.
-- Admin dashboard: stats, user & conference management, SMTP, socials,
-  notifications, support tickets.
+**Conferencing**
+- Two call modes — **P2P** (full-mesh, up to 8) and **SFU** (mediasoup, scales further)
+- Screen sharing, dynamic video grid, pin/spotlight mode
+- Per-participant media controls, real-time mute/unmute state
 
-## 🛠️ Technology Stack
+**Moderation**
+- Host and co-host roles — kick, force-mute, chat-ban
+- Promote/demote co-hosts mid-call, all applied live over Socket.IO
 
-**Backend** — Node.js 22 + Express, Socket.IO (signaling, chat, SFU control),
-**mediasoup** (SFU), `mysql2` pool, JWT + cookie-parser, bcrypt, nodemailer,
-express-rate-limit, multer.
+**Communication**
+- Real-time chat with unread badge, participant list
+- Admin broadcast notifications with bell widget
+- Support ticket system with threaded replies
 
-**Frontend** — Vanilla HTML/CSS/JS (no build step), WebRTC + mediasoup-client,
-Socket.IO client. "Deep Space Precision" design system.
+**Management**
+- Schedule conferences with start/end times (Scheduled / Ongoing / Ended)
+- Optional conference passwords (bcrypt-hashed), public/private rooms
+- Admin dashboard — stats, user management, SMTP, notifications, support
 
-**Infrastructure** — Docker Compose (db / backend / frontend), Nginx reverse
-proxy + static server, MySQL 8.0 with a persistent volume.
+## Conference Modes
 
-## 🏗️ Architecture
+| | P2P | SFU |
+|---|---|---|
+| Transport | Direct browser-to-browser | Routed through mediasoup |
+| Max participants | 8 | Configurable |
+| Infrastructure | Only STUN/TURN | STUN/TURN + mediasoup ports |
+| Best for | Small calls, minimal setup | Group meetings |
 
-Three containers on `meetify-network`:
+Both modes are available from the same conference create form — the host picks at creation time.
 
-| Container | Image | Exposes |
-|-----------|-------|---------|
-| `meetify-db` | MySQL 8.0 | 3306 |
-| `meetify-backend` | Node.js (`src/server_js`) | 3000; UDP+TCP **40000–40059** (mediasoup RTC) |
-| `meetify-frontend` | Nginx (`src/app`) | 80, 443 |
+## Privacy
 
-**Request flow:** Browser → Nginx (80) → proxies `/api/*`, `/socket.io/`,
-`/check-status`, `/uploads/` to `backend:3000`; everything else is static.
+Meetify is designed to keep data on your server:
 
-**Two call modes:**
-- **P2P** — full-mesh; each client opens one `RTCPeerConnection` per peer via the
-  `offer`/`answer`/`ice-candidate` relay. Hard cap of **8** participants.
-- **SFU** — one mediasoup `Router` per room; clients produce their tracks once and
-  consume each peer's producers. Media flows over the 40000–40059 port range, so
-  in production **`MEDIASOUP_ANNOUNCED_IP` must be the server's reachable IP**.
+- **No Google Fonts** — Outfit and JetBrains Mono are self-hosted as WOFF2
+- **No external CDN or analytics** — zero third-party requests on page load
+- **Own STUN/TURN** — coturn ships with the stack; WebRTC traffic stays on your infrastructure
+- **No tracking cookies** — a single `httpOnly` session cookie, nothing else
+- **Error telemetry** — JS errors are reported to *your* server only, never to a third party. Fully documented in [PRIVACY.md](PRIVACY.md)
+- **Swiss hosting** on the live instance at meetify.cc (nFADP / GDPR equivalent)
 
-> For a deeper map of the backend (routes, services, socket events, and schema
-> migrations) see [`Docker.md`](Docker.md) and the inline comments in
-> `src/server_js/utils/initDatabase.js`.
+## Security
 
-## 🚀 Quick Start
+- JWT in `httpOnly; Secure; SameSite` cookies + `Authorization: Bearer` support
+- Socket.IO connections require a valid JWT (unauthenticated connections are rejected)
+- User and conference passwords hashed with bcrypt (cost 10)
+- HTTP rate limiting with Cloudflare-aware IP resolution (`CF-Connecting-IP`)
+- Admin panel protected by Nginx `auth_request`
+- All log endpoints require admin authentication
+
+See [SECURITY.md](SECURITY.md) to report a vulnerability.
+
+## Self-Hosting
 
 **Requirements:** Docker + Docker Compose.
 
@@ -93,157 +87,90 @@ Three containers on `meetify-network`:
 git clone https://github.com/axl214v/Meetify.git
 cd Meetify
 
-cp .env.example .env        # then edit secrets (see below)
-make first-run              # build images + start all containers
+cp .env.example .env   # edit secrets (see below)
+make first-run         # builds images and starts all containers
 ```
 
-App is served at **http://localhost**. macOS users with XAMPP on port 80, see
-[QuickStart-Macos.md](QuickStart-Macos.md). Full Docker reference:
-[Docker.md](Docker.md).
+Open **http://localhost**. macOS users with XAMPP on port 80 — see [QuickStart-Macos.md](QuickStart-Macos.md).
 
-### Minimum `.env` to change
+### Minimum `.env` changes
 
 ```env
-DB_PASSWORD=change_me
-JWT_SECRET=change_me                 # see generator below
-SERVER_URL=http://localhost:3000
-CLIENT_URL=http://localhost
+DB_PASSWORD=your_strong_password
+JWT_SECRET=your_64_byte_hex_secret   # node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+SERVER_URL=https://your-domain.com
+CLIENT_URL=https://your-domain.com
 
-# Required for SFU group calls beyond localhost:
-MEDIASOUP_ANNOUNCED_IP=127.0.0.1     # set to your LAN/public IP in production
+# For SFU group calls — set to your server's public IP:
+MEDIASOUP_ANNOUNCED_IP=127.0.0.1
+
+# STUN/TURN — already configured to use bundled coturn:
+COTURN_PUBLIC_IP=your-server-ip
+TURN_PASSWORD=your_turn_secret
 ```
 
-Generate a JWT secret:
-```bash
-node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+Full guide including HTTPS, TURN, backups, and troubleshooting: [Docker.md](Docker.md).
+
+## Technology Stack
+
+| Layer | Technology |
+|---|---|
+| Backend | Node.js 22, Express, Socket.IO |
+| SFU | mediasoup 3 |
+| Database | MySQL 8.0, mysql2 pool |
+| Auth | JWT, bcrypt, nodemailer |
+| Frontend | Vanilla HTML/CSS/JS (no build step) |
+| Infrastructure | Docker Compose, Nginx, coturn |
+
+## Architecture
+
+```
+Browser → Nginx :80/:443 → /api/* /socket.io/ /uploads/  → backend:3000
+                         → static files (HTML/CSS/JS/fonts)
+
+backend:3000 → MySQL :3306
+             → mediasoup RTC :40000–40059 (UDP/TCP)
+
+coturn :3478  → STUN/TURN relay (runs on separate VPS)
 ```
 
-### Check status
-```bash
-make health                 # backend /check-status + frontend HTTP status
-docker compose ps
-docker compose logs -f backend
-```
+Routes, socket events, and schema details: [Docker.md](Docker.md) and `src/server_js/utils/initDatabase.js`.
 
-## 📚 API Reference
+## Roadmap
 
-All routes are under `/api` (proxied by Nginx). Auth is via the `token` cookie or
-`Authorization: Bearer`.
-
-| Prefix | Highlights |
-|--------|-----------|
-| `/api/auth` | register, login, logout, `/me`, `/token`, forgot/reset-password, verify-email, resend-verification, refresh |
-| `/api/users` | profile GET/PUT, avatar upload/delete, stats, delete account |
-| `/api/conferences` | list (filters: `search`, `status`, `isPublic`, `limit`, `offset`), create (with `mode`), get, update, delete, join, leave, participants, `user/my` |
-| `/api/admin` | stats, server info, user mgmt, conference mgmt (delete/kick), SMTP, socials, notifications, support tickets |
-| `/api/notifications` | latest broadcast notifications |
-| `/api/support` | user tickets: list, create, get + replies, reply |
-| `/api/logs` | client error capture, query, stats |
-| `/api/public/socials` | **public** — visible donate/crypto/social links (no auth) |
-| `/check-status`, `/api/health` | health checks |
-
-### WebSocket events (Socket.IO)
-
-A valid JWT must be sent in `socket.handshake.auth.token`.
-
-**Signaling / chat / moderation (Client → Server):**
-`join-conference`, `offer`, `answer`, `ice-candidate`, `chat-message`,
-`media-state-change`, `screen-share-start`, `screen-share-stop`,
-`leave-conference`, `host:kick`, `host:force-media`, `host:chat-ban`,
-`host:promote-co-host`, `host:demote-co-host`.
-
-**SFU control (Client → Server, ack-based):**
-`sfu:get-rtp-capabilities`, `sfu:create-transport`, `sfu:connect-transport`,
-`sfu:produce`, `sfu:get-producers`, `sfu:consume`, `sfu:resume-consumer`,
-`sfu:close-producer`.
-
-**Server → Client:** `room-participants`, `user-connected`, `user-disconnected`,
-`offer`/`answer`/`ice-candidate`, `chat-message`, `user-media-state`,
-`user-screen-share-start`/`stop`, `join-rejected` (`kicked`|`full`),
-`force-muted`, `chat-blocked`, `user-chat-banned`, `user-kicked`,
-`force-disconnect`, `user-role-change`, `error`, and SFU:
-`sfu:new-producer`, `sfu:producer-closed`, `sfu:consumer-closed`.
-
-## 🗄️ Database
-
-Eight InnoDB tables, created and migrated in place on startup by
-`utils/initDatabase.js` (no migration framework — missing columns/FKs are added
-via `information_schema` checks):
-
-| Table | Purpose |
-|-------|---------|
-| `users` | accounts, role, email verification, trust level |
-| `conferences` | meetings; `mode` (`p2p`/`sfu`), bcrypt password, schedule |
-| `conference_members` | join/leave tracking (unique per conf+user) |
-| `password_reset_tokens` | one-time reset tokens |
-| `app_settings` | key/value — SMTP, `social_links` JSON, admin settings |
-| `notifications` | admin broadcast notifications |
-| `support_tickets` | support tickets |
-| `ticket_replies` | threaded ticket replies |
-
-Full DDL and auto-migration logic lives in `src/server_js/utils/initDatabase.js`.
-
-## 🐳 Docker
-
-```bash
-make up / make down / make restart       # lifecycle
-make logs / make logs-backend            # logs
-make shell-be / make shell-db            # shells
-make health                              # health check
-
-# Rebuild after a code change:
-docker compose build --no-cache backend && docker compose up -d backend
-docker compose build frontend && docker compose up -d frontend   # frontend is static-copied at build time
-
-# Nuclear reset (DELETES DB data):
-docker compose down -v
-```
-
-See [Docker.md](Docker.md) for the full guide (production, TURN, backups,
-troubleshooting).
-
-## 🔒 Security
-
-JWT in `httpOnly; Secure; SameSite` cookies · Socket.IO JWT enforced · user and
-conference passwords bcrypt-hashed · HTTP rate limiting with Cloudflare-aware IP
-resolution · admin static files behind Nginx `auth_request`.
-
-Known gaps and how to report a vulnerability: [SECURITY.md](SECURITY.md).
-
-## 🗺️ Roadmap
-
-- [ ] TURN server (coturn config included, commented out in `docker-compose.yml`)
-- [ ] HTTPS / SSL termination in Nginx
+- [x] SFU group calls (mediasoup)
+- [x] Host/co-host moderation
+- [x] Email verification and password reset
+- [x] In-app notifications and support tickets
+- [x] Self-hosted STUN/TURN (coturn)
+- [x] Self-hosted fonts (no Google Fonts)
+- [ ] HTTPS / SSL in Nginx (certs provisioned by deploy script, SSL block present but commented out)
 - [ ] Conference recording
-- [ ] Redis adapter for Socket.IO clustering / multi-instance SFU
+- [ ] Redis adapter for Socket.IO clustering
 - [ ] Breakout rooms
-- [ ] Virtual backgrounds
-- [ ] Persistent moderation log
 - [ ] Mobile application
 
-Recently shipped (see [CHANGELOG.md](CHANGELOG.md)): SFU group calls, host/co-host
-moderation, email verification & password reset, in-app notifications, support
-tickets, donate page.
+## Contributing
 
-## 📦 Versioning
+Pull requests are welcome. Before opening one:
 
-Meetify follows [Semantic Versioning](https://semver.org) (loosely, while in
-`beta`). Every notable change is recorded in [CHANGELOG.md](CHANGELOG.md), and the
-current version string lives in [`version.txt`](version.txt) — bump both together
-when cutting a release.
+1. Open an issue or discussion to describe what you want to change
+2. Fork the repo and create a branch from `main`
+3. PRs into `main` require one approval
 
-## 🤝 Contributing
+By contributing you agree to the terms in [CONTRIBUTING.md](CONTRIBUTING.md) — your contributions are licensed under the project's license and the maintainer retains commercial rights.
 
-See [contributing.md](contributing.md).
-
-## 👨‍💻 Author
-
-**axl214** — [@axl214v](https://github.com/axl214v)
-
-## 📄 License
+## License
 
 Licensed under the **Polyform Noncommercial License 1.0.0** — see [LICENSE.md](LICENSE.md).
-- **Personal / educational use:** free.
-- **Commercial use:** requires a separate license — contact [legal@meetify.cc](mailto:legal@meetify.cc).
+
+- **Personal / educational / self-hosted use:** free
+- **Commercial use:** requires a separate license — [legal@meetify.cc](mailto:legal@meetify.cc)
 
 "Meetify" and its logo are trademarks — see [TRADEMARK.md](TRADEMARK.md).
+
+---
+
+<div align="center">
+  <sub>Built by <a href="https://github.com/axl214v">axl214v</a> · <a href="https://meetify.cc">meetify.cc</a></sub>
+</div>

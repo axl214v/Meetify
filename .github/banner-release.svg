@@ -1,0 +1,91 @@
+<svg viewBox="0 0 1200 400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="g1" cx="20%" cy="50%" r="70%"
+                    gradientUnits="userSpaceOnUse"
+                    gradientTransform="translate(0,0) scale(1200,400)">
+      <stop offset="0%" stop-color="#2563eb" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#020c1a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="g2" cx="90%" cy="60%" r="55%"
+                    gradientUnits="userSpaceOnUse"
+                    gradientTransform="translate(0,0) scale(1200,400)">
+      <stop offset="0%" stop-color="#0ea5e9" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#020c1a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#0ea5e9"/>
+    </linearGradient>
+    <pattern id="dots" x="0" y="0" width="28" height="28" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="1" fill="#1e40af" opacity="0.22"/>
+    </pattern>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="400" fill="#020c1a"/>
+  <rect width="1200" height="400" fill="url(#dots)"/>
+  <rect width="1200" height="400" fill="url(#g1)"/>
+  <rect width="1200" height="400" fill="url(#g2)"/>
+
+  <!-- Left bar -->
+  <rect x="0" y="0" width="4" height="400" fill="url(#grad)"/>
+  <!-- Bottom bar -->
+  <rect x="0" y="396" width="1200" height="4" fill="url(#grad)"/>
+
+  <!-- Left: Meetify logo area -->
+  <text x="80" y="175"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+        font-weight="800"
+        font-size="72"
+        letter-spacing="-2"
+        fill="white">Meetify</text>
+
+  <!-- Gradient underline under logo -->
+  <rect x="80" y="190" width="280" height="3" rx="1.5" fill="url(#grad)"/>
+
+  <!-- "New Release" label -->
+  <rect x="80" y="215" width="130" height="28" rx="14" fill="url(#grad)" opacity="0.9"/>
+  <text x="145" y="234"
+        text-anchor="middle"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+        font-size="13"
+        font-weight="600"
+        fill="white"
+        letter-spacing="1">NEW RELEASE</text>
+
+  <!-- Divider -->
+  <rect x="450" y="60" width="1" height="280" fill="#1e3a5f" opacity="0.8"/>
+
+  <!-- Right: Version number placeholder -->
+  <text x="640" y="155"
+        text-anchor="middle"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+        font-weight="700"
+        font-size="22"
+        fill="#60a5fa"
+        letter-spacing="3">VERSION</text>
+
+  <text x="640" y="240"
+        text-anchor="middle"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+        font-weight="800"
+        font-size="80"
+        letter-spacing="-2"
+        fill="white">1.2.0</text>
+
+  <text x="640" y="278"
+        text-anchor="middle"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+        font-weight="400"
+        font-size="22"
+        fill="#475569">beta</text>
+
+  <!-- meetify.cc -->
+  <text x="640" y="348"
+        text-anchor="middle"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+        font-size="16"
+        font-weight="300"
+        fill="#334155"
+        letter-spacing="2">meetify.cc</text>
+</svg>
