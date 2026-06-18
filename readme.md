@@ -81,8 +81,9 @@ Three containers on `meetify-network`:
   consume each peer's producers. Media flows over the 40000–40059 port range, so
   in production **`MEDIASOUP_ANNOUNCED_IP` must be the server's reachable IP**.
 
-> For a deeper map of the backend (routes, services, socket events, schema
-> migrations) see [CLAUDE.md](CLAUDE.md).
+> For a deeper map of the backend (routes, services, socket events, and schema
+> migrations) see [`Docker.md`](Docker.md) and the inline comments in
+> `src/server_js/utils/initDatabase.js`.
 
 ## 🚀 Quick Start
 
@@ -180,8 +181,7 @@ via `information_schema` checks):
 | `support_tickets` | support tickets |
 | `ticket_replies` | threaded ticket replies |
 
-Full DDL lives in `utils/initDatabase.js`; a schema summary is in
-[CLAUDE.md](CLAUDE.md#database-schema).
+Full DDL and auto-migration logic lives in `src/server_js/utils/initDatabase.js`.
 
 ## 🐳 Docker
 

@@ -1,8 +1,7 @@
 # 🐳 Meetify Docker Setup
 
 Complete guide for running Meetify with Docker. For a quick macOS path see
-[QuickStart-Macos.md](QuickStart-Macos.md); for an architecture/code map see
-[CLAUDE.md](CLAUDE.md).
+[QuickStart-Macos.md](QuickStart-Macos.md).
 
 ## 📋 Prerequisites
 
