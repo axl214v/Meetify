@@ -22,6 +22,19 @@ const roomScreenShareState = new Set();
 // Pin / spotlight state
 const pinnedTiles = new Set();
 
+// Camera flip state (local preview only — does not affect transmitted stream)
+let flipH = false;
+let flipV = false;
+
+function applyVideoFlip() {
+    const vid = document.getElementById('localVideo');
+    if (!vid) return;
+    vid.classList.toggle('flip-h', flipH);
+    vid.classList.toggle('flip-v', flipV);
+    document.getElementById('flipHBtn')?.classList.toggle('active', flipH);
+    document.getElementById('flipVBtn')?.classList.toggle('active', flipV);
+}
+
 // Conference mode ('p2p' | 'sfu')
 let conferenceMode = 'p2p';
 
@@ -617,6 +630,16 @@ function setupEventListeners() {
     document.getElementById('localPinBtn').addEventListener('click', (e) => {
         e.stopPropagation();
         togglePin('local');
+    });
+
+    document.getElementById('flipHBtn').addEventListener('click', () => {
+        flipH = !flipH;
+        applyVideoFlip();
+    });
+
+    document.getElementById('flipVBtn').addEventListener('click', () => {
+        flipV = !flipV;
+        applyVideoFlip();
     });
 }
 

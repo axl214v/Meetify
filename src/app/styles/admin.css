@@ -446,6 +446,26 @@ body { display: flex; }
     .main { padding: 20px 16px; }
     .stat-grid { grid-template-columns: 1fr 1fr; }
 }
+
+/* ── Phone-specific fixes (sidebar icon-only + narrow content) ── */
+@media (max-width: 480px) {
+    .stat-grid   { grid-template-columns: 1fr; }
+    .server-grid { grid-template-columns: 1fr 1fr; }
+    .main        { padding: 16px 12px; }
+    .panel-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .panel-header h1 { font-size: 18px; }
+    .header-controls { flex-wrap: wrap; gap: 6px; }
+    .modal       { width: min(360px, 88vw); padding: 24px 20px; }
+    .search-input{ width: 100%; }
+    .card-header { flex-direction: column; align-items: flex-start; gap: 6px; }
+    .settings-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Very small phones: collapse sidebar entirely, show hamburger ── */
+@media (max-width: 360px) {
+    .sidebar { width: 0; overflow: hidden; }
+    .main    { padding: 12px 10px; }
+}
 /* ── Settings ── */
 .settings-grid {
     display: grid;

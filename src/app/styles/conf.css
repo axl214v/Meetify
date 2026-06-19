@@ -968,6 +968,26 @@ a:hover { color: #93c5fd; }
   .grid-3 { grid-template-columns: 1fr; }
 }
 
+@media (max-width: 480px) {
+  main {
+    margin: 0.5rem;
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+  }
+
+  h1 { font-size: 1.5rem; }
+
+  .card-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+  .status-badge { align-self: flex-start; }
+
+  /* form-row → 1 column on small phones */
+  .form-row { grid-template-columns: 1fr; gap: 0; }
+
+  .pagination { flex-wrap: wrap; gap: 0.5rem; }
+  .recent-item { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+  .quick-join-btn { align-self: flex-end; }
+}
+
 .video-container.screen-sharing {
     outline: 2px solid var(--accent, #6c63ff);
     position: relative;

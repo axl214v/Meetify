@@ -873,6 +873,20 @@
         .filmstrip .video-container:hover .pin-btn { opacity: 1; }
 
         /* ============================================ */
+        /* Camera flip state                           */
+        /* ============================================ */
+
+        #localVideo.flip-h { transform: scaleX(-1); }
+        #localVideo.flip-v { transform: scaleY(-1); }
+        #localVideo.flip-h.flip-v { transform: scaleX(-1) scaleY(-1); }
+
+        .control-btn.flip-h.active,
+        .control-btn.flip-v.active {
+            background: rgba(14,165,233,0.15);
+            border-color: rgba(14,165,233,0.35);
+        }
+
+        /* ============================================ */
         /* Mobile                                       */
         /* ============================================ */
 
@@ -890,6 +904,35 @@
             .control-btn.leave { padding: 0 1rem; font-size: 0.8rem; }
 
             .room-meta { display: none; }
+        }
+
+        /* Phones: wrap controls into multiple rows so nothing overflows */
+        @media (max-width: 600px) {
+            .room-container { grid-template-rows: 52px 1fr auto; }
+
+            .controls-bar {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 6px;
+                padding: 8px 10px;
+                height: auto;
+            }
+
+            .ctrl-sep { display: none; }
+            .ctrl-group { gap: 6px; }
+
+            .control-btn { width: 40px; height: 40px; font-size: 0.95rem; border-radius: 10px; }
+
+            .control-btn.leave { padding: 0 14px; font-size: 0.8rem; width: auto; }
+
+            /* Keep logo visible but hide title to save space */
+            .room-title { display: none; }
+            .room-divider { display: none; }
+        }
+
+        @media (max-width: 400px) {
+            .control-btn { width: 36px; height: 36px; font-size: 0.88rem; }
+            .control-btn.leave { padding: 0 10px; font-size: 0.75rem; }
         }
     </style>
 </head>
@@ -956,6 +999,8 @@
         <div class="ctrl-group">
             <button class="control-btn mic" id="toggleMic" title="Toggle Microphone">🎤</button>
             <button class="control-btn video" id="toggleVideo" title="Toggle Camera">📹</button>
+            <button class="control-btn flip-h" id="flipHBtn" title="Flip camera horizontally (mirror)">↔️</button>
+            <button class="control-btn flip-v" id="flipVBtn" title="Flip camera vertically">↕️</button>
             <button class="control-btn screen" id="toggleScreen" title="Share Screen">🖥️</button>
         </div>
 

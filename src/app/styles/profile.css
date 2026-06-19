@@ -485,6 +485,28 @@
     }
 }
 
+@media (max-width: 480px) {
+    .profile-main {
+        padding: 1rem;
+        gap: 1rem;
+    }
+
+    .profile-card { padding: 1rem; }
+
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+
+    .history-filters { flex-wrap: wrap; }
+
+    .history-item { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+    .history-item-badges { align-self: flex-end; }
+
+    .form-actions { flex-direction: column; }
+    .form-actions button { width: 100%; }
+
+    .modal-actions { flex-direction: column; }
+    .modal-actions button { width: 100%; }
+}
+
 
 /* ── Email Verification Banner ── */
 .verification-banner {
