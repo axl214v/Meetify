@@ -43,6 +43,7 @@
             background: var(--room-bg);
             color: var(--room-text);
             height: 100vh;
+            height: 100dvh;
             overflow: hidden;
             -webkit-font-smoothing: antialiased;
         }
@@ -55,6 +56,7 @@
             display: grid;
             grid-template-rows: 60px 1fr 80px;
             height: 100vh;
+            height: 100dvh;
         }
 
         /* ============================================ */
@@ -873,17 +875,126 @@
         .filmstrip .video-container:hover .pin-btn { opacity: 1; }
 
         /* ============================================ */
-        /* Camera flip state                           */
+        /* Camera flip (applied to local video only)   */
         /* ============================================ */
 
         #localVideo.flip-h { transform: scaleX(-1); }
         #localVideo.flip-v { transform: scaleY(-1); }
         #localVideo.flip-h.flip-v { transform: scaleX(-1) scaleY(-1); }
+        #localVideo.rotate-land { transform: rotate(90deg) scale(var(--rot-scale, 1.78)); }
+        #localVideo.flip-h.rotate-land { transform: scaleX(-1) rotate(90deg) scale(var(--rot-scale, 1.78)); }
+        #localVideo.flip-v.rotate-land { transform: scaleY(-1) rotate(90deg) scale(var(--rot-scale, 1.78)); }
+        #localVideo.flip-h.flip-v.rotate-land { transform: scaleX(-1) scaleY(-1) rotate(90deg) scale(var(--rot-scale, 1.78)); }
 
-        .control-btn.flip-h.active,
-        .control-btn.flip-v.active {
-            background: rgba(14,165,233,0.15);
-            border-color: rgba(14,165,233,0.35);
+        /* Camera button wrapper with dropdown */
+        .ctrl-with-menu {
+            position: relative;
+            display: inline-flex;
+            flex-shrink: 0;
+        }
+
+        /* Small chevron badge — opens the dropdown */
+        .ctrl-sub-btn {
+            position: absolute;
+            bottom: -4px;
+            right: -4px;
+            width: 16px;
+            height: 16px;
+            border-radius: 5px;
+            background: var(--room-card);
+            border: 1px solid rgba(255,255,255,0.18);
+            color: rgba(255,255,255,0.7);
+            font-size: 0.6rem;
+            line-height: 1;
+            padding: 0;
+            min-height: unset;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+            transition: background 0.15s, border-color 0.15s;
+            box-shadow: none;
+        }
+
+        .ctrl-sub-btn:hover {
+            background: rgba(37,99,235,0.4);
+            border-color: rgba(37,99,235,0.6);
+            color: white;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Dropdown panel */
+        .ctrl-dropdown {
+            position: absolute;
+            bottom: calc(100% + 12px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: #0b1e3d;
+            border: 1px solid rgba(37,99,235,0.28);
+            border-radius: 10px;
+            padding: 5px;
+            display: none;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 158px;
+            z-index: 500;
+            box-shadow: 0 10px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04) inset;
+        }
+
+        .ctrl-dropdown::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: rgba(37,99,235,0.28);
+        }
+
+        .ctrl-dropdown.open { display: flex; }
+
+        /* Dropdown items */
+        .ctrl-dropdown-item {
+            background: none;
+            border: 1px solid transparent;
+            border-radius: 7px;
+            color: rgba(255,255,255,0.78);
+            padding: 7px 10px;
+            font-size: 0.82rem;
+            font-family: var(--font);
+            font-weight: 500;
+            cursor: pointer;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-height: unset;
+            box-shadow: none;
+            width: 100%;
+            justify-content: flex-start;
+            transition: background 0.12s, color 0.12s;
+        }
+
+        .ctrl-dropdown-item:hover {
+            background: rgba(255,255,255,0.07);
+            color: white;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .ctrl-dropdown-item.active {
+            background: rgba(14,165,233,0.14);
+            border-color: rgba(14,165,233,0.28);
+            color: #38bdf8;
+        }
+
+        .flip-icon {
+            font-size: 1rem;
+            width: 18px;
+            text-align: center;
+            flex-shrink: 0;
         }
 
         /* ============================================ */
@@ -925,9 +1036,8 @@
 
             .control-btn.leave { padding: 0 14px; font-size: 0.8rem; width: auto; }
 
-            /* Keep logo visible but hide title to save space */
-            .room-title { display: none; }
-            .room-divider { display: none; }
+            /* On mobile: hide participant/timer chips to make room for logo+name */
+            .room-meta { display: none; }
         }
 
         @media (max-width: 400px) {
@@ -998,9 +1108,21 @@
     <div class="controls-bar">
         <div class="ctrl-group">
             <button class="control-btn mic" id="toggleMic" title="Toggle Microphone">🎤</button>
-            <button class="control-btn video" id="toggleVideo" title="Toggle Camera">📹</button>
-            <button class="control-btn flip-h" id="flipHBtn" title="Flip camera horizontally (mirror)">↔️</button>
-            <button class="control-btn flip-v" id="flipVBtn" title="Flip camera vertically">↕️</button>
+            <div class="ctrl-with-menu">
+                <button class="control-btn video" id="toggleVideo" title="Toggle Camera">📹</button>
+                <button class="ctrl-sub-btn" id="videoMenuBtn" title="Camera options" aria-label="Camera options">&#8964;</button>
+                <div class="ctrl-dropdown" id="videoMenu" role="menu">
+                    <button class="ctrl-dropdown-item" id="flipHBtn" role="menuitem">
+                        <span class="flip-icon">&#8596;</span>Mirror
+                    </button>
+                    <button class="ctrl-dropdown-item" id="flipVBtn" role="menuitem">
+                        <span class="flip-icon">&#8597;</span>Flip vertical
+                    </button>
+                    <button class="ctrl-dropdown-item" id="rotateBtn" role="menuitem">
+                        <span class="flip-icon">&#8635;</span>Rotate 90°
+                    </button>
+                </div>
+            </div>
             <button class="control-btn screen" id="toggleScreen" title="Share Screen">🖥️</button>
         </div>
 

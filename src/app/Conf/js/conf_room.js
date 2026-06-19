@@ -22,17 +22,30 @@ const roomScreenShareState = new Set();
 // Pin / spotlight state
 const pinnedTiles = new Set();
 
-// Camera flip state (local preview only — does not affect transmitted stream)
-let flipH = false;
-let flipV = false;
+// Camera flip/rotate state (local preview only — does not affect transmitted stream)
+let flipH    = false;
+let flipV    = false;
+let rotated  = false;
 
 function applyVideoFlip() {
     const vid = document.getElementById('localVideo');
     if (!vid) return;
-    vid.classList.toggle('flip-h', flipH);
-    vid.classList.toggle('flip-v', flipV);
+    vid.classList.toggle('flip-h',      flipH);
+    vid.classList.toggle('flip-v',      flipV);
+    vid.classList.toggle('rotate-land', rotated);
+
+    // When rotating 90°, scale up so rotated content fills the element's bounding box (no black bars)
+    if (rotated) {
+        const w = vid.offsetWidth  || 160;
+        const h = vid.offsetHeight || 90;
+        vid.style.setProperty('--rot-scale', Math.max(w / h, h / w));
+    } else {
+        vid.style.removeProperty('--rot-scale');
+    }
+
     document.getElementById('flipHBtn')?.classList.toggle('active', flipH);
     document.getElementById('flipVBtn')?.classList.toggle('active', flipV);
+    document.getElementById('rotateBtn')?.classList.toggle('active', rotated);
 }
 
 // Conference mode ('p2p' | 'sfu')
@@ -632,13 +645,32 @@ function setupEventListeners() {
         togglePin('local');
     });
 
-    document.getElementById('flipHBtn').addEventListener('click', () => {
+    const videoMenuBtn = document.getElementById('videoMenuBtn');
+    const videoMenu    = document.getElementById('videoMenu');
+
+    videoMenuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        videoMenu.classList.toggle('open');
+    });
+
+    // Close dropdown when clicking anywhere else
+    document.addEventListener('click', () => videoMenu.classList.remove('open'));
+
+    document.getElementById('flipHBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
         flipH = !flipH;
         applyVideoFlip();
     });
 
-    document.getElementById('flipVBtn').addEventListener('click', () => {
+    document.getElementById('flipVBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
         flipV = !flipV;
+        applyVideoFlip();
+    });
+
+    document.getElementById('rotateBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        rotated = !rotated;
         applyVideoFlip();
     });
 }
