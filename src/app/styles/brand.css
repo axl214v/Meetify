@@ -178,7 +178,10 @@ select.form-input{cursor:pointer}
     .brand-nav-right .btn-ghost:not(.btn-sm){display:none}
     .brand-nav-right .btn{padding:6px 14px;font-size:13px}
 }
-@media(max-width:400px){
-    /* Clip wordmark to logo-mark width so primary CTA still fits */
-    .brand-nav-logo img{max-width:38px;object-fit:cover;object-position:left center}
+@media(max-width:560px){
+    /* Swap full wordmark for logo-mark icon on mobile */
+    .brand-nav-logo img{
+        content:url('/assets/logo-mark.png');
+        width:40px;height:40px;object-fit:contain;
+    }
 }
