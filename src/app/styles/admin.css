@@ -81,7 +81,7 @@ body { display: flex; }
     top: 0;
 }
 
-.main { flex: 1; overflow-y: auto; height: 100vh; padding: 32px; }
+.main { flex: 1; min-width: 0; overflow-y: auto; overflow-x: hidden; height: 100vh; padding: 32px; }
 
 /* ── Sidebar Logo ── */
 .sidebar-logo {
@@ -297,6 +297,8 @@ body { display: flex; }
     border-radius: var(--radius);
     padding: 20px;
     margin-bottom: 16px;
+    min-width: 0;
+    max-width: 100%;
 }
 
 .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; font-size: 13px; font-weight: 600; }
@@ -318,11 +320,10 @@ body { display: flex; }
     border-bottom: 1px solid var(--border);
 }
 
-.data-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--text2); vertical-align: middle; }
+.data-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--text2); vertical-align: middle; word-break: break-word; overflow-wrap: anywhere; max-width: 260px; }
 .data-table tr:last-child td { border-bottom: none; }
 .data-table tr:hover td { background: rgba(59,130,246,0.04); color: var(--text); }
 .data-table.full { min-width: 600px; }
-.panel-card:has(.data-table.full) { overflow-x: auto; }
 
 /* ── Badges ── */
 .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.3px; }
@@ -445,6 +446,14 @@ body { display: flex; }
     .admin-identity { justify-content: center; }
     .main { padding: 20px 16px; }
     .stat-grid { grid-template-columns: 1fr 1fr; }
+    /* iOS: prevent auto-zoom on input focus (triggered when font-size < 16px) */
+    .setting-input,
+    .search-input,
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    select,
+    textarea { font-size: 16px !important; }
 }
 
 /* ── Phone-specific fixes (sidebar icon-only + narrow content) ── */
@@ -461,10 +470,8 @@ body { display: flex; }
     .settings-grid { grid-template-columns: 1fr; }
 }
 
-/* ── Very small phones: collapse sidebar entirely, show hamburger ── */
 @media (max-width: 360px) {
-    .sidebar { width: 0; overflow: hidden; }
-    .main    { padding: 12px 10px; }
+    .main { padding: 12px 10px; }
 }
 /* ── Settings ── */
 .settings-grid {
@@ -472,6 +479,7 @@ body { display: flex; }
     grid-template-columns: 1fr 1fr;
     gap: 12px;
     margin-bottom: 20px;
+    min-width: 0;
 }
 
 .setting-row {

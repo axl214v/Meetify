@@ -166,20 +166,22 @@
             </header>
 
             <div class="panel-card">
-                <table class="data-table full" id="confsTable">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Host</th>
-                            <th>Participants</th>
-                            <th>Status</th>
-                            <th>Created</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+                <div style="overflow-x:auto;max-width:100%;">
+                    <table class="data-table full" id="confsTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Host</th>
+                                <th>Participants</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
                 <div class="pagination" id="confPagination"></div>
             </div>
         </section>
@@ -198,19 +200,21 @@
             </header>
 
             <div class="panel-card">
-                <table class="data-table full" id="usersTable">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Username</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Registered</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+                <div style="overflow-x:auto;max-width:100%;">
+                    <table class="data-table full" id="usersTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Registered</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
                 <div class="pagination" id="userPagination"></div>
             </div>
         </section>
@@ -449,17 +453,19 @@
                     <span>Email Verification</span>
                     <span class="card-tag" id="verifiedCount">—</span>
                 </div>
-                <table class="data-table full" id="verificationTable">
-                    <thead>
-                        <tr>
-                            <th>User</th>
-                            <th>Email</th>
-                            <th>Verified</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+                <div style="overflow-x:auto;max-width:100%;">
+                    <table class="data-table full" id="verificationTable">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Email</th>
+                                <th>Verified</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
             </div>
         </section>
     </main>
@@ -509,21 +515,23 @@
                     <span>Sent Notifications</span>
                     <button class="btn-refresh" id="refreshNotifs" style="font-size:11px;padding:4px 10px;">↻ Reload</button>
                 </div>
-                <table class="data-table full" id="notifsTable">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Category</th>
-                            <th>Title</th>
-                            <th>Message</th>
-                            <th>Sent by</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="notifsBody">
-                        <tr><td colspan="6" style="text-align:center;color:var(--text2);padding:24px;">Loading...</td></tr>
-                    </tbody>
-                </table>
+                <div style="overflow-x:auto;max-width:100%;">
+                    <table class="data-table full" id="notifsTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Category</th>
+                                <th>Title</th>
+                                <th>Message</th>
+                                <th>Sent by</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="notifsBody">
+                            <tr><td colspan="6" style="text-align:center;color:var(--text2);padding:24px;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
@@ -608,21 +616,23 @@
                     <span>Current Links</span>
                     <button class="btn-refresh" id="refreshSocials" style="font-size:11px;padding:4px 10px;">↻ Reload</button>
                 </div>
-                <table class="data-table full" id="socialsTable">
-                    <thead>
-                        <tr>
-                            <th>Icon</th>
-                            <th>Label</th>
-                            <th>URL</th>
-                            <th>Category</th>
-                            <th>Visible</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="socialsBody">
-                        <tr><td colspan="6" style="text-align:center;color:var(--text2);padding:24px;">Loading...</td></tr>
-                    </tbody>
-                </table>
+                <div style="overflow-x:auto;max-width:100%;">
+                    <table class="data-table full" id="socialsTable">
+                        <thead>
+                            <tr>
+                                <th>Icon</th>
+                                <th>Label</th>
+                                <th>URL</th>
+                                <th>Category</th>
+                                <th>Visible</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="socialsBody">
+                            <tr><td colspan="6" style="text-align:center;color:var(--text2);padding:24px;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
@@ -644,23 +654,25 @@
                 </div>
             </header>
             <div class="panel-card">
-                <table class="data-table full" id="ticketsTable">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>User</th>
-                            <th>Title</th>
-                            <th>Category</th>
-                            <th>Status</th>
-                            <th>Updated</th>
-                            <th>Replies</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ticketsBody">
-                        <tr><td colspan="8" style="text-align:center;color:var(--text2);padding:24px;">Loading...</td></tr>
-                    </tbody>
-                </table>
+                <div style="overflow-x:auto;max-width:100%;">
+                    <table class="data-table full" id="ticketsTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>User</th>
+                                <th>Title</th>
+                                <th>Category</th>
+                                <th>Status</th>
+                                <th>Updated</th>
+                                <th>Replies</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ticketsBody">
+                            <tr><td colspan="8" style="text-align:center;color:var(--text2);padding:24px;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
