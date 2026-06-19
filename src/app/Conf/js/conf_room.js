@@ -287,6 +287,7 @@ async function initSocket() {
                 }
             }
         }
+        startQualityMonitor();
     });
     // New user joined — existing user is NOT initiator, waits for offer
     socket.on('user-connected', async ({ userId, userName }) => {
@@ -956,6 +957,7 @@ function cleanupAndRedirect(reason) {
     Object.values(peers).forEach(p => p.close());
     peers = {};
     cleanupSfu();
+    stopQualityMonitor();
     if (socket) socket.disconnect();
     alert(reason);
     window.location.href = 'conf.html';
@@ -1035,6 +1037,7 @@ async function leaveConference() {
     Object.values(peers).forEach(peer => peer.close());
     peers = {};
     cleanupSfu();
+    stopQualityMonitor();
 
     if (socket) {
         socket.emit('leave-conference', { conferenceId });
@@ -1200,6 +1203,156 @@ async function sfuConsume({ producerId, userId, userName, kind }) {
     if (!remoteStreams[userId]) remoteStreams[userId] = new MediaStream();
     remoteStreams[userId].addTrack(consumer.track);
     addRemoteVideo(userId, remoteStreams[userId], userName);
+}
+
+// ============================================================
+// Adaptive quality monitor — 4 tiers: excellent / good / degraded / poor
+// Polls WebRTC stats every 5 s via getStats(). Requires 2 consecutive
+// matching polls before switching tiers (prevents flapping).
+// VP9 is preferred in mediasoup; audio goes mono on weak links.
+// ============================================================
+
+// Video resolution + framerate per tier
+const QUALITY_PRESETS = {
+    excellent: { width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30 } },
+    good:      { width: { ideal: 1280 }, height: { ideal: 720  }, frameRate: { ideal: 30 } },
+    degraded:  { width: { ideal: 640  }, height: { ideal: 360  }, frameRate: { ideal: 20 } },
+    poor:      { width: { ideal: 320  }, height: { ideal: 180  }, frameRate: { ideal: 15 } },
+};
+
+// Max bitrate per tier (P2P RTCRtpSender.setParameters)
+const BITRATE_CAP = { excellent: 4_000_000, good: 2_000_000, degraded: 500_000, poor: 200_000 };
+
+// Audio constraints per tier — mono on weak links, stereo (ideal) on strong links
+const AUDIO_PRESETS = {
+    excellent: { channelCount: { ideal: 2 } },
+    good:      { channelCount: { ideal: 2 } },
+    degraded:  { channelCount: 1 },
+    poor:      { channelCount: 1 },
+};
+
+// Tier rank for comparing improvement vs regression
+const TIER_RANK = { excellent: 3, good: 2, degraded: 1, poor: 0 };
+
+let _qualityTier  = 'good';   // currently applied tier
+let _streakTier   = null;     // tier seen in last poll
+let _streakCount  = 0;        // consecutive polls for _streakTier
+let _qualityInterval = null;
+
+async function _pollNetworkStats() {
+    const samples = [];
+
+    const readStats = async (statsPromise) => {
+        let rtt = 0, loss = 0;
+        (await statsPromise).forEach(r => {
+            if (r.type === 'candidate-pair' && r.state === 'succeeded' && r.currentRoundTripTime)
+                rtt = Math.max(rtt, r.currentRoundTripTime * 1000);
+            if (r.type === 'remote-inbound-rtp' && r.kind === 'video' && r.fractionLost != null)
+                loss = Math.max(loss, r.fractionLost);
+        });
+        return { rtt, loss };
+    };
+
+    for (const pc of Object.values(peers)) {
+        try { samples.push(await readStats(pc.getStats())); } catch (_) {}
+    }
+
+    if (conferenceMode === 'sfu' && sfuSendTransport) {
+        const pc = sfuSendTransport._handler?._pc;
+        if (pc) {
+            try { samples.push(await readStats(pc.getStats())); } catch (_) {}
+        }
+    }
+
+    if (!samples.length) return null;
+    return {
+        rtt:  samples.reduce((a, s) => a + s.rtt,  0) / samples.length,
+        loss: samples.reduce((a, s) => a + s.loss, 0) / samples.length,
+    };
+}
+
+function _classifyTier({ rtt, loss }) {
+    if (loss > 0.08 || rtt > 400)                            return 'poor';
+    if (loss > 0.02 || rtt > 150)                            return 'degraded';
+    if (loss < 0.005 && rtt > 0 && rtt < 50)                return 'excellent';
+    return 'good';
+}
+
+async function _applyQualityTier(tier) {
+    const videoTrack = localStream?.getVideoTracks()[0];
+    if (videoTrack && !isScreenSharing) {
+        try { await videoTrack.applyConstraints(QUALITY_PRESETS[tier]); } catch (_) {}
+    }
+
+    const audioTrack = localStream?.getAudioTracks()[0];
+    if (audioTrack) {
+        try { await audioTrack.applyConstraints(AUDIO_PRESETS[tier]); } catch (_) {}
+    }
+
+    if (conferenceMode === 'p2p') {
+        const maxBitrate = BITRATE_CAP[tier];
+        for (const pc of Object.values(peers)) {
+            const sender = pc.getSenders().find(s => s.track?.kind === 'video');
+            if (!sender) continue;
+            try {
+                const params = sender.getParameters();
+                if (!params.encodings?.length) params.encodings = [{}];
+                params.encodings[0].maxBitrate = maxBitrate;
+                await sender.setParameters(params);
+            } catch (_) {}
+        }
+    }
+}
+
+function _showQualityNotification(prev, next) {
+    const improved = TIER_RANK[next] > TIER_RANK[prev];
+    if (improved) {
+        const msg = next === 'excellent'
+            ? 'Excellent connection — HD 1080p enabled'
+            : 'Connection stable — quality restored';
+        showNotification(msg, 'success', 3000);
+    } else {
+        const msgs = {
+            poor:     'Poor connection — quality reduced for stability',
+            degraded: 'Slow connection detected — quality reduced',
+            good:     'Connection slowed — HD mode paused',
+        };
+        showNotification(msgs[next] || 'Quality reduced', 'warning', 6000);
+    }
+}
+
+async function _qualityTick() {
+    const net = await _pollNetworkStats();
+    if (!net) return;
+
+    const targetTier = _classifyTier(net);
+
+    if (targetTier === _streakTier) {
+        _streakCount++;
+    } else {
+        _streakTier  = targetTier;
+        _streakCount = 1;
+    }
+
+    if (_streakCount < 2 || targetTier === _qualityTier) return;
+
+    const prev    = _qualityTier;
+    _qualityTier  = targetTier;
+    await _applyQualityTier(targetTier);
+    _showQualityNotification(prev, targetTier);
+}
+
+function startQualityMonitor() {
+    if (_qualityInterval) return;
+    _qualityTier = 'good';
+    _streakTier  = null;
+    _streakCount = 0;
+    _qualityInterval = setInterval(_qualityTick, 5000);
+}
+
+function stopQualityMonitor() {
+    clearInterval(_qualityInterval);
+    _qualityInterval = null;
 }
 
 window.closeSidebar = closeSidebar;
