@@ -9,13 +9,18 @@ const mediaCodecs = [
         kind:      'audio',
         mimeType:  'audio/opus',
         clockRate: 48000,
-        channels:  2
+        channels:  2,   // router supports stereo; client constrains to mono on weak links
     },
     {
-        kind:        'video',
-        mimeType:    'video/VP8',
-        clockRate:   90000,
-        parameters:  { 'x-google-start-bitrate': 1000 }
+        kind:       'video',
+        mimeType:   'video/VP9',
+        clockRate:  90000,
+        parameters: { 'profile-id': 0 }   // VP9 baseline profile — widest browser support
+    },
+    {
+        kind:      'video',
+        mimeType:  'video/VP8',
+        clockRate: 90000,
     }
 ];
 
@@ -67,7 +72,7 @@ function getWebRtcTransportOptions() {
         enableUdp:                       true,
         enableTcp:                       true,
         preferUdp:                       true,
-        initialAvailableOutgoingBitrate: 800_000
+        initialAvailableOutgoingBitrate: 2_500_000
     };
 }
 
