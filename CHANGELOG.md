@@ -36,6 +36,15 @@ _Nothing yet._
 - **VP9 codec** registered in mediasoup `mediaCodecs` ahead of VP8. Chrome,
   Firefox and Edge negotiate VP9 automatically (~30–40 % bandwidth savings at
   equivalent visual quality); Safari and older browsers fall back to VP8.
+- **Camera submenu with flip and rotate** in the conference room. The video
+  control bar now has a dedicated camera menu (▾) with three actions: flip
+  horizontal, flip vertical, and rotate 90°. Transforms are CSS-only and apply
+  to the local preview only — the transmitted stream is unaffected. Works on
+  desktop and mobile.
+- **Mobile-responsive conference room.** Video grid, controls, and sidebars
+  reworked for small screens: the wordmark swaps to the logo-mark below 480 px,
+  mode cards collapse on narrow viewports, and the admin tables are wrapped in
+  scroll containers. iOS input zoom (font-size < 16 px) is fixed.
 
 ### Changed
 - **`x-google-start-bitrate` removed** from VP8 and VP9 codec parameters.
