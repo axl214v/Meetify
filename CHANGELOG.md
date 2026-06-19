@@ -13,6 +13,38 @@ containers as `APP_VERSION` by `make up`.
 
 _Nothing yet._
 
+## [1.3.0-beta] — 2026-06-20
+
+### Added
+- **Adaptive quality monitor** (`conf_room.js`). WebRTC stats are polled every 5 s
+  via `RTCPeerConnection.getStats()` (P2P: all peer connections; SFU: send
+  transport's underlying RTCPeerConnection). Four tiers are applied automatically
+  based on measured RTT and outbound packet-loss fraction (two consecutive matching
+  polls required to avoid flapping):
+
+  | Tier | Trigger | Video | Audio | P2P bitrate cap |
+  |------|---------|-------|-------|-----------------|
+  | `excellent` | RTT < 50 ms, loss < 0.5 % | 1920 × 1080 @ 30 fps | stereo (ideal) | 4 Mbit/s |
+  | `good` _(default)_ | RTT < 150 ms, loss < 2 % | 1280 × 720 @ 30 fps | stereo (ideal) | 2 Mbit/s |
+  | `degraded` | RTT < 400 ms or loss < 8 % | 640 × 360 @ 20 fps | mono | 500 kbit/s |
+  | `poor` | RTT ≥ 400 ms or loss ≥ 8 % | 320 × 180 @ 15 fps | mono | 200 kbit/s |
+
+  Resolution and framerate are applied via `MediaStreamTrack.applyConstraints()`;
+  audio channel count via the same API; P2P bitrate via
+  `RTCRtpSender.setParameters()`. A transient toast notifies users on quality
+  change and on recovery.
+- **VP9 codec** registered in mediasoup `mediaCodecs` ahead of VP8. Chrome,
+  Firefox and Edge negotiate VP9 automatically (~30–40 % bandwidth savings at
+  equivalent visual quality); Safari and older browsers fall back to VP8.
+
+### Changed
+- **`x-google-start-bitrate` removed** from VP8 and VP9 codec parameters.
+  mediasoup uses TWCC-based congestion control (GoogCCC), which converges on the
+  right bitrate within 1–2 s regardless of this legacy Chrome-specific SDP hint.
+- **`initialAvailableOutgoingBitrate`** raised from 800 kbit/s to **2.5 Mbit/s**.
+  GoogCCC now starts with a budget sufficient for 720p without a ramp-up phase,
+  consistent with the self-hosted STUN/TURN setup introduced in 1.2.0-beta.
+
 ## [1.2.0-beta] — 2026-06-16
 
 ### Added
@@ -138,6 +170,8 @@ Baseline release (pre-changelog). Summarized from history.
   timestamps), public/private conferences, participant tracking.
 - Admin panel, avatar upload, and client-side error logging to `/api/logs`.
 
-[Unreleased]: https://github.com/axl214v/Meetify/compare/v1.1.0-beta...HEAD
+[Unreleased]: https://github.com/axl214v/Meetify/compare/v1.3.0-beta...HEAD
+[1.3.0-beta]: https://github.com/axl214v/Meetify/compare/v1.2.0-beta...v1.3.0-beta
+[1.2.0-beta]: https://github.com/axl214v/Meetify/compare/v1.1.0-beta...v1.2.0-beta
 [1.1.0-beta]: https://github.com/axl214v/Meetify/releases/tag/v1.1.0-beta
 [1.0.0-beta]: https://github.com/axl214v/Meetify/releases/tag/v1.0.0-beta

@@ -8,8 +8,8 @@ there are no long-term support branches yet. Always run the most recent version
 
 | Version | Supported |
 | ------- | --------- |
-| 1.1.x-beta (latest) | ✅ |
-| < 1.1.0-beta | ❌ — please upgrade |
+| 1.3.x-beta (latest) | ✅ |
+| < 1.3.0-beta | ❌ — please upgrade |
 
 ## Reporting a Vulnerability
 
@@ -54,8 +54,10 @@ These are documented, not secrets — please factor them into your deployment:
 - **HTTPS is not enabled by default.** The Nginx SSL block is commented out;
   terminate TLS before exposing Meetify publicly. Browsers require a secure
   context for camera/microphone outside `localhost`.
-- **No bundled TURN server.** coturn is commented out in `docker-compose.yml`;
-  without it, calls may fail across restrictive NATs.
+- **Bundled TURN server requires explicit configuration.** coturn runs as a
+  sidecar container (added in 1.2.0-beta) but needs `COTURN_PUBLIC_IP` and
+  `TURN_PASSWORD` set in `.env`; misconfiguration means calls may fail across
+  restrictive NATs.
 - **Socket.IO event payloads beyond WebRTC signaling are not rate-limited.**
 - **Moderation state (kick/ban/co-host) is in-memory and session-scoped** — it is
   not persisted and resets when a room empties; there is no audit log.
