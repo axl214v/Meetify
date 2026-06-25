@@ -30,3 +30,14 @@ Thumbs.db
 .DS_Store
 Thumbs.db
 *.log
+
+# Node.js packages accidentally installed in frontend — not used in browser (9.2MB + 1.4MB)
+js/node_modules/
+Conf/node_modules/
+
+# High-res source asset — not referenced by any page (868KB)
+assets/logo_small.png
+
+# Build config not needed inside container
+Dockerfile
+nginx.prod.conf
