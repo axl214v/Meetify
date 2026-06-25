@@ -1,0 +1,128 @@
+<svg viewBox="0 0 1280 640" width="1280" height="640" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Background glows -->
+    <radialGradient id="gLeft" cx="0%" cy="50%" r="80%" gradientUnits="userSpaceOnUse"
+                    x1="0" y1="0" x2="1280" y2="640">
+      <stop offset="0%"   stop-color="#2563eb" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#020c1a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="gRight" cx="100%" cy="50%" r="70%" gradientUnits="userSpaceOnUse"
+                    x1="0" y1="0" x2="1280" y2="640">
+      <stop offset="0%"   stop-color="#0ea5e9" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#020c1a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="gMid" cx="50%" cy="38%" r="45%" gradientUnits="userSpaceOnUse"
+                    x1="0" y1="0" x2="1280" y2="640">
+      <stop offset="0%"   stop-color="#1d4ed8" stop-opacity="0.20"/>
+      <stop offset="100%" stop-color="#020c1a" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Brand gradient (blue→sky) -->
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"   stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#0ea5e9"/>
+    </linearGradient>
+
+    <!-- Headline gradient -->
+    <linearGradient id="headline" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#cbd9f0"/>
+    </linearGradient>
+
+    <!-- Dot grid -->
+    <pattern id="dots" x="0" y="0" width="28" height="28" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="1" fill="#1e40af" opacity="0.18"/>
+    </pattern>
+
+    <filter id="cardShadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="2" stdDeviation="8" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <!-- ── Background ── -->
+  <rect width="1280" height="640" fill="#020c1a"/>
+  <rect width="1280" height="640" fill="url(#dots)"/>
+  <rect width="1280" height="640" fill="url(#gLeft)"/>
+  <rect width="1280" height="640" fill="url(#gRight)"/>
+  <rect width="1280" height="640" fill="url(#gMid)"/>
+
+  <!-- Edge accents -->
+  <rect x="0"   y="0"   width="4"    height="640" fill="url(#brand)"/>
+  <rect x="0"   y="636" width="1280" height="4"   fill="url(#brand)" opacity="0.5"/>
+
+  <!-- ══════════════════════════════════════════
+       Abstract network — left cluster
+       ══════════════════════════════════════════ -->
+  <g stroke="#2563eb" stroke-width="1" opacity="0.35">
+    <line x1="96"  y1="120" x2="190" y2="170"/>
+    <line x1="190" y1="170" x2="150" y2="260"/>
+    <line x1="190" y1="170" x2="270" y2="140"/>
+    <line x1="96"  y1="120" x2="150" y2="260"/>
+    <line x1="150" y1="260" x2="92"  y2="330"/>
+  </g>
+  <g fill="#60a5fa">
+    <circle cx="96"  cy="120" r="3.5" opacity="0.8"/>
+    <circle cx="190" cy="170" r="3"   opacity="0.7"/>
+    <circle cx="270" cy="140" r="2.5" opacity="0.6"/>
+    <circle cx="150" cy="260" r="3"   opacity="0.6"/>
+    <circle cx="92"  cy="330" r="2.5" opacity="0.5"/>
+  </g>
+
+  <!-- ══════════════════════════════════════════
+       Abstract network — right cluster
+       ══════════════════════════════════════════ -->
+  <g stroke="#0ea5e9" stroke-width="1" opacity="0.35">
+    <line x1="1184" y1="500" x2="1100" y2="460"/>
+    <line x1="1100" y1="460" x2="1130" y2="380"/>
+    <line x1="1100" y1="460" x2="1010" y2="490"/>
+    <line x1="1184" y1="500" x2="1130" y2="380"/>
+    <line x1="1130" y1="380" x2="1190" y2="320"/>
+  </g>
+  <g fill="#7dd3fc">
+    <circle cx="1184" cy="500" r="3.5" opacity="0.8"/>
+    <circle cx="1100" cy="460" r="3"   opacity="0.7"/>
+    <circle cx="1010" cy="490" r="2.5" opacity="0.6"/>
+    <circle cx="1130" cy="380" r="3"   opacity="0.6"/>
+    <circle cx="1190" cy="320" r="2.5" opacity="0.5"/>
+  </g>
+
+  <!-- ══════════════════════════════════════════
+       TOP — wordmark + milestone pill
+       ══════════════════════════════════════════ -->
+  <text x="640" y="112" text-anchor="middle"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+        font-weight="800" font-size="40" letter-spacing="-1"
+        fill="white">Meetify</text>
+  <rect x="590" y="128" width="100" height="3" rx="1.5" fill="url(#brand)"/>
+
+  <rect x="556" y="156" width="168" height="32" rx="16" fill="#0d1829" stroke="#1e3a5f" stroke-width="1"/>
+  <text x="640" y="177" text-anchor="middle"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+        font-size="12" font-weight="700" letter-spacing="3" fill="#3b82f6">MILESTONE</text>
+
+  <!-- ══════════════════════════════════════════
+       CENTER — headline + subtitle
+       ══════════════════════════════════════════ -->
+  <text x="640" y="350" text-anchor="middle"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+        font-weight="800" font-size="86" letter-spacing="-2"
+        fill="url(#headline)">MONTH ONE COMPLETE</text>
+
+  <text x="640" y="408" text-anchor="middle"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+        font-size="24" font-weight="400" fill="#64748b" letter-spacing="0.5">
+    23 May 2026 — 23 June 2026
+  </text>
+
+  <!-- ══════════════════════════════════════════
+       BOTTOM — feature / status tags
+       ══════════════════════════════════════════ -->
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+     font-size="15" font-weight="600" letter-spacing="2.5" fill="#93c5fd">
+    <text x="640" y="546" text-anchor="middle">PUBLIC BETA&#160;&#160;&#160;•&#160;&#160;&#160;OPEN SOURCE&#160;&#160;&#160;•&#160;&#160;&#160;PRIVACY FIRST</text>
+  </g>
+
+  <text x="640" y="592" text-anchor="middle"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+        font-size="16" font-weight="300" fill="#334155" letter-spacing="2">meetify.cc</text>
+</svg>
