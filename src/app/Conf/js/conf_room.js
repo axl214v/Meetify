@@ -857,7 +857,7 @@ function renderParticipants(participants) {
         ].filter(Boolean).join(' ');
 
         const avatarHtml = p.avatar_url
-            ? `<img class="participant-avatar-img" src="${p.avatar_url}" alt="${escapeHtml(name)}">`
+            ? `<img class="participant-avatar-img" src="${escapeHtml(p.avatar_url)}" alt="${escapeHtml(name)}">`
             : `<div class="participant-avatar-initials" style="background:${stringToColor(name)}">${initials}</div>`;
 
         const actionMenu = canActOn ? `
