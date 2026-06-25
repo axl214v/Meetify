@@ -77,11 +77,7 @@ function getCookie(name) {
     return null;
 }
 
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
+
 
 // Initialize application when DOM is loaded
 // - validate conference ID from query

@@ -357,12 +357,7 @@ function quickJoin(conferenceId) {
     checkConference();
 }
 
-// Escape HTML
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
+
 
 // Make functions globally accessible
 window.checkConference = checkConference;
