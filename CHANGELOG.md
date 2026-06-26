@@ -13,6 +13,57 @@ containers as `APP_VERSION` by `make up`.
 
 _Nothing yet._
 
+## [1.4.0-beta] — 2026-06-27
+
+### Added
+- **Standalone SFU server** (`src/sfu_server/`). mediasoup extracted to a dedicated
+  Node.js process that can be deployed on a separate VPS. The main backend proxies
+  signaling to the SFU over HTTP authenticated by `SFU_SHARED_SECRET`; RTP media
+  flows directly between clients and the SFU on ports 40000–40059, eliminating the
+  server-transit bottleneck for group calls.
+- **Automated SFU deployment** in `deploy.sh` (step 6). rsync's `src/sfu_server/`
+  to the `meetify-mail` VPS, auto-detects its public IP, creates/updates `.env`
+  with `MEDIASOUP_ANNOUNCED_IP` and `SFU_SHARED_SECRET`, installs Docker if absent,
+  builds the image, and writes `SFU_SERVER_URL` back to the main server's `.env`
+  before restarting the backend.
+- **Admin — Error Logs tab** (`admin/admin-logs.js`). Separate JS module (not
+  inlined in `admin.js`) with five stat cards (total / errors / warnings / info /
+  last event), per-type breakdown bars, a 14-day sparkline chart, a top-15
+  recurring errors table, and a filterable full error list (by severity, type,
+  date). Click any row to open a full-detail modal with timestamp, stack trace, URL,
+  browser, user ID and session ID. Backed by the existing `/api/logs/*` endpoints.
+- **System status strip** on the landing page. Compact bar between the features
+  section and footer, linking to `health.meetify.cc` with a pulsing green dot,
+  "System Status" label, monospace URL and an arrow icon. Also added as a footer
+  link.
+
+### Changed
+- **Admin panel modularised.** `admin-logs.js` is the first module split out of
+  `admin.js` (which had grown to ~1 300 lines). The split keeps tab logic isolated
+  and sets the pattern for future tabs.
+
+### Fixed
+- **Raw JSON rendered as DOM content in Error Logs table.** `data-detail` with
+  JSON-stringified stack traces broke HTML attribute parsing (browser terminated
+  the attribute mid-value, rendering the rest as visible text) even after
+  `escAttr` escaping. Replaced with index-based lookup: entries stored in
+  `logsState.entries[]`, rows use `onclick="showLogDetailByIndex(i)"`.
+- **Admin panel content overflowing viewport width.** `</main>` was placed after
+  the Settings tab; Notifications, Socials, Support and Logs tabs were flex
+  siblings of `<main>` under `body { display: flex }`, losing width constraints.
+  Moved `</main>` to after the Logs tab section.
+- **Duplicate helper functions** — merged `fmtBytes` / `escapeHtml` duplicates in
+  admin and conference pages; removed dead code paths.
+
+### Security
+- **22 Dependabot alerts patched** across mediasoup, multer, express and transitive
+  dependencies. All 8 high-severity and 8 medium-severity advisories resolved.
+
+### Performance
+- **Docker image optimisation** — Nginx frontend image trimmed (~30 % smaller);
+  static assets served with `Cache-Control: max-age=31536000, immutable` for
+  versioned files.
+
 ## [1.3.0-beta] — 2026-06-20
 
 ### Added
@@ -179,7 +230,8 @@ Baseline release (pre-changelog). Summarized from history.
   timestamps), public/private conferences, participant tracking.
 - Admin panel, avatar upload, and client-side error logging to `/api/logs`.
 
-[Unreleased]: https://github.com/axl214v/Meetify/compare/v1.3.0-beta...HEAD
+[Unreleased]: https://github.com/axl214v/Meetify/compare/v1.4.0-beta...HEAD
+[1.4.0-beta]: https://github.com/axl214v/Meetify/compare/v1.3.0-beta...v1.4.0-beta
 [1.3.0-beta]: https://github.com/axl214v/Meetify/compare/v1.2.0-beta...v1.3.0-beta
 [1.2.0-beta]: https://github.com/axl214v/Meetify/compare/v1.1.0-beta...v1.2.0-beta
 [1.1.0-beta]: https://github.com/axl214v/Meetify/releases/tag/v1.1.0-beta

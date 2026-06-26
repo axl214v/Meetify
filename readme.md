@@ -11,7 +11,7 @@
     <a href="https://github.com/axl214v/Meetify/discussions">Discussions</a>
   </p>
 
-  [![Version](https://img.shields.io/badge/version-1.2.0--beta-blue)](version.txt)
+  [![Version](https://img.shields.io/badge/version-1.4.0--beta-blue)](version.txt)
   [![License](https://img.shields.io/badge/license-Polyform%20Noncommercial-orange)](LICENSE.md)
   [![Node.js](https://img.shields.io/badge/node-%3E%3D22-brightgreen)](https://nodejs.org/)
   [![Docker](https://img.shields.io/badge/Docker-Compose-blue)](https://www.docker.com/)
