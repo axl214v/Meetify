@@ -130,7 +130,7 @@
         font-size="13" font-weight="400" fill="#64748b">mediasoup on dedicated VPS</text>
   <text x="888" y="190"
         font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
-        font-size="13" font-weight="400" fill="#64748b">auto-deployed via deploy.sh</text>
+        font-size="13" font-weight="400" fill="#64748b">SFU_SHARED_SECRET auth · ports 40000–40059</text>
 
   <!-- Card 2 — Error Logs tab -->
   <rect x="808" y="252" width="400" height="132" rx="14"
@@ -153,24 +153,22 @@
         font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
         font-size="13" font-weight="400" fill="#64748b">separate module, filterable</text>
 
-  <!-- Card 3 — Status monitoring -->
+  <!-- Card 3 — Performance -->
   <rect x="808" y="408" width="400" height="132" rx="14"
         fill="#0d1829" stroke="#1e3a5f" stroke-width="1" filter="url(#cardShadow)"/>
   <rect x="808" y="408" width="4" height="132" rx="2" fill="url(#brand)"/>
 
   <circle cx="852" cy="474" r="24" fill="#0f2240"/>
-  <!-- pulse / status dot icon -->
-  <circle cx="852" cy="474" r="8" fill="none" stroke="#10b981" stroke-width="2"/>
-  <circle cx="852" cy="474" r="3" fill="#10b981"/>
-  <circle cx="852" cy="474" r="14" fill="none" stroke="#10b981" stroke-width="1" opacity="0.35"/>
+  <!-- lightning bolt icon -->
+  <polygon points="857,452 845,474 854,474 847,496 863,470 854,470" fill="#3b82f6"/>
 
   <text x="888" y="460"
         font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
-        font-size="18" font-weight="700" fill="white">Status Monitoring</text>
+        font-size="18" font-weight="700" fill="white">Performance</text>
   <text x="888" y="482"
         font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
-        font-size="13" font-weight="400" fill="#64748b">health.meetify.cc strip on landing</text>
+        font-size="13" font-weight="400" fill="#64748b">self-hosted socket.io · font preloads</text>
   <text x="888" y="502"
         font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
-        font-size="13" font-weight="400" fill="#64748b">22 Dependabot alerts patched</text>
+        font-size="13" font-weight="400" fill="#64748b">nginx immutable cache · Docker −11 MB</text>
 </svg>
