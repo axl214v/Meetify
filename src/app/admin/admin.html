@@ -55,6 +55,10 @@
                 <span class="nav-icon">◇</span>
                 <span>Support</span>
             </button>
+            <button class="nav-item" data-tab="logs">
+                <span class="nav-icon">⬡</span>
+                <span>Error Logs</span>
+            </button>
         </nav>
 
         <div class="sidebar-footer">
@@ -468,7 +472,6 @@
                 </div>
             </div>
         </section>
-    </main>
 
         <!-- ── NOTIFICATIONS ── -->
         <section class="tab-panel" id="tab-notifications">
@@ -676,6 +679,127 @@
             </div>
         </section>
 
+        <!-- ── ERROR LOGS ── -->
+        <section class="tab-panel" id="tab-logs">
+            <header class="panel-header">
+                <div>
+                    <h1>Error Logs</h1>
+                    <p class="panel-sub">Client-side error statistics and log viewer</p>
+                </div>
+                <div class="header-controls">
+                    <button class="btn-refresh" id="refreshLogs">↻ Refresh</button>
+                    <button class="btn-danger-outline" id="clearLogsBtn">Clear Logs</button>
+                </div>
+            </header>
+
+            <!-- Stat cards -->
+            <div class="stat-grid logs-stat-grid" id="logsStatsArea">
+                <div class="stat-card">
+                    <div class="stat-label">Total Errors</div>
+                    <div class="stat-value" id="logStatTotal">—</div>
+                </div>
+                <div class="stat-card" style="--accent:#ef4444">
+                    <div class="stat-label">Errors</div>
+                    <div class="stat-value" id="logStatError">—</div>
+                </div>
+                <div class="stat-card" style="--accent:#f59e0b">
+                    <div class="stat-label">Warnings</div>
+                    <div class="stat-value" id="logStatWarn">—</div>
+                </div>
+                <div class="stat-card" style="--accent:#38bdf8">
+                    <div class="stat-label">Info</div>
+                    <div class="stat-value" id="logStatInfo">—</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Last Event</div>
+                    <div class="stat-value" id="logStatUpdated" style="font-size:15px">—</div>
+                </div>
+            </div>
+
+            <!-- Two-column: type breakdown + date sparkline -->
+            <div class="logs-two-col">
+                <div class="panel-card">
+                    <h3 class="panel-card-title">By Type</h3>
+                    <div id="logTypeBreakdown" class="log-type-list"></div>
+                </div>
+                <div class="panel-card">
+                    <h3 class="panel-card-title">Last 14 Days</h3>
+                    <div id="logDateChart"></div>
+                </div>
+            </div>
+
+            <!-- Top errors -->
+            <div class="panel-card" style="margin-top:16px">
+                <h3 class="panel-card-title">Top Errors</h3>
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Message</th>
+                                <th>Type</th>
+                                <th>Severity</th>
+                                <th>Count</th>
+                                <th>Last Seen</th>
+                            </tr>
+                        </thead>
+                        <tbody id="topErrorsBody">
+                            <tr><td colspan="5" class="logs-empty-cell">Loading…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Log list with filters -->
+            <div class="panel-card" style="margin-top:16px">
+                <div class="logs-filter-row">
+                    <h3 class="panel-card-title" style="margin:0;white-space:nowrap">Recent Errors</h3>
+                    <div class="logs-filters">
+                        <select class="setting-input logs-filter-input" id="logFilterSev">
+                            <option value="">All severities</option>
+                            <option value="error">Error</option>
+                            <option value="warning">Warning</option>
+                            <option value="info">Info</option>
+                        </select>
+                        <input class="setting-input logs-filter-input" type="date" id="logFilterDate">
+                        <input class="setting-input logs-filter-input" type="text" id="logFilterType" placeholder="Type filter…" maxlength="64">
+                        <button class="btn-refresh" onclick="applyLogFilters()">Apply</button>
+                        <button class="btn-secondary" onclick="clearLogFilters()">Reset</button>
+                        <span class="logs-count" id="logsTotalCount"></span>
+                    </div>
+                </div>
+                <div class="table-wrap" style="margin-top:12px">
+                    <table class="data-table logs-table">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Sev</th>
+                                <th>Type</th>
+                                <th>Message</th>
+                                <th>Page</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logsTableBody">
+                            <tr><td colspan="5" class="logs-empty-cell">Loading…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Log Detail Modal -->
+    <div class="modal-overlay" id="logDetailModal" onclick="if(event.target===this)closeLogDetail()">
+        <div class="modal" style="max-width:680px;width:92%">
+            <div class="modal-icon">🔍</div>
+            <h3>Error Detail</h3>
+            <pre id="logDetailPre" style="text-align:left;font-size:12px;background:var(--bg2);border-radius:8px;padding:16px;overflow:auto;max-height:340px;white-space:pre-wrap;word-break:break-all;margin:12px 0 0"></pre>
+            <div class="modal-actions" style="margin-top:12px">
+                <button class="btn-cancel" onclick="closeLogDetail()">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Confirm Modal -->
     <div class="modal-overlay" id="confirmModal">
         <div class="modal">
@@ -694,6 +818,7 @@
 
     <script src="/js/theme.js"></script>
     <script src="admin.js"></script>
+    <script src="admin-logs.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="/js/notifications.js"></script>
 </body>

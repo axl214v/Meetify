@@ -86,6 +86,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('ticketStatusFilter').addEventListener('change', loadAdminTickets);
     document.getElementById('addSocialBtn').addEventListener('click',   addSocialLink);
     document.getElementById('refreshSocials').addEventListener('click', loadSocials);
+    document.getElementById('refreshLogs').addEventListener('click',    () => { logsState.loaded = false; loadLogsTab(); });
+    document.getElementById('clearLogsBtn').addEventListener('click',   confirmClearLogs);
     document.getElementById('socialPreset').addEventListener('change',  e => {
         const preset = SOCIAL_PRESETS[e.target.value];
         if (!preset) return;
@@ -147,6 +149,7 @@ function switchTab(tab) {
     if (tab === 'notifications')  loadNotifications();
     if (tab === 'socials')        loadSocials();
     if (tab === 'support')        loadAdminTickets();
+    if (tab === 'logs')           { if (!logsState.loaded) loadLogsTab(); }
 }
 
 function setupNav() {}  // placeholder — tabs wired in DOMContentLoaded
