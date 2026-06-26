@@ -432,3 +432,41 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
     }
     *{scroll-behavior:auto!important}
 }
+
+/* ── Status strip ────────────────────────────────────── */
+.status-strip{
+    border-top:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+    padding:14px 32px;
+}
+.status-strip-inner{
+    display:inline-flex;align-items:center;gap:8px;
+    text-decoration:none;
+    color:var(--text-3);font-size:13px;
+    transition:color .15s;
+    border-radius:20px;
+    padding:6px 14px;
+    border:1px solid transparent;
+    transition:all .2s;
+}
+.status-strip-inner:hover{
+    color:var(--text-2);
+    border-color:var(--border);
+    background:rgba(255,255,255,.03);
+}
+.status-strip-dot{
+    width:7px;height:7px;border-radius:50%;
+    background:#10b981;flex-shrink:0;
+    box-shadow:0 0 6px rgba(16,185,129,.5);
+    animation:pulse-green 2s ease-in-out infinite;
+}
+.status-strip-label{color:var(--text-2);font-weight:500}
+.status-strip-sep{font-size:10px}
+.status-strip-url{font-family:var(--font-mono,monospace);font-size:12px}
+.status-strip-arrow{opacity:.5;flex-shrink:0;transition:opacity .15s,transform .15s}
+.status-strip-inner:hover .status-strip-arrow{opacity:1;transform:translate(2px,-2px)}
+
+@keyframes pulse-green{
+    0%,100%{box-shadow:0 0 6px rgba(16,185,129,.5)}
+    50%{box-shadow:0 0 12px rgba(16,185,129,.8)}
+}
