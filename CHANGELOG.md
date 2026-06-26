@@ -21,11 +21,6 @@ _Nothing yet._
   signaling to the SFU over HTTP authenticated by `SFU_SHARED_SECRET`; RTP media
   flows directly between clients and the SFU on ports 40000–40059, eliminating the
   server-transit bottleneck for group calls.
-- **Automated SFU deployment** in `deploy.sh` (step 6). rsync's `src/sfu_server/`
-  to the `meetify-mail` VPS, auto-detects its public IP, creates/updates `.env`
-  with `MEDIASOUP_ANNOUNCED_IP` and `SFU_SHARED_SECRET`, installs Docker if absent,
-  builds the image, and writes `SFU_SERVER_URL` back to the main server's `.env`
-  before restarting the backend.
 - **Admin — Error Logs tab** (`admin/admin-logs.js`). Separate JS module (not
   inlined in `admin.js`) with five stat cards (total / errors / warnings / info /
   last event), per-type breakdown bars, a 14-day sparkline chart, a top-15
@@ -60,9 +55,21 @@ _Nothing yet._
   dependencies. All 8 high-severity and 8 medium-severity advisories resolved.
 
 ### Performance
-- **Docker image optimisation** — Nginx frontend image trimmed (~30 % smaller);
-  static assets served with `Cache-Control: max-age=31536000, immutable` for
-  versioned files.
+- **socket.io self-hosted** on all 7 pages that previously loaded it from
+  `cdnjs.cloudflare.com`. The file is now served as `/socket.io/socket.io.js`
+  directly from the backend — one fewer external dependency, no CDN round-trip,
+  works fully offline.
+- **Font preload hints** added to the landing page and all auth pages
+  (`<link rel="preload" … as="font">`). Outfit woff2 starts downloading in
+  parallel with CSS, eliminating the flash of system-ui on first visit.
+- **Nginx caching** — images and fonts bumped from `max-age=3600` to
+  `max-age=31536000, immutable`; gzip level raised to 6, SVG added to
+  `gzip_types`, `gzip_proxied any` enabled. Security headers (`X-Frame-Options`,
+  `X-Content-Type-Options`, etc.) propagated to all child location blocks
+  (Nginx wipes parent `add_header` directives in child blocks — fixed).
+- **Docker image trimmed** — `js/node_modules` (9.2 MB), `Conf/node_modules`
+  (1.4 MB) and the unused `assets/logo_small.png` (868 KB) excluded via
+  `.dockerignore`, reducing the Nginx image by ~11 MB.
 
 ## [1.3.0-beta] — 2026-06-20
 
