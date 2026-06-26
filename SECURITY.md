@@ -8,8 +8,8 @@ there are no long-term support branches yet. Always run the most recent version
 
 | Version | Supported |
 | ------- | --------- |
-| 1.3.x-beta (latest) | ✅ |
-| < 1.3.0-beta | ❌ — please upgrade |
+| 1.4.x-beta (latest) | ✅ |
+| < 1.4.0-beta | ❌ — please upgrade |
 
 ## Reporting a Vulnerability
 
@@ -46,6 +46,9 @@ Please give us reasonable time to release a fix before any public disclosure
   `auth_request`; admin APIs require `role = admin`.
 - **Input handling** — server-side validation on API routes; client-side HTML
   escaping to mitigate XSS.
+- **SFU authentication** — the standalone SFU server (`src/sfu_server`) requires
+  a shared secret (`SFU_SHARED_SECRET`) on every request from the main backend;
+  direct client access to the SFU HTTP API is rejected.
 
 ## Known Limitations (by design / not yet implemented)
 
@@ -63,10 +66,16 @@ These are documented, not secrets — please factor them into your deployment:
   not persisted and resets when a room empties; there is no audit log.
 - **mediasoup media ports (40000–40059)** must be firewalled to the intended
   audience; `MEDIASOUP_ANNOUNCED_IP` must point at the correct reachable address.
+- **Standalone SFU exposes the server's IP** via WebRTC ICE candidates. If the
+  SFU runs on a dedicated VPS this is expected; ensure `MEDIASOUP_ANNOUNCED_IP`
+  is set to that VPS's public IP, not the main server's.
+- **SFU HTTP API is not TLS-terminated by default.** Traffic between the main
+  server and the SFU travels over plain HTTP inside a trusted network; expose the
+  SFU port (3001) only to the main server, not publicly.
 
 ## Scope
 
-In scope: the Meetify backend (`src/server_js`), frontend (`src/app`), and the
-Docker/Nginx configuration in this repository. Out of scope: third-party
-dependencies (report upstream), and issues that require a pre-compromised host or
-privileged local access.
+In scope: the Meetify backend (`src/server_js`), standalone SFU (`src/sfu_server`),
+frontend (`src/app`), and the Docker/Nginx configuration in this repository.
+Out of scope: third-party dependencies (report upstream), and issues that require
+a pre-compromised host or privileged local access.
