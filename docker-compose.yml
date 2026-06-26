@@ -36,9 +36,6 @@ services:
     restart: unless-stopped
     ports:
       - "${PORT:-3000}:3000"
-      # mediasoup RTC media ports (UDP + TCP fallback for Docker Desktop)
-      - "40000-40059:40000-40059/udp"
-      - "40000-40059:40000-40059/tcp"
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       HOST: '0.0.0.0'
@@ -69,11 +66,10 @@ services:
       # Conference limits
       MAX_CONFERENCE_PARTICIPANTS: ${MAX_CONFERENCE_PARTICIPANTS:-50}
 
-      # mediasoup SFU — set MEDIASOUP_ANNOUNCED_IP to your public/LAN IP in production
-      MEDIASOUP_ANNOUNCED_IP: ${MEDIASOUP_ANNOUNCED_IP:-127.0.0.1}
-      MEDIASOUP_MIN_PORT: ${MEDIASOUP_MIN_PORT:-40000}
-      MEDIASOUP_MAX_PORT: ${MEDIASOUP_MAX_PORT:-40059}
-      
+      # SFU server (mediasoup on a separate VPS)
+      SFU_SERVER_URL: ${SFU_SERVER_URL:-}
+      SFU_SHARED_SECRET: ${SFU_SHARED_SECRET:-change_me_sfu_secret}
+
     volumes:
       # Don't mount src for production, files are copied in Dockerfile
       - server_logs:/app/logs

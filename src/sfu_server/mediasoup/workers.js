@@ -1,5 +1,5 @@
 const mediasoup = require('mediasoup');
-const config    = require('../config/config');
+const config    = require('../config');
 
 const workers = [];
 let workerIdx = 0;
@@ -9,13 +9,13 @@ const mediaCodecs = [
         kind:      'audio',
         mimeType:  'audio/opus',
         clockRate: 48000,
-        channels:  2,   // router supports stereo; client constrains to mono on weak links
+        channels:  2,
     },
     {
         kind:       'video',
         mimeType:   'video/VP9',
         clockRate:  90000,
-        parameters: { 'profile-id': 0 }   // VP9 baseline profile — widest browser support
+        parameters: { 'profile-id': 0 }
     },
     {
         kind:      'video',
@@ -28,8 +28,7 @@ async function createWorkers() {
     const n = config.mediasoup.numWorkers;
     console.log(`[mediasoup] Starting ${n} worker(s)...`);
     for (let i = 0; i < n; i++) {
-        const w = await spawnWorker(i);
-        workers.push(w);
+        workers.push(await spawnWorker(i));
     }
     console.log(`[mediasoup] ${workers.length} worker(s) ready`);
 }

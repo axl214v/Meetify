@@ -52,6 +52,7 @@ function applyVideoFlip() {
 let conferenceMode = 'p2p';
 
 // SFU state (only used for Group calls)
+let sfuSocket        = null;
 let sfuDevice        = null;
 let sfuSendTransport = null;
 let sfuRecvTransport = null;
@@ -724,7 +725,7 @@ async function toggleScreenShare() {
             if (conferenceMode === 'sfu') {
                 // SFU: close camera producer, produce screen track
                 if (sfuProducers.video) {
-                    socket.emit('sfu:close-producer', { producerId: sfuProducers.video.id });
+                    sfuSocket?.emit('sfu:close-producer', { producerId: sfuProducers.video.id });
                     sfuProducers.video.close();
                     delete sfuProducers.video;
                 }
@@ -765,7 +766,7 @@ async function stopScreenShare() {
     if (conferenceMode === 'sfu') {
         // SFU: close screen producer, re-produce camera
         if (sfuProducers.screen) {
-            socket.emit('sfu:close-producer', { producerId: sfuProducers.screen.id });
+            sfuSocket?.emit('sfu:close-producer', { producerId: sfuProducers.screen.id });
             sfuProducers.screen.close();
             delete sfuProducers.screen;
         }
@@ -944,6 +945,8 @@ function cleanupSfu() {
     Object.values(sfuConsumers).forEach(c => { try { c?.close(); } catch {} });
     try { sfuSendTransport?.close(); } catch {}
     try { sfuRecvTransport?.close(); } catch {}
+    try { sfuSocket?.disconnect(); } catch {}
+    sfuSocket = null;
 }
 
 function cleanupAndRedirect(reason) {
@@ -1068,6 +1071,10 @@ function socketAck(event, data) {
     return new Promise(resolve => socket.emit(event, data, resolve));
 }
 
+function sfuSocketAck(event, data) {
+    return new Promise(resolve => sfuSocket.emit(event, data, resolve));
+}
+
 function waitForMediasoup(timeout = 8000) {
     // Already ready (loaded or failed)
     if (window.MediasoupDevice || _msoupReadyFired) return Promise.resolve();
@@ -1084,24 +1091,40 @@ async function initSfu() {
         return;
     }
 
+    // 0. Get SFU server address + short-lived token from main backend
+    const { url: sfuUrl, token: sfuToken, error: cfgErr } =
+        await socketAck('sfu:get-server-config', { conferenceId });
+    if (cfgErr) throw new Error(`SFU config error: ${cfgErr}`);
+
+    // Connect directly to the SFU server
+    sfuSocket = window.io(sfuUrl, {
+        auth:       { token: sfuToken },
+        transports: ['websocket'],
+        path:       '/sfu/'
+    });
+    await new Promise((resolve, reject) => {
+        sfuSocket.once('connect', resolve);
+        sfuSocket.once('connect_error', err => reject(new Error(`SFU connect failed: ${err.message}`)));
+    });
+
     sfuDevice = new window.MediasoupDevice();
 
     // 1. Get router RTP capabilities and load device
-    const { rtpCapabilities, error: capErr } = await socketAck('sfu:get-rtp-capabilities', { conferenceId });
+    const { rtpCapabilities, error: capErr } = await sfuSocketAck('sfu:get-rtp-capabilities', { conferenceId });
     if (capErr) throw new Error(capErr);
     await sfuDevice.load({ routerRtpCapabilities: rtpCapabilities });
 
     // 2. Create send transport and wire its events before producing
-    const sendParams = await socketAck('sfu:create-transport', { conferenceId });
+    const sendParams = await sfuSocketAck('sfu:create-transport', { conferenceId });
     if (sendParams.error) throw new Error(sendParams.error);
 
     sfuSendTransport = sfuDevice.createSendTransport(sendParams);
     sfuSendTransport.on('connect', ({ dtlsParameters }, cb, eb) => {
-        socketAck('sfu:connect-transport', { transportId: sfuSendTransport.id, dtlsParameters })
+        sfuSocketAck('sfu:connect-transport', { transportId: sfuSendTransport.id, dtlsParameters })
             .then(() => cb()).catch(eb);
     });
     sfuSendTransport.on('produce', async ({ kind, rtpParameters, appData }, cb, eb) => {
-        const { id, error } = await socketAck('sfu:produce', {
+        const { id, error } = await sfuSocketAck('sfu:produce', {
             transportId: sfuSendTransport.id, kind, rtpParameters, appData
         });
         if (error) return eb(new Error(error));
@@ -1115,32 +1138,30 @@ async function initSfu() {
     if (videoTrack) sfuProducers.video = await sfuSendTransport.produce({ track: videoTrack });
 
     // 4. Create recv transport and wire connect event before consuming
-    const recvParams = await socketAck('sfu:create-transport', { conferenceId });
+    const recvParams = await sfuSocketAck('sfu:create-transport', { conferenceId });
     if (recvParams.error) throw new Error(recvParams.error);
 
     sfuRecvTransport = sfuDevice.createRecvTransport(recvParams);
     sfuRecvTransport.on('connect', ({ dtlsParameters }, cb, eb) => {
-        socketAck('sfu:connect-transport', { transportId: sfuRecvTransport.id, dtlsParameters })
+        sfuSocketAck('sfu:connect-transport', { transportId: sfuRecvTransport.id, dtlsParameters })
             .then(() => cb()).catch(eb);
     });
 
     // 5. Consume all existing producers in the room
-    const { producers } = await socketAck('sfu:get-producers', { conferenceId });
+    const { producers } = await sfuSocketAck('sfu:get-producers', { conferenceId });
     for (const info of producers) await sfuConsume(info);
 
     // 6. React to new producers (others who join later or start screen share)
-    socket.on('sfu:new-producer', async info => { await sfuConsume(info); });
+    sfuSocket.on('sfu:new-producer', async info => { await sfuConsume(info); });
 
-    // 7. Handle producers closed remotely (user left or stopped screen share).
-    //    sfuProdInfo stores consumerId so we can find and remove the exact track.
-    socket.on('sfu:producer-closed', ({ producerId }) => {
+    // 7. Handle producers closed remotely (user left or stopped screen share)
+    sfuSocket.on('sfu:producer-closed', ({ producerId }) => {
         const info = sfuProdInfo[producerId];
         if (!info) return;
 
         const { userId, consumerId } = info;
         delete sfuProdInfo[producerId];
 
-        // Remove the specific track from the user's stream
         const consumer = sfuConsumers[consumerId];
         const stream   = remoteStreams[userId];
         if (consumer && stream && consumer.track) {
@@ -1148,7 +1169,6 @@ async function initSfu() {
         }
         if (consumer) { consumer.close(); delete sfuConsumers[consumerId]; }
 
-        // Remove tile only if the user has no remaining producers
         const stillHasProducer = Object.values(sfuProdInfo).some(pi => pi.userId === userId);
         if (!stillHasProducer) {
             document.getElementById(`video-${userId}`)?.remove();
@@ -1159,11 +1179,10 @@ async function initSfu() {
         }
     });
 
-    // 8. Handle consumer closed server-side (e.g. producer paused then transport closed)
-    socket.on('sfu:consumer-closed', ({ consumerId }) => {
+    // 8. Handle consumer closed server-side
+    sfuSocket.on('sfu:consumer-closed', ({ consumerId }) => {
         const consumer = sfuConsumers[consumerId];
         if (!consumer) return;
-        // Find which producer this consumer belonged to and clean up its track
         const prodEntry = Object.entries(sfuProdInfo).find(([, i]) => i.consumerId === consumerId);
         if (prodEntry) {
             const [producerId, info] = prodEntry;
@@ -1179,7 +1198,7 @@ async function initSfu() {
 async function sfuConsume({ producerId, userId, userName, kind }) {
     if (!sfuDevice.canConsume({ producerId, rtpCapabilities: sfuDevice.rtpCapabilities })) return;
 
-    const params = await socketAck('sfu:consume', {
+    const params = await sfuSocketAck('sfu:consume', {
         transportId:     sfuRecvTransport.id,
         producerId,
         rtpCapabilities: sfuDevice.rtpCapabilities,
@@ -1189,11 +1208,9 @@ async function sfuConsume({ producerId, userId, userName, kind }) {
 
     const consumer = await sfuRecvTransport.consume(params);
     sfuConsumers[consumer.id] = consumer;
-    // Store consumerId so we can find the exact track when the producer closes
     sfuProdInfo[producerId] = { userId, userName, kind, consumerId: consumer.id };
 
-    // Resume (server starts consumers paused)
-    await socketAck('sfu:resume-consumer', { consumerId: consumer.id });
+    await sfuSocketAck('sfu:resume-consumer', { consumerId: consumer.id });
 
     // Group audio+video into one MediaStream per user, then render (or update) their tile
     if (!remoteStreams[userId]) remoteStreams[userId] = new MediaStream();

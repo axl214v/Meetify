@@ -1,23 +1,12 @@
-const { createRouter, getWebRtcTransportOptions } = require('../sfu/mediasoup');
+const { createRouter, getWebRtcTransportOptions } = require('../mediasoup/workers');
 
-// Per-room mediasoup Router
-const routers = new Map();      // conferenceId -> router
-
-// Per-socket peer state
-const peers = new Map();        // socketId -> { transports, producers, consumers }
-
-// Per-room producer registry (for discovery when new peer joins)
+const routers      = new Map(); // conferenceId -> router
+const peers        = new Map(); // socketId -> { transports, producers, consumers }
 const roomProducers = new Map(); // conferenceId -> Map<producerId, {userId,userName,kind,appData}>
-
-// ── Helpers ────────────────────────────────────────────────────────────
 
 function getPeer(socketId) {
     if (!peers.has(socketId)) {
-        peers.set(socketId, {
-            transports: new Map(),
-            producers:  new Map(),
-            consumers:  new Map()
-        });
+        peers.set(socketId, { transports: new Map(), producers: new Map(), consumers: new Map() });
     }
     return peers.get(socketId);
 }
@@ -31,14 +20,14 @@ async function getOrCreateRouter(conferenceId) {
     return routers.get(conferenceId);
 }
 
-// ── Register handlers on a socket ──────────────────────────────────────
+function registerSfuHandlers(io, socket) {
+    const { userId, userName, conferenceId } = socket.user;
 
-async function registerSfuHandlers(io, socket, socketUsers) {
+    socket.join(`conference-${conferenceId}`);
 
-    // Client asks for router RTP capabilities so it can load its Device
-    socket.on('sfu:get-rtp-capabilities', async ({ conferenceId }, ack) => {
+    socket.on('sfu:get-rtp-capabilities', async ({ conferenceId: confId }, ack) => {
         try {
-            const router = await getOrCreateRouter(conferenceId);
+            const router = await getOrCreateRouter(confId);
             ack({ rtpCapabilities: router.rtpCapabilities });
         } catch (err) {
             console.error('[SFU] get-rtp-capabilities:', err.message);
@@ -46,18 +35,12 @@ async function registerSfuHandlers(io, socket, socketUsers) {
         }
     });
 
-    // Create a WebRTC transport (send or recv)
-    socket.on('sfu:create-transport', async ({ conferenceId }, ack) => {
+    socket.on('sfu:create-transport', async ({ conferenceId: confId }, ack) => {
         try {
-            const router    = await getOrCreateRouter(conferenceId);
+            const router    = await getOrCreateRouter(confId);
             const transport = await router.createWebRtcTransport(getWebRtcTransportOptions());
-
-            transport.on('dtlsstatechange', state => {
-                if (state === 'closed') transport.close();
-            });
-
+            transport.on('dtlsstatechange', state => { if (state === 'closed') transport.close(); });
             getPeer(socket.id).transports.set(transport.id, transport);
-
             ack({
                 id:             transport.id,
                 iceParameters:  transport.iceParameters,
@@ -70,7 +53,6 @@ async function registerSfuHandlers(io, socket, socketUsers) {
         }
     });
 
-    // Client connects a transport after ICE/DTLS negotiation
     socket.on('sfu:connect-transport', async ({ transportId, dtlsParameters }, ack) => {
         try {
             const transport = peers.get(socket.id)?.transports.get(transportId);
@@ -83,7 +65,6 @@ async function registerSfuHandlers(io, socket, socketUsers) {
         }
     });
 
-    // Client starts producing (audio or video)
     socket.on('sfu:produce', async ({ transportId, kind, rtpParameters, appData }, ack) => {
         try {
             const peer      = peers.get(socket.id);
@@ -94,17 +75,12 @@ async function registerSfuHandlers(io, socket, socketUsers) {
             peer.producers.set(producer.id, producer);
             producer.on('transportclose', () => producer.close());
 
-            // Register in room and notify others
-            const user = socketUsers.get(socket.id);
-            if (user) {
-                const { conferenceId, userId, userName } = user;
-                if (!roomProducers.has(conferenceId)) roomProducers.set(conferenceId, new Map());
-                roomProducers.get(conferenceId).set(producer.id, { userId, userName, kind, appData: appData || {} });
+            if (!roomProducers.has(conferenceId)) roomProducers.set(conferenceId, new Map());
+            roomProducers.get(conferenceId).set(producer.id, { userId, userName, kind, appData: appData || {} });
 
-                socket.to(`conference-${conferenceId}`).emit('sfu:new-producer', {
-                    producerId: producer.id, userId, userName, kind, appData: appData || {}
-                });
-            }
+            socket.to(`conference-${conferenceId}`).emit('sfu:new-producer', {
+                producerId: producer.id, userId, userName, kind, appData: appData || {}
+            });
 
             ack({ id: producer.id });
         } catch (err) {
@@ -113,15 +89,13 @@ async function registerSfuHandlers(io, socket, socketUsers) {
         }
     });
 
-    // Return existing producers in the room (called on join, to consume already-present streams)
-    socket.on('sfu:get-producers', ({ conferenceId }, ack) => {
+    socket.on('sfu:get-producers', ({ conferenceId: confId }, ack) => {
         try {
-            const myUserId  = socketUsers.get(socket.id)?.userId;
             const producers = [];
-            const room      = roomProducers.get(conferenceId);
+            const room = roomProducers.get(confId);
             if (room) {
                 for (const [producerId, info] of room) {
-                    if (info.userId !== myUserId) producers.push({ producerId, ...info });
+                    if (info.userId !== userId) producers.push({ producerId, ...info });
                 }
             }
             ack({ producers });
@@ -131,10 +105,9 @@ async function registerSfuHandlers(io, socket, socketUsers) {
         }
     });
 
-    // Client wants to consume a remote producer
-    socket.on('sfu:consume', async ({ transportId, producerId, rtpCapabilities, conferenceId }, ack) => {
+    socket.on('sfu:consume', async ({ transportId, producerId, rtpCapabilities, conferenceId: confId }, ack) => {
         try {
-            const router = routers.get(conferenceId);
+            const router = routers.get(confId);
             if (!router) return ack({ error: 'Router not found' });
             if (!router.canConsume({ producerId, rtpCapabilities })) return ack({ error: 'Cannot consume' });
 
@@ -144,7 +117,6 @@ async function registerSfuHandlers(io, socket, socketUsers) {
 
             const consumer = await transport.consume({ producerId, rtpCapabilities, paused: true });
             peer.consumers.set(consumer.id, consumer);
-
             consumer.on('transportclose', () => consumer.close());
             consumer.on('producerclose', () => {
                 consumer.close();
@@ -165,7 +137,6 @@ async function registerSfuHandlers(io, socket, socketUsers) {
         }
     });
 
-    // Client resumes a consumer (after calling consume)
     socket.on('sfu:resume-consumer', async ({ consumerId }, ack) => {
         try {
             const consumer = peers.get(socket.id)?.consumers.get(consumerId);
@@ -178,36 +149,29 @@ async function registerSfuHandlers(io, socket, socketUsers) {
         }
     });
 
-    // Client closes one of its producers (e.g. screen-share stop)
     socket.on('sfu:close-producer', ({ producerId }, ack) => {
         try {
             const peer     = peers.get(socket.id);
             const producer = peer?.producers.get(producerId);
             if (producer) { producer.close(); peer.producers.delete(producerId); }
-
-            const user = socketUsers.get(socket.id);
-            if (user) {
-                roomProducers.get(user.conferenceId)?.delete(producerId);
-                socket.to(`conference-${user.conferenceId}`).emit('sfu:producer-closed', { producerId });
-            }
+            roomProducers.get(conferenceId)?.delete(producerId);
+            socket.to(`conference-${conferenceId}`).emit('sfu:producer-closed', { producerId });
             if (typeof ack === 'function') ack({});
         } catch (err) {
             console.error('[SFU] close-producer:', err.message);
             if (typeof ack === 'function') ack({ error: err.message });
         }
     });
+
+    socket.on('disconnect', () => cleanupPeer(socket));
 }
 
-// ── Cleanup when a peer disconnects or leaves ──────────────────────────
-
-function cleanupPeer(socket, socketUsers) {
+function cleanupPeer(socket) {
     const peer = peers.get(socket.id);
     if (!peer) return;
 
-    const user = socketUsers.get(socket.id);
-    const conferenceId = user?.conferenceId;
+    const conferenceId = socket.user?.conferenceId;
 
-    // Notify room about closed producers before we close transports
     if (conferenceId) {
         for (const producerId of peer.producers.keys()) {
             roomProducers.get(conferenceId)?.delete(producerId);
@@ -215,11 +179,9 @@ function cleanupPeer(socket, socketUsers) {
         }
     }
 
-    // Closing a transport closes all its producers and consumers
     for (const transport of peer.transports.values()) transport.close();
     peers.delete(socket.id);
 
-    // Close the router when the room is now empty
     if (conferenceId) {
         const room = roomProducers.get(conferenceId);
         if (!room || room.size === 0) {
@@ -234,4 +196,4 @@ function cleanupPeer(socket, socketUsers) {
     }
 }
 
-module.exports = { registerSfuHandlers, cleanupPeer };
+module.exports = { registerSfuHandlers };

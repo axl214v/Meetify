@@ -1,5 +1,6 @@
 const Conference = require('../models/Conference');
-const { registerSfuHandlers, cleanupPeer } = require('./sfuSocket');
+const jwt        = require('jsonwebtoken');
+const config     = require('../config/config');
 
 const P2P_MAX = 8;
 
@@ -50,9 +51,6 @@ function handleUserDisconnect(socket, conferenceId) {
         }
     }
 
-    // Clean up SFU transports/producers/consumers for this peer
-    cleanupPeer(socket, socketUsers);
-
     socketUsers.delete(socket.id);
     userSockets.delete(user.userId);
 
@@ -77,9 +75,6 @@ function initializeConferenceSocket(io) {
 
     io.on('connection', (socket) => {
         console.log(`[Socket] Client connected: ${socket.id}`);
-
-        // Register mediasoup SFU handlers (no-ops for P2P rooms)
-        registerSfuHandlers(io, socket, socketUsers);
 
         // Join Conference
         socket.on('join-conference', async ({ conferenceId, userName }) => {
@@ -254,6 +249,23 @@ function initializeConferenceSocket(io) {
         // Leave Conference
         socket.on('leave-conference', ({ conferenceId }) => {
             handleUserDisconnect(socket, conferenceId);
+        });
+
+        // SFU: issue a short-lived token so the client can connect directly to the SFU server
+        socket.on('sfu:get-server-config', ({ conferenceId: confId }, ack) => {
+            const user = socketUsers.get(socket.id);
+            if (!user || String(user.conferenceId) !== String(confId)) {
+                return ack({ error: 'Not in conference' });
+            }
+            if (!config.sfu.serverUrl) {
+                return ack({ error: 'SFU server not configured' });
+            }
+            const token = jwt.sign(
+                { userId: user.userId, userName: user.userName, conferenceId: user.conferenceId },
+                config.sfu.sharedSecret,
+                { expiresIn: '5m' }
+            );
+            ack({ url: config.sfu.serverUrl, token });
         });
 
         // Disconnect
