@@ -25,3 +25,5 @@ docker-compose.prod.yml
 src/app/nginx.prod.conf
 certs/
 graphify-out/
+src/server_js/
+src/sfu_server/
