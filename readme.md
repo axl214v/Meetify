@@ -64,11 +64,11 @@ Both modes are available from the same conference create form — the host picks
 
 ## Privacy
 
-Meetify is designed to keep data on your server:
+Meetify is designed to keep data off third-party services:
 
 - **No Google Fonts** — Outfit and JetBrains Mono are self-hosted as WOFF2
 - **No external CDN or analytics** — zero third-party requests on page load
-- **Own STUN/TURN** — coturn ships with the stack; WebRTC traffic stays on your infrastructure
+- **Own STUN/TURN** — coturn relays WebRTC traffic without routing it through a third party
 - **No tracking cookies** — a single `httpOnly` session cookie, nothing else
 - **Error telemetry** — JS errors are reported to *your* server only, never to a third party. Fully documented in [PRIVACY.md](PRIVACY.md)
 - **Swiss hosting** on the live instance at meetify.cc (nFADP / GDPR equivalent)
@@ -113,7 +113,6 @@ backend:3000 → MySQL :3306
 
 coturn :3478  → STUN/TURN relay (runs on separate VPS)
 ```
-
 
 ## Roadmap
 
