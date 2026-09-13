@@ -27,3 +27,5 @@ certs/
 graphify-out/
 src/server_js/
 src/sfu_server/
+Docker.md
+QuickStart-Macos.md

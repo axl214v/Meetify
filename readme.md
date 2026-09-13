@@ -1,12 +1,11 @@
 <div align="center">
   <img src="src/app/assets/logo.png" alt="Meetify" height="56" />
 
-  <p><strong>Privacy-focused open-source WebRTC video conferencing</strong><br/>
-  Self-hostable · No third-party services · P2P and SFU modes</p>
+  <p><strong>Privacy-focused WebRTC video conferencing</strong><br/>
+  Open-source client · No third-party services · P2P and SFU modes</p>
 
   <p>
     <a href="https://meetify.cc">meetify.cc</a> &nbsp;·&nbsp;
-    <a href="Docker.md">Self-hosting guide</a> &nbsp;·&nbsp;
     <a href="CHANGELOG.md">Changelog</a> &nbsp;·&nbsp;
     <a href="https://github.com/axl214v/Meetify/discussions">Discussions</a>
   </p>
@@ -21,9 +20,15 @@
 
 ## What is Meetify?
 
-Meetify is a self-hostable video conferencing platform built on WebRTC, Node.js, and Socket.IO. It ships as a three-container Docker stack (Nginx + Node.js + MySQL) and requires no third-party services to run.
+Meetify is a privacy-focused video conferencing platform built on WebRTC. Everything
+that runs in your browser — this repository — is open source, so you can verify
+exactly what the client does: no tracking, no third-party requests, no hidden
+telemetry. The backend, SFU media server, and infrastructure that power the hosted
+service at [meetify.cc](https://meetify.cc) are proprietary and are not distributed
+as part of this repository.
 
-The project started as a personal tool and is now open-sourced for the community.
+The project started as a personal tool and the client was open-sourced for the
+community to audit.
 
 ## Features
 
@@ -79,37 +84,12 @@ Meetify is designed to keep data on your server:
 
 See [SECURITY.md](SECURITY.md) to report a vulnerability.
 
-## Self-Hosting
+## Using Meetify
 
-**Requirements:** Docker + Docker Compose.
-
-```bash
-git clone https://github.com/axl214v/Meetify.git
-cd Meetify
-
-cp .env.example .env   # edit secrets (see below)
-make first-run         # builds images and starts all containers
-```
-
-Open **http://localhost**. macOS users with XAMPP on port 80 — see [QuickStart-Macos.md](QuickStart-Macos.md).
-
-### Minimum `.env` changes
-
-```env
-DB_PASSWORD=your_strong_password
-JWT_SECRET=your_64_byte_hex_secret   # node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
-SERVER_URL=https://your-domain.com
-CLIENT_URL=https://your-domain.com
-
-# For SFU group calls — set to your server's public IP:
-MEDIASOUP_ANNOUNCED_IP=127.0.0.1
-
-# STUN/TURN — already configured to use bundled coturn:
-COTURN_PUBLIC_IP=your-server-ip
-TURN_PASSWORD=your_turn_secret
-```
-
-Full guide including HTTPS, TURN, backups, and troubleshooting: [Docker.md](Docker.md).
+Meetify runs as a hosted service at **[meetify.cc](https://meetify.cc)** — own
+STUN/TURN, Swiss hosting, no third-party requests. There is no public build of the
+backend to self-host; the client in this repository is what your browser actually
+runs when you use it.
 
 ## Technology Stack
 
@@ -134,7 +114,6 @@ backend:3000 → MySQL :3306
 coturn :3478  → STUN/TURN relay (runs on separate VPS)
 ```
 
-Routes, socket events, and schema details: [Docker.md](Docker.md) and `src/server_js/utils/initDatabase.js`.
 
 ## Roadmap
 

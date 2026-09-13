@@ -16,7 +16,7 @@ _Nothing yet._
 ## [1.4.0-beta] — 2026-06-27
 
 ### Added
-- **Standalone SFU server** (`src/sfu_server/`). mediasoup extracted to a dedicated
+- **Standalone SFU server.** mediasoup extracted to a dedicated
   Node.js process that can be deployed on a separate VPS. The main backend proxies
   signaling to the SFU over HTTP authenticated by `SFU_SHARED_SECRET`; RTP media
   flows directly between clients and the SFU on ports 40000–40059, eliminating the
@@ -126,10 +126,11 @@ _Nothing yet._
   `room-participants` socket event; `conf_room.js` populates `rtcConfig` from that
   response instead of hardcoding Google STUN addresses. Changing the STUN/TURN
   endpoint requires only an `.env` update — no frontend rebuild.
-- **Auto-provision coturn in `deploy.sh`.** Step 5 SSHes into `meetify-mail`
-  (62.60.186.59), installs Docker if absent, opens ufw ports, and starts/restarts
-  the coturn container with credentials read from the main server's `.env`.
-  `TURN_PASSWORD` is now generated automatically on first deploy.
+- **Auto-provision coturn in `deploy.sh`.** The deploy script provisions coturn
+  on the dedicated TURN/SFU VPS automatically — installs Docker if absent, opens
+  firewall ports, and starts/restarts the coturn container with credentials read
+  from the main server's `.env`. `TURN_PASSWORD` is now generated automatically
+  on first deploy.
 - **Copyright notice** added to `LICENSE.md`
   (`Copyright © 2024–2026 axl214v. All rights reserved.`).
 - **Repository made public** with branch protection on `main`: PRs require
@@ -137,7 +138,7 @@ _Nothing yet._
   directly.
 
 ### Changed
-- `stunServer.js` defaults point to `62.60.186.59:3478`; TURNS/5349 entry
+- `stunServer.js` defaults point to the dedicated coturn VPS; TURNS/5349 entry
   removed (not running); hardcoded fallback credential removed.
 - `Docker.md` STUN/TURN section rewritten: documents `COTURN_PUBLIC_IP`, Option
   A (same VPS) vs Option B (dedicated VPS for IP privacy), and required firewall
