@@ -47,6 +47,10 @@
                 <span class="nav-icon">◎</span>
                 <span>Notifications</span>
             </button>
+            <button class="nav-item" data-tab="email">
+                <span class="nav-icon">✉</span>
+                <span>Email</span>
+            </button>
             <button class="nav-item" data-tab="socials">
                 <span class="nav-icon">⬡</span>
                 <span>Socials</span>
@@ -419,6 +423,14 @@
                         <input class="setting-input" type="text" id="smtpFrom" placeholder="Meetify <noreply@meetify.cc>">
                     </div>
                     <div class="setting-row">
+                        <label class="setting-label">From name</label>
+                        <input class="setting-input" type="text" id="smtpFromName" placeholder="Meetify" maxlength="100">
+                    </div>
+                    <div class="setting-row">
+                        <label class="setting-label">Reply-To / contact</label>
+                        <input class="setting-input" type="email" id="smtpReplyTo" placeholder="admin@meetify.cc">
+                    </div>
+                    <div class="setting-row">
                         <label class="setting-label">Secure (TLS)</label>
                         <select class="setting-input" id="smtpSecure">
                             <option value="false">No (STARTTLS)</option>
@@ -532,6 +544,82 @@
                         </thead>
                         <tbody id="notifsBody">
                             <tr><td colspan="6" style="text-align:center;color:var(--text2);padding:24px;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── EMAIL BROADCAST ── -->
+        <section class="tab-panel" id="tab-email">
+            <header class="panel-header">
+                <div>
+                    <h1>Email</h1>
+                    <p class="panel-sub">Send an email to all verified users who haven't unsubscribed</p>
+                </div>
+                <span class="card-tag" id="emailAudience">—</span>
+            </header>
+
+            <div class="panel-card">
+                <div class="card-header">
+                    <span>New Email</span>
+                </div>
+                <div class="settings-grid">
+                    <div class="setting-row">
+                        <label class="setting-label">Subject</label>
+                        <input class="setting-input" type="text" id="emailSubject" placeholder="What's new in Meetify" maxlength="255">
+                    </div>
+                    <div class="setting-row"></div>
+                    <div class="setting-row">
+                        <label class="setting-label">Button label (optional)</label>
+                        <input class="setting-input" type="text" id="emailCtaLabel" placeholder="See what's new" maxlength="100">
+                    </div>
+                    <div class="setting-row">
+                        <label class="setting-label">Button URL</label>
+                        <input class="setting-input" type="url" id="emailCtaUrl" placeholder="https://meetify.cc/...">
+                    </div>
+                </div>
+                <div style="margin-top:12px;">
+                    <textarea class="setting-input" id="emailBody" rows="9" maxlength="10000"
+                        placeholder="Write your message. Blank line = new paragraph. Use {{name}} for the recipient's username."
+                        style="width:100%;resize:vertical;font-family:inherit;"></textarea>
+                    <p class="panel-sub" style="margin-top:6px;">Plain text. The logo, signature ("All the best, Meetify team"), contact links and unsubscribe link are added automatically.</p>
+                </div>
+                <div class="settings-actions" style="margin-top:12px;">
+                    <button class="btn-refresh" id="previewEmail">👁 Preview</button>
+                    <button class="btn-refresh" id="testEmailBroadcast">✉ Send test to me</button>
+                    <button class="btn-refresh" id="sendEmailBroadcast">◎ Send to all users</button>
+                </div>
+            </div>
+
+            <div class="panel-card" id="emailPreviewCard" style="display:none;">
+                <div class="card-header">
+                    <span>Preview</span>
+                </div>
+                <iframe id="emailPreviewFrame" title="Email preview" sandbox=""
+                    style="width:100%;height:640px;border:1px solid var(--border);border-radius:8px;background:#020c1a;"></iframe>
+            </div>
+
+            <div class="panel-card">
+                <div class="card-header">
+                    <span>Sent Emails</span>
+                    <button class="btn-refresh" id="refreshEmails" style="font-size:11px;padding:4px 10px;">↻ Reload</button>
+                </div>
+                <div style="overflow-x:auto;max-width:100%;">
+                    <table class="data-table full" id="emailsTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Subject</th>
+                                <th>Status</th>
+                                <th>Recipients</th>
+                                <th>Sent</th>
+                                <th>Failed</th>
+                                <th>Sent by</th>
+                            </tr>
+                        </thead>
+                        <tbody id="emailsBody">
+                            <tr><td colspan="7" style="text-align:center;color:var(--text2);padding:24px;">Loading...</td></tr>
                         </tbody>
                     </table>
                 </div>

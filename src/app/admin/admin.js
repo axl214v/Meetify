@@ -82,6 +82,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('sendTestEmail').addEventListener('click',  sendTestEmail);
     document.getElementById('sendNotif').addEventListener('click',      sendNotification);
     document.getElementById('refreshNotifs').addEventListener('click',  loadNotifications);
+    document.getElementById('previewEmail').addEventListener('click',        previewEmailBroadcast);
+    document.getElementById('testEmailBroadcast').addEventListener('click',  sendEmailTest);
+    document.getElementById('sendEmailBroadcast').addEventListener('click',  confirmEmailBroadcast);
+    document.getElementById('refreshEmails').addEventListener('click',       loadEmailHistory);
     document.getElementById('refreshTickets').addEventListener('click',  loadAdminTickets);
     document.getElementById('ticketStatusFilter').addEventListener('change', loadAdminTickets);
     document.getElementById('addSocialBtn').addEventListener('click',   addSocialLink);
@@ -147,6 +151,8 @@ function switchTab(tab) {
     if (tab === 'users'       && state.users.total === 0)  loadUsers(0);
     if (tab === 'settings')       loadSmtpSettings();
     if (tab === 'notifications')  loadNotifications();
+    if (tab === 'email')          loadEmailHistory();
+    else                          stopEmailPolling();
     if (tab === 'socials')        loadSocials();
     if (tab === 'support')        loadAdminTickets();
     if (tab === 'logs')           { if (!logsState.loaded) loadLogsTab(); }
@@ -336,6 +342,8 @@ async function loadSmtpSettings() {
         document.getElementById('smtpUser').value     = s.smtp_user     || '';
         document.getElementById('smtpPassword').value = s.smtp_password || '';
         document.getElementById('smtpFrom').value     = s.smtp_from     || '';
+        document.getElementById('smtpFromName').value = s.smtp_from_name || '';
+        document.getElementById('smtpReplyTo').value  = s.smtp_reply_to  || '';
         document.getElementById('smtpSecure').value     = s.smtp_secure     || 'false';
         document.getElementById('smtpIgnoreTls').value = s.smtp_ignore_tls || 'false';
         document.getElementById('smtpEnabled').value   = s.smtp_enabled    || 'false';
@@ -357,6 +365,8 @@ async function saveSmtpSettings() {
         smtp_user:     document.getElementById('smtpUser').value.trim(),
         smtp_password: document.getElementById('smtpPassword').value,
         smtp_from:     document.getElementById('smtpFrom').value.trim(),
+        smtp_from_name: document.getElementById('smtpFromName').value.trim(),
+        smtp_reply_to:  document.getElementById('smtpReplyTo').value.trim(),
         smtp_secure:      document.getElementById('smtpSecure').value,
         smtp_ignore_tls:  document.getElementById('smtpIgnoreTls').value,
         smtp_enabled:     document.getElementById('smtpEnabled').value,
@@ -623,6 +633,124 @@ function timeAgo(ts) {
     const h = Math.floor(m / 60);
     if (h < 24) return `${h}h ago`;
     return `${Math.floor(h / 24)}d ago`;
+}
+
+// ── Email broadcast ────────────────────────────────────────────────────────
+const EMAIL_STATUS = {
+    sending:     { label: 'Sending…',    color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
+    completed:   { label: 'Completed',   color: '#10b981', bg: 'rgba(16,185,129,0.15)' },
+    interrupted: { label: 'Interrupted', color: '#ef4444', bg: 'rgba(239,68,68,0.15)'  }
+};
+let emailPollTimer = null;
+let emailAudience  = 0;
+
+function stopEmailPolling() {
+    clearInterval(emailPollTimer);
+    emailPollTimer = null;
+}
+
+function readEmailForm() {
+    return {
+        subject:  document.getElementById('emailSubject').value.trim(),
+        body:     document.getElementById('emailBody').value.trim(),
+        ctaLabel: document.getElementById('emailCtaLabel').value.trim(),
+        ctaUrl:   document.getElementById('emailCtaUrl').value.trim()
+    };
+}
+
+async function postEmail(path, payload) {
+    const res = await apiFetch('/api/admin/broadcast' + path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Request failed');
+    return data;
+}
+
+async function loadEmailHistory() {
+    const tbody = document.getElementById('emailsBody');
+    try {
+        const res  = await apiFetch('/api/admin/broadcast');
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        emailAudience = data.audience;
+        document.getElementById('emailAudience').textContent = `${fmt(data.audience)} recipients`;
+
+        if (!data.campaigns.length) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text2);padding:24px;">No emails sent yet</td></tr>';
+        } else {
+            tbody.innerHTML = data.campaigns.map(c => {
+                const st = EMAIL_STATUS[c.status] || EMAIL_STATUS.completed;
+                const badge = `<span style="display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;background:${st.bg};color:${st.color};text-transform:uppercase;letter-spacing:0.5px;">${st.label}</span>`;
+                return `<tr>
+                    <td style="white-space:nowrap;">${fmtDate(c.created_at)}</td>
+                    <td style="font-weight:500;color:var(--text);">${escHtml(c.subject)}</td>
+                    <td>${badge}</td>
+                    <td>${fmt(c.recipients_total)}</td>
+                    <td>${fmt(c.sent_count)}</td>
+                    <td style="${c.failed_count ? 'color:#f87171;' : ''}">${fmt(c.failed_count)}</td>
+                    <td>${escHtml(c.created_by_name || '—')}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        // Poll while a campaign is running, stop when it finishes
+        if (data.sending && !emailPollTimer) emailPollTimer = setInterval(loadEmailHistory, 3000);
+        if (!data.sending) stopEmailPolling();
+    } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#f87171;padding:24px;">${escHtml(e.message || 'Error loading history')}</td></tr>`;
+        stopEmailPolling();
+    }
+}
+
+async function previewEmailBroadcast() {
+    try {
+        const { html } = await postEmail('/preview', readEmailForm());
+        document.getElementById('emailPreviewFrame').srcdoc = html;
+        document.getElementById('emailPreviewCard').style.display = '';
+    } catch (e) {
+        toast(e.message, 'error');
+    }
+}
+
+async function sendEmailTest() {
+    const btn = document.getElementById('testEmailBroadcast');
+    btn.disabled = true;
+    try {
+        const data = await postEmail('/test', readEmailForm());
+        toast(`Test email sent to ${data.to}`, 'success');
+    } catch (e) {
+        toast(e.message, 'error');
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+function confirmEmailBroadcast() {
+    const form = readEmailForm();
+    if (!form.subject || !form.body) { toast('Subject and message are required', 'error'); return; }
+    showConfirmModal('✉', 'Send email to all users',
+        `"${form.subject}" will be sent to ${fmt(emailAudience)} users. This cannot be undone.`,
+        sendEmailBroadcast);
+}
+
+async function sendEmailBroadcast() {
+    const btn = document.getElementById('sendEmailBroadcast');
+    btn.disabled = true;
+    try {
+        await postEmail('', readEmailForm());
+        toast('Sending started', 'success');
+        ['emailSubject', 'emailBody', 'emailCtaLabel', 'emailCtaUrl'].forEach(id => { document.getElementById(id).value = ''; });
+        document.getElementById('emailPreviewCard').style.display = 'none';
+        loadEmailHistory();
+    } catch (e) {
+        toast(e.message, 'error');
+    } finally {
+        btn.disabled = false;
+    }
 }
 
 // ── Notifications ──────────────────────────────────────────────────────────
