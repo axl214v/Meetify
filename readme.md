@@ -6,6 +6,7 @@
 
   <p>
     <a href="https://meetify.cc">meetify.cc</a> &nbsp;·&nbsp;
+    <a href="https://health.meetify.cc">Status</a> &nbsp;·&nbsp;
     <a href="CHANGELOG.md">Changelog</a> &nbsp;·&nbsp;
     <a href="https://github.com/axl214v/Meetify/discussions">Discussions</a>
   </p>
@@ -89,7 +90,9 @@ See [SECURITY.md](SECURITY.md) to report a vulnerability.
 Meetify runs as a hosted service at **[meetify.cc](https://meetify.cc)** — own
 STUN/TURN, Swiss hosting, no third-party requests. There is no public build of the
 backend to self-host; the client in this repository is what your browser actually
-runs when you use it.
+runs when you use it. Live uptime status: **[health.meetify.cc](https://health.meetify.cc)**
+([meetify-monitor](https://github.com/axl214v/meetify-monitor), an independent watchdog
+running on separate infrastructure).
 
 ## Technology Stack
 
