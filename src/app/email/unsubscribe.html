@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Email preferences — Meetify</title>
+    <script>(function(){var t=localStorage.getItem('theme')||'dark';document.documentElement.setAttribute('data-theme',t)})();</script>
+    <link rel="preload" href="/assets/fonts/outfit-latin.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/assets/fonts/fonts.css">
+    <link rel="stylesheet" href="/styles/brand.css">
+    <link rel="stylesheet" href="/styles/auth_reg.css">
+    <link rel="stylesheet" href="/styles/verify-email.css">
+    <link rel="icon" href="/assets/logo-mark.png">
+</head>
+<body>
+    <a class="auth-back" href="/">← Home</a>
+
+    <div class="auth-page">
+        <div class="auth-brand">
+            <img src="/assets/logo.png" alt="Meetify" class="auth-brand-logo-img">
+        </div>
+
+        <div class="auth-card">
+
+            <!-- State: confirm -->
+            <div id="stateConfirm" style="display:none">
+                <div class="verify-icon">✉️</div>
+                <h1 class="auth-card-title">Unsubscribe from emails?</h1>
+                <p class="auth-card-sub">You will stop receiving announcements and news from Meetify. Important account emails, such as password resets, will still be sent.</p>
+                <button class="auth-submit" id="confirmBtn">Unsubscribe</button>
+            </div>
+
+            <!-- State: done -->
+            <div id="stateDone" style="display:none">
+                <div class="verify-icon">✅</div>
+                <h1 class="auth-card-title">You're unsubscribed</h1>
+                <p class="auth-card-sub">You won't receive announcement emails from Meetify anymore.</p>
+                <button class="auth-submit" id="resubBtn">Changed your mind? Resubscribe</button>
+            </div>
+
+            <!-- State: resubscribed -->
+            <div id="stateResub" style="display:none">
+                <div class="verify-icon">👍</div>
+                <h1 class="auth-card-title">Welcome back</h1>
+                <p class="auth-card-sub">You're subscribed to Meetify announcements again.</p>
+            </div>
+
+            <!-- State: error -->
+            <div id="stateError" style="display:none">
+                <div class="verify-icon">❌</div>
+                <h1 class="auth-card-title">Something went wrong</h1>
+                <p class="auth-card-sub" id="errorText">This link is invalid or has expired.</p>
+            </div>
+
+        </div>
+
+        <div class="page-footer">
+            <p>© 2026 Meetify · <a href="/">Home</a></p>
+        </div>
+    </div>
+
+    <script src="/js/theme.js"></script>
+    <script src="/email/unsubscribe.js"></script>
+</body>
+</html>
