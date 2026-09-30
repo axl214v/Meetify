@@ -29,3 +29,5 @@ src/server_js/
 src/sfu_server/
 Docker.md
 QuickStart-Macos.md
+# Local release tracking (not committed)
+NEXT_RELEASE.md
