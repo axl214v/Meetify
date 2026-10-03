@@ -301,6 +301,8 @@
                 <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
                     <button class="btn-refresh" id="backupDownloadBtn" onclick="downloadBackup()">↓ Download to Browser</button>
                     <button class="btn-refresh" id="backupRunBtn" onclick="runBackupNow()">▶ Run Now (save to dest)</button>
+                    <button class="btn-refresh" id="backupUploadBtn" onclick="document.getElementById('backupUploadInput').click()">↑ Upload backup (.zip)</button>
+                    <input type="file" id="backupUploadInput" accept=".zip,application/zip" hidden onchange="uploadBackupFile(this)">
                 </div>
 
                 <!-- Settings -->
@@ -897,6 +899,29 @@
             <div class="modal-actions">
                 <button class="btn-cancel" id="modalCancel">Cancel</button>
                 <button class="btn-danger" id="modalConfirm">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Restore Backup Modal -->
+    <div class="modal-overlay" id="restoreModal">
+        <div class="modal" style="max-width:560px;width:92%;text-align:left">
+            <div class="modal-icon" style="text-align:center">⚠</div>
+            <h3 style="text-align:center">Restore backup</h3>
+            <div id="restoreInfo" style="font-size:13px;color:var(--text2);margin:12px 0"></div>
+            <div style="font-size:13px;margin-bottom:12px">
+                <strong>This replaces ALL current data</strong> (database and uploaded files). A safety copy
+                <span class="mono">pre-restore-*.zip</span> is saved first and used for an automatic rollback if the restore fails.
+                Everybody, including you, will be logged out and must sign in with accounts from the backup.
+            </div>
+            <label style="display:block;font-size:13px;margin-bottom:6px"><input type="checkbox" id="restoreSmtp"> Also restore SMTP settings from the backup (otherwise this server's are kept)</label>
+            <label style="display:block;font-size:13px;margin-bottom:6px"><input type="checkbox" id="restoreBkpConfig"> Also restore backup schedule/destination from the backup</label>
+            <label style="display:none;font-size:13px;margin-bottom:6px;color:var(--danger)" id="restoreNoAdminRow"><input type="checkbox" id="restoreNoAdmin"> I understand there are no admins in this backup and I may lose access</label>
+            <label style="display:block;font-size:13px;margin:12px 0 6px">Type <strong>RESTORE</strong> to confirm</label>
+            <input class="setting-input" type="text" id="restoreConfirmInput" autocomplete="off" style="width:100%">
+            <div class="modal-actions" style="margin-top:14px">
+                <button class="btn-cancel" id="restoreCancel">Cancel</button>
+                <button class="btn-danger" id="restoreConfirm" disabled>Restore</button>
             </div>
         </div>
     </div>

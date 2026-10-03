@@ -1147,7 +1147,11 @@ async function loadBackupHistory() {
                     <td class="mono" style="font-size:12px;">${escHtml(b.filename)}</td>
                     <td>${fmtBytes(b.size)}</td>
                     <td>${new Date(b.createdAt).toLocaleString()}</td>
-                    <td><button class="btn-sm btn-sm-danger" onclick="deleteBackupFile('${escAttr(b.filename)}')">Delete</button></td>
+                    <td style="white-space:nowrap;">
+                        <button class="btn-sm btn-sm-neutral" onclick="downloadStoredBackup('${escAttr(b.filename)}')">Download</button>
+                        <button class="btn-sm btn-sm-neutral" onclick="openRestoreModal('${escAttr(b.filename)}')">Restore</button>
+                        <button class="btn-sm btn-sm-danger" onclick="deleteBackupFile('${escAttr(b.filename)}')">Delete</button>
+                    </td>
                 </tr>`).join('')}
             </tbody></table>`;
     } catch (e) {
@@ -1169,6 +1173,127 @@ async function deleteBackupFile(filename) {
 }
 
 // fmtBytes defined above (line ~607)
+
+async function downloadStoredBackup(filename) {
+    try {
+        const res = await apiFetch(`/api/admin/backup/history/${encodeURIComponent(filename)}`);
+        if (!res.ok) throw new Error((await res.json()).error || res.statusText);
+        const url = URL.createObjectURL(await res.blob());
+        const a = Object.assign(document.createElement('a'), { href: url, download: filename });
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+    } catch (e) {
+        toast('Download failed: ' + e.message, 'error');
+    }
+}
+
+// XHR instead of fetch: upload progress
+function uploadBackupFile(input) {
+    const file = input.files[0];
+    input.value = '';
+    if (!file) return;
+    if (!/\.zip$/i.test(file.name)) { toast('Only .zip backups can be uploaded', 'error'); return; }
+
+    const btn = document.getElementById('backupUploadBtn');
+    const label = btn.textContent;
+    const reset = () => { btn.disabled = false; btn.textContent = label; };
+    btn.disabled = true;
+    btn.textContent = 'Uploading 0%';
+
+    const form = new FormData();
+    form.append('file', file);
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', API + '/api/admin/backup/upload');
+    xhr.withCredentials = true;
+    xhr.upload.onprogress = e => {
+        if (e.lengthComputable) btn.textContent = `Uploading ${Math.round(e.loaded / e.total * 100)}%`;
+    };
+    xhr.onerror = () => { reset(); toast('Upload failed: network error', 'error'); };
+    xhr.onload = () => {
+        reset();
+        let data = {};
+        try { data = JSON.parse(xhr.responseText); } catch { /* non-JSON (e.g. proxy error page) */ }
+        if (xhr.status < 200 || xhr.status >= 300) {
+            const hint = xhr.status === 413 ? 'File is too large' : (data.error || `HTTP ${xhr.status}`);
+            toast('Upload failed: ' + hint, 'error');
+            return;
+        }
+        toast('Backup uploaded and verified', 'success');
+        loadBackupHistory();
+        openRestoreModal(data.filename);
+    };
+    xhr.send(form);
+}
+
+async function openRestoreModal(filename) {
+    let info;
+    try {
+        const res = await apiFetch(`/api/admin/backup/history/${encodeURIComponent(filename)}/inspect`);
+        info = await res.json();
+        if (!res.ok) throw new Error(info.error);
+    } catch (e) {
+        toast('Cannot read backup: ' + e.message, 'error');
+        return;
+    }
+
+    const admins = info.users.admins;
+    document.getElementById('restoreInfo').innerHTML = `
+        <div><strong>File:</strong> <span class="mono">${escHtml(filename)}</span></div>
+        <div><strong>Created:</strong> ${info.createdAt ? escHtml(new Date(info.createdAt).toLocaleString()) : 'unknown'}</div>
+        <div><strong>Users:</strong> ${fmt(info.users.total)} &nbsp; <strong>Uploaded files:</strong> ${fmt(info.uploadFiles)}</div>
+        <div><strong>Admins in backup:</strong> ${admins.length ? admins.map(a => escHtml(a.email)).join(', ') : '<span style="color:var(--danger)">none</span>'}</div>
+        <div style="margin-top:6px;">${info.tables.map(t => `${escHtml(t.name)}: ${fmt(t.rows)}`).join(' · ')}</div>`;
+
+    const smtp = document.getElementById('restoreSmtp');
+    const bkp = document.getElementById('restoreBkpConfig');
+    const noAdmin = document.getElementById('restoreNoAdmin');
+    const input = document.getElementById('restoreConfirmInput');
+    const confirmBtn = document.getElementById('restoreConfirm');
+    smtp.checked = bkp.checked = noAdmin.checked = false;
+    input.value = '';
+    document.getElementById('restoreNoAdminRow').style.display = admins.length ? 'none' : 'block';
+
+    const update = () => {
+        confirmBtn.disabled = input.value !== 'RESTORE' || (!admins.length && !noAdmin.checked);
+    };
+    input.oninput = noAdmin.onchange = update;
+    update();
+
+    const overlay = document.getElementById('restoreModal');
+    const close = () => overlay.classList.remove('open');
+    document.getElementById('restoreCancel').onclick = close;
+    overlay.onclick = e => { if (e.target === overlay) close(); };
+    confirmBtn.onclick = async () => {
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = 'Restoring…';
+        try {
+            const res = await apiFetch('/api/admin/backup/restore', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    filename,
+                    confirm: input.value,
+                    restoreSmtp: smtp.checked,
+                    restoreBackupConfig: bkp.checked,
+                    allowNoAdmin: noAdmin.checked,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+            close();
+            toast('Restored. Redirecting to login…', 'success');
+            setTimeout(() => { window.location.href = '/auth/Auth.html'; }, 2000);
+        } catch (e) {
+            toast('Restore failed: ' + e.message, 'error');
+            confirmBtn.textContent = 'Restore';
+            update();
+            loadBackupHistory();
+        }
+    };
+    overlay.classList.add('open');
+}
 
 function onBkpScheduleChange() {
     const v = document.getElementById('bkpSchedule').value;
