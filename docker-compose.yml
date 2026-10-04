@@ -49,7 +49,7 @@ services:
       DB_PORT: 3306
       
       # JWT
-      JWT_SECRET: ${JWT_SECRET:-your_jwt_secret_change_in_production}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
       
       # URLs
