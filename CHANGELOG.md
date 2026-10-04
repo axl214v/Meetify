@@ -13,6 +13,35 @@ containers as `APP_VERSION` by `make up`.
 
 _Nothing yet._
 
+## [1.5.0-beta] — 2026-10-05
+
+### Added
+- **Admin — Email tab.** Send an email to all verified users who have not
+  unsubscribed, with a `{{name}}` placeholder, a live preview, a test send to yourself
+  and a campaign history (sent / failed counts, who sent it).
+- **One-click unsubscribe.** Every broadcast carries an unsubscribe link that opens a
+  public page (`/email/unsubscribe.html`) where the choice can be undone. Account
+  emails (verification, password reset) are never affected.
+- **Admin — Backup tab.** Download any stored backup, upload a ZIP (with progress),
+  and restore it. Restoring replaces the current data, saves a safety copy first and
+  asks for a typed `RESTORE` confirmation.
+- **Backup merge.** Instead of replacing everything, a backup can be merged into the
+  current data: only what is missing is added, a preview shows what would change before
+  anything is written, and an optional "backup wins" mode overwrites matching records.
+  Asks for a typed `MERGE` confirmation.
+
+### Changed
+- **Emails** use a shared branded template with a configurable From name and Reply-To.
+- **Privacy policy** now mentions occasional service emails and the unsubscribe link.
+
+### Fixed
+- Uploading a large backup ZIP failed with `413` (Nginx default 1 MB body limit).
+- `/admin/` returned `403` because Nginx had no index file for the directory.
+
+### Security
+- Hardened the account-recovery flow and abuse protection.
+- Required secrets in the deployment configuration no longer have built-in fallbacks.
+
 ## [1.4.0-beta] — 2026-06-27
 
 ### Added
@@ -238,7 +267,8 @@ Baseline release (pre-changelog). Summarized from history.
   timestamps), public/private conferences, participant tracking.
 - Admin panel, avatar upload, and client-side error logging to `/api/logs`.
 
-[Unreleased]: https://github.com/axl214v/Meetify/compare/v1.4.0-beta...HEAD
+[Unreleased]: https://github.com/axl214v/Meetify/compare/v1.5.0-beta...HEAD
+[1.5.0-beta]: https://github.com/axl214v/Meetify/compare/v1.4.0-beta...v1.5.0-beta
 [1.4.0-beta]: https://github.com/axl214v/Meetify/compare/v1.3.0-beta...v1.4.0-beta
 [1.3.0-beta]: https://github.com/axl214v/Meetify/compare/v1.2.0-beta...v1.3.0-beta
 [1.2.0-beta]: https://github.com/axl214v/Meetify/compare/v1.1.0-beta...v1.2.0-beta

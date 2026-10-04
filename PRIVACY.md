@@ -1,6 +1,6 @@
 # Privacy Policy
 
-**Last updated: June 2026**
+**Last updated: October 2026**
 
 Meetify is an independent project maintained by a single developer. This policy explains what data we collect, why, and how we protect it.
 
@@ -22,6 +22,8 @@ We do **not** collect IP address logs, behavioral analytics, or advertising data
 ## How we use your data
 
 Your data is used solely to operate your account. We do not sell, share, rent, or otherwise disclose your data to any third party, ever.
+
+We may occasionally email registered users about the service itself (updates, maintenance, security). These messages contain a one-click unsubscribe link; unsubscribing never affects account emails such as email verification and password reset.
 
 ---
 

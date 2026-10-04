@@ -11,7 +11,7 @@
     <a href="https://github.com/axl214v/Meetify/discussions">Discussions</a>
   </p>
 
-  [![Version](https://img.shields.io/badge/version-1.4.0--beta-blue)](version.txt)
+  [![Version](https://img.shields.io/badge/version-1.5.0--beta-blue)](version.txt)
   [![License](https://img.shields.io/badge/license-Polyform%20Noncommercial-orange)](LICENSE.md)
   [![Node.js](https://img.shields.io/badge/node-%3E%3D22-brightgreen)](https://nodejs.org/)
   [![Docker](https://img.shields.io/badge/Docker-Compose-blue)](https://www.docker.com/)
@@ -45,12 +45,14 @@ community to audit.
 **Communication**
 - Real-time chat with unread badge, participant list
 - Admin broadcast notifications with bell widget
+- Admin email broadcasts with a branded template and one-click unsubscribe
 - Support ticket system with threaded replies
 
 **Management**
 - Schedule conferences with start/end times (Scheduled / Ongoing / Ended)
 - Optional conference passwords (bcrypt-hashed), public/private rooms
-- Admin dashboard — stats, user management, SMTP, notifications, support
+- Admin dashboard — stats, user management, SMTP, notifications, email broadcasts, support
+- Backups — scheduled or on-demand, download, upload, restore (full replace) or merge into live data, always with a safety copy and automatic rollback
 
 ## Conference Modes
 
@@ -125,6 +127,8 @@ coturn :3478  → STUN/TURN relay (runs on separate VPS)
 - [x] In-app notifications and support tickets
 - [x] Self-hosted STUN/TURN (coturn)
 - [x] Self-hosted fonts (no Google Fonts)
+- [x] Admin email broadcasts with unsubscribe
+- [x] Backup upload, restore and merge
 - [ ] HTTPS / SSL in Nginx (certs provisioned by deploy script, SSL block present but commented out)
 - [ ] Conference recording
 - [ ] Redis adapter for Socket.IO clustering

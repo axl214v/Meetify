@@ -8,8 +8,8 @@ there are no long-term support branches yet. Always run the most recent version
 
 | Version | Supported |
 | ------- | --------- |
-| 1.4.x-beta (latest) | ✅ |
-| < 1.4.0-beta | ❌ — please upgrade |
+| 1.5.x-beta (latest) | ✅ |
+| < 1.5.0-beta | ❌ — please upgrade |
 
 ## Reporting a Vulnerability
 
@@ -46,8 +46,10 @@ Please give us reasonable time to release a fix before any public disclosure
   `auth_request`; admin APIs require `role = admin`.
 - **Input handling** — server-side validation on API routes; client-side HTML
   escaping to mitigate XSS.
+- **Destructive admin actions** (restoring or merging a backup) require typing a
+  confirmation word.
 - **SFU authentication** — the standalone SFU server requires a shared secret
-  (`SFU_SHARED_SECRET`) on every request from the main backend; direct client
+  (`SFU_SHARED_SECRET`) on every request from the main server; direct client
   access to the SFU HTTP API is rejected.
 
 ## Known Limitations (by design / not yet implemented)
