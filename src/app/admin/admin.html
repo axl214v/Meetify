@@ -907,17 +907,34 @@
     <div class="modal-overlay" id="restoreModal">
         <div class="modal" style="max-width:560px;width:92%;text-align:left">
             <div class="modal-icon" style="text-align:center">⚠</div>
-            <h3 style="text-align:center">Restore backup</h3>
+            <h3 style="text-align:center" id="restoreTitle">Restore backup</h3>
             <div id="restoreInfo" style="font-size:13px;color:var(--text2);margin:12px 0"></div>
-            <div style="font-size:13px;margin-bottom:12px">
-                <strong>This replaces ALL current data</strong> (database and uploaded files). A safety copy
-                <span class="mono">pre-restore-*.zip</span> is saved first and used for an automatic rollback if the restore fails.
-                Everybody, including you, will be logged out and must sign in with accounts from the backup.
+            <div style="font-size:13px;margin-bottom:12px;display:flex;gap:16px;flex-wrap:wrap">
+                <label><input type="radio" name="restoreMode" value="replace" checked> Replace everything</label>
+                <label><input type="radio" name="restoreMode" value="merge"> Merge into current data</label>
             </div>
-            <label style="display:block;font-size:13px;margin-bottom:6px"><input type="checkbox" id="restoreSmtp"> Also restore SMTP settings from the backup (otherwise this server's are kept)</label>
-            <label style="display:block;font-size:13px;margin-bottom:6px"><input type="checkbox" id="restoreBkpConfig"> Also restore backup schedule/destination from the backup</label>
-            <label style="display:none;font-size:13px;margin-bottom:6px;color:var(--danger)" id="restoreNoAdminRow"><input type="checkbox" id="restoreNoAdmin"> I understand there are no admins in this backup and I may lose access</label>
-            <label style="display:block;font-size:13px;margin:12px 0 6px">Type <strong>RESTORE</strong> to confirm</label>
+            <div id="restoreReplaceBox">
+                <div style="font-size:13px;margin-bottom:12px">
+                    <strong>This replaces ALL current data</strong> (database and uploaded files). A safety copy
+                    <span class="mono">pre-restore-*.zip</span> is saved first and used for an automatic rollback if the restore fails.
+                    Everybody, including you, will be logged out and must sign in with accounts from the backup.
+                </div>
+                <label style="display:block;font-size:13px;margin-bottom:6px"><input type="checkbox" id="restoreSmtp"> Also restore SMTP settings from the backup (otherwise this server's are kept)</label>
+                <label style="display:block;font-size:13px;margin-bottom:6px"><input type="checkbox" id="restoreBkpConfig"> Also restore backup schedule/destination from the backup</label>
+                <label style="display:none;font-size:13px;margin-bottom:6px;color:var(--danger)" id="restoreNoAdminRow"><input type="checkbox" id="restoreNoAdmin"> I understand there are no admins in this backup and I may lose access</label>
+            </div>
+            <div id="restoreMergeBox" style="display:none">
+                <div style="font-size:13px;margin-bottom:12px">
+                    Adds what is missing here and keeps everything that already exists. Users are matched by email,
+                    conferences by host + name + start time. Users from the backup who are new here become regular
+                    <strong>users</strong> (admins are demoted). Support tickets, SMTP and backup settings are not merged.
+                    A safety copy <span class="mono">pre-merge-*.zip</span> is saved first. Nobody is logged out.
+                </div>
+                <label style="display:block;font-size:13px;margin-bottom:6px"><input type="checkbox" id="mergeOverwrite"> Backup wins: where a record exists in both, overwrite it with the backup's data (roles are never changed)</label>
+                <div style="margin:8px 0"><button class="btn-sm btn-sm-neutral" id="mergePreviewBtn" type="button">Preview changes</button></div>
+                <div id="mergePreview" style="font-size:12px;color:var(--text2)"></div>
+            </div>
+            <label style="display:block;font-size:13px;margin:12px 0 6px">Type <strong id="restoreWord">RESTORE</strong> to confirm</label>
             <input class="setting-input" type="text" id="restoreConfirmInput" autocomplete="off" style="width:100%">
             <div class="modal-actions" style="margin-top:14px">
                 <button class="btn-cancel" id="restoreCancel">Cancel</button>

@@ -1249,45 +1249,104 @@ async function openRestoreModal(filename) {
     const smtp = document.getElementById('restoreSmtp');
     const bkp = document.getElementById('restoreBkpConfig');
     const noAdmin = document.getElementById('restoreNoAdmin');
+    const overwrite = document.getElementById('mergeOverwrite');
+    const preview = document.getElementById('mergePreview');
     const input = document.getElementById('restoreConfirmInput');
     const confirmBtn = document.getElementById('restoreConfirm');
-    smtp.checked = bkp.checked = noAdmin.checked = false;
+    const modeRadios = document.querySelectorAll('input[name="restoreMode"]');
+    smtp.checked = bkp.checked = noAdmin.checked = overwrite.checked = false;
+    modeRadios.forEach(r => { r.checked = r.value === 'replace'; });
     input.value = '';
+    preview.innerHTML = '';
     document.getElementById('restoreNoAdminRow').style.display = admins.length ? 'none' : 'block';
 
+    const mode = () => document.querySelector('input[name="restoreMode"]:checked').value;
+    const word = () => (mode() === 'merge' ? 'MERGE' : 'RESTORE');
+    const label = () => (mode() === 'merge' ? 'Merge' : 'Restore');
     const update = () => {
-        confirmBtn.disabled = input.value !== 'RESTORE' || (!admins.length && !noAdmin.checked);
+        confirmBtn.disabled = input.value !== word() || (mode() === 'replace' && !admins.length && !noAdmin.checked);
     };
+    const applyMode = () => {
+        const merge = mode() === 'merge';
+        document.getElementById('restoreReplaceBox').style.display = merge ? 'none' : '';
+        document.getElementById('restoreMergeBox').style.display = merge ? '' : 'none';
+        document.getElementById('restoreTitle').textContent = merge ? 'Merge backup' : 'Restore backup';
+        document.getElementById('restoreWord').textContent = word();
+        confirmBtn.textContent = label();
+        input.value = '';
+        update();
+    };
+    modeRadios.forEach(r => { r.onchange = applyMode; });
     input.oninput = noAdmin.onchange = update;
-    update();
+    overwrite.onchange = () => { preview.innerHTML = ''; };
+    applyMode();
+
+    const renderPreview = r => {
+        const rows = Object.entries(r.tables).map(([name, t]) =>
+            `<tr><td>${escHtml(name)}</td><td>+${fmt(t.added)}</td><td>${fmt(t.matched)}</td>` +
+            `<td>${r.overwrite ? fmt(t.updated) : '–'}</td><td>${fmt(t.skipped)}</td></tr>`).join('');
+        const notes = [];
+        if (r.demotedAdmins) notes.push(`${fmt(r.demotedAdmins)} admin(s) from the backup will be added as regular users`);
+        r.warnings.forEach(w => notes.push(escHtml(w)));
+        return `<table class="data-table" style="margin:0"><thead><tr><th>Table</th><th>Added</th><th>Already here</th><th>Overwritten</th><th>Skipped</th></tr></thead><tbody>${rows}</tbody></table>` +
+            (notes.length ? `<ul style="margin:8px 0 0 16px;padding:0">${notes.map(n => `<li>${n}</li>`).join('')}</ul>` : '');
+    };
+
+    const previewBtn = document.getElementById('mergePreviewBtn');
+    previewBtn.onclick = async () => {
+        previewBtn.disabled = true;
+        preview.textContent = 'Calculating…';
+        try {
+            const res = await apiFetch('/api/admin/backup/merge/preview', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename, overwrite: overwrite.checked }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+            preview.innerHTML = renderPreview(data);
+        } catch (e) {
+            preview.innerHTML = `<span style="color:var(--danger)">${escHtml(e.message)}</span>`;
+        } finally {
+            previewBtn.disabled = false;
+        }
+    };
 
     const overlay = document.getElementById('restoreModal');
     const close = () => overlay.classList.remove('open');
     document.getElementById('restoreCancel').onclick = close;
     overlay.onclick = e => { if (e.target === overlay) close(); };
     confirmBtn.onclick = async () => {
+        const merging = mode() === 'merge';
         confirmBtn.disabled = true;
-        confirmBtn.textContent = 'Restoring…';
+        confirmBtn.textContent = merging ? 'Merging…' : 'Restoring…';
         try {
-            const res = await apiFetch('/api/admin/backup/restore', {
+            const res = await apiFetch(merging ? '/api/admin/backup/merge' : '/api/admin/backup/restore', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    filename,
-                    confirm: input.value,
-                    restoreSmtp: smtp.checked,
-                    restoreBackupConfig: bkp.checked,
-                    allowNoAdmin: noAdmin.checked,
-                }),
+                body: JSON.stringify(merging
+                    ? { filename, confirm: input.value, overwrite: overwrite.checked }
+                    : {
+                        filename,
+                        confirm: input.value,
+                        restoreSmtp: smtp.checked,
+                        restoreBackupConfig: bkp.checked,
+                        allowNoAdmin: noAdmin.checked,
+                    }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error);
             close();
+            if (merging) {
+                toast('Merged. Safety copy: ' + data.safetyBackup, 'success');
+                loadBackupHistory();
+                return;
+            }
             toast('Restored. Redirecting to login…', 'success');
             setTimeout(() => { window.location.href = '/auth/Auth.html'; }, 2000);
         } catch (e) {
-            toast('Restore failed: ' + e.message, 'error');
-            confirmBtn.textContent = 'Restore';
+            toast((merging ? 'Merge' : 'Restore') + ' failed: ' + e.message, 'error');
+            confirmBtn.textContent = label();
             update();
             loadBackupHistory();
         }
