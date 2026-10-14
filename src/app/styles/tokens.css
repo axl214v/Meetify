@@ -1,0 +1,141 @@
+/* Meetify design tokens. Rules and rationale: /DESIGN.md
+   Load after assets/fonts/fonts.css. Theme via <html data-theme="dark|light">. */
+
+:root,
+[data-theme="dark"] {
+    /* Surfaces: near-black with a faint blue cast, stepped by lightness */
+    --bg:         #06080d;   /* page */
+    --surface:    #0b0f17;   /* panels, cards */
+    --surface-2:  #111724;   /* inputs, raised rows, hover */
+    --surface-3:  #19202f;   /* pressed, selected */
+    --border:     rgba(148,170,215,0.12);
+    --border-strong: rgba(148,170,215,0.24);
+
+    /* Text */
+    --text:       #eef2fa;
+    --text-2:     #9ba8c0;   /* secondary, ~8:1 on --bg */
+    --text-3:     #74829c;   /* hints only, ~4.8:1 on --bg */
+
+    /* Accent: the logo blue. The only brand colour. */
+    --accent:        #2f7cf6;  /* fills */
+    --accent-hover:  #4b93ff;
+    --accent-press:  #2468d8;
+    --accent-text:   #7db0ff;  /* accent as text/icon on dark */
+    --accent-subtle: rgba(47,124,246,0.15);
+    --on-accent:     #ffffff;
+    --accent-cyan:   #2cc4f4;  /* logo's second blue; glow and highlights only */
+
+    /* Glow: blurred accent light behind key objects. Max two per page. */
+    --glow:          rgba(47,124,246,0.52);
+    --glow-soft:     rgba(47,124,246,0.16);
+    --glow-cyan:     rgba(44,196,244,0.30);
+
+    /* Status: always paired with an icon or word, never colour alone */
+    --success:    #3fb985;
+    --warning:    #dcab48;
+    --danger:     #ec6a62;
+    --success-subtle: rgba(63,185,133,0.15);
+    --warning-subtle: rgba(220,171,72,0.15);
+    --danger-subtle:  rgba(236,106,98,0.15);
+
+    /* Participant avatar fills: muted, fixed per person */
+    --avatar-1: #3b5f9a; --avatar-2: #2f7771; --avatar-3: #704f8a; --avatar-4: #86603a;
+
+    /* Glass: the floating header only */
+    --glass-bg:     rgba(10,14,22,0.62);
+    --glass-border: rgba(148,170,215,0.20);
+    --glass-blur:   16px;
+
+    --overlay:    rgba(3,5,9,0.70);
+    --shadow-panel:   0 1px 0 rgba(255,255,255,0.04) inset, 0 12px 40px rgba(0,0,0,0.45);
+    --shadow-overlay: 0 16px 48px rgba(0,0,0,0.6);
+    --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent-hover);
+}
+
+[data-theme="light"] {
+    --bg:         #f3f6fb;
+    --surface:    #ffffff;
+    --surface-2:  #edf1f8;
+    --surface-3:  #e0e6f1;
+    --border:     rgba(30,50,90,0.10);
+    --border-strong: rgba(30,50,90,0.20);
+
+    --text:       #0d1422;
+    --text-2:     #475371;
+    --text-3:     #66728f;
+
+    --accent:        #2467e6;
+    --accent-hover:  #1b56c9;
+    --accent-press:  #1647ab;
+    --accent-text:   #1c55c8;
+    --accent-subtle: rgba(36,103,230,0.09);
+    --on-accent:     #ffffff;
+    --accent-cyan:   #0b9bd0;
+
+    --glow:          rgba(36,103,230,0.22);
+    --glow-soft:     rgba(36,103,230,0.10);
+    --glow-cyan:     rgba(11,155,208,0.14);
+
+    --success:    #1c8458;
+    --warning:    #96680b;
+    --danger:     #c63d36;
+    --success-subtle: rgba(28,132,88,0.10);
+    --warning-subtle: rgba(150,104,11,0.10);
+    --danger-subtle:  rgba(198,61,54,0.09);
+
+    --avatar-1: #3b5f9a; --avatar-2: #2f7771; --avatar-3: #704f8a; --avatar-4: #86603a;
+
+    --glass-bg:     rgba(255,255,255,0.68);
+    --glass-border: rgba(30,50,90,0.14);
+
+    --overlay:    rgba(15,22,40,0.46);
+    --shadow-panel:   0 1px 2px rgba(20,35,70,0.06), 0 12px 32px rgba(20,35,70,0.08);
+    --shadow-overlay: 0 16px 48px rgba(20,35,70,0.18);
+    --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+}
+
+:root {
+    /* Type */
+    --font:      'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+    --text-xs:   0.75rem;    /* 12  meta, badges */
+    --text-sm:   0.875rem;   /* 14  dense UI, table cells, hints */
+    --text-base: 1rem;       /* 16  body, inputs, buttons */
+    --text-md:   1.1875rem;  /* 19  lead text */
+    --text-lg:   1.5rem;     /* 24  section titles in apps */
+    --text-xl:   2rem;       /* 32  page titles, landing section titles */
+    --text-2xl:  3.75rem;    /* 60  landing hero only (clamped on small screens) */
+
+    --leading-tight: 1.1;
+    --leading-base:  1.5;
+    --leading-loose: 1.65;
+
+    /* Spacing: 4px base */
+    --space-1: 4px;  --space-2: 8px;   --space-3: 12px; --space-4: 16px;
+    --space-5: 24px; --space-6: 32px;  --space-7: 48px; --space-8: 72px; --space-9: 112px;
+
+    /* Radius: by role. Nested radius = outer radius minus padding. */
+    --radius-sm:      6px;    /* badges, small chips */
+    --radius-control: 10px;   /* buttons, inputs, menu items */
+    --radius-inner:   12px;   /* tiles and blocks inside a panel */
+    --radius-panel:   18px;   /* cards, tables, video tiles */
+    --radius-overlay: 22px;   /* dialogs, popovers, big mockups */
+    --radius-pill:    999px;  /* floating header, status pills */
+
+    --control-h:    40px;
+    --control-h-sm: 32px;
+    --control-h-lg: 48px;
+    --content-w:    1160px;
+    --reading-w:    64ch;
+
+    /* Motion */
+    --dur:      150ms;       /* hover, press, focus */
+    --dur-slow: 600ms;       /* scroll reveal, one-off entrances */
+    --ease:     cubic-bezier(0.2, 0, 0, 1);
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :root { --dur: 0ms; --dur-slow: 0ms; }
+}
