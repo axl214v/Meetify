@@ -1,100 +1,58 @@
 (function () {
-    if (localStorage.getItem('cookie_accepted')) return;
+    try { if (localStorage.getItem('cookie_accepted')) return; } catch { /* storage blocked: show banner */ }
 
-    const isDark = () => document.documentElement.getAttribute('data-theme') !== 'light';
-
-    const banner = document.createElement('div');
-    banner.id = 'cookie-banner';
-
-    const applyTheme = () => {
-        const dark = isDark();
-        banner.style.cssText = `
-            position: fixed;
-            bottom: 1.25rem;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 9999;
-            width: min(640px, calc(100vw - 2rem));
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 0.9rem 1.1rem;
-            border-radius: 14px;
-            font-family: 'Outfit', sans-serif;
-            font-size: 0.875rem;
-            line-height: 1.55;
-            backdrop-filter: blur(16px);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.35);
-            background: ${dark ? 'rgba(17,24,39,0.95)' : 'rgba(255,255,255,0.95)'};
-            border: 1px solid ${dark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.08)'};
-            color: ${dark ? '#94a3b8' : '#475569'};
-            animation: cookie-slide-in 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards;
-        `;
-    };
-
+    // Shared across all pages, including ones not yet on tokens.css, so every
+    // var() carries its graphite fallback.
     const style = document.createElement('style');
     style.textContent = `
-        @keyframes cookie-slide-in {
-            from { opacity: 0; transform: translateX(-50%) translateY(16px); }
-            to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+        #cookie-banner {
+            position: fixed; z-index: 9999;
+            left: 16px; right: 16px; bottom: 16px;
+            max-width: 520px;
+            display: flex; align-items: center; gap: 16px;
+            padding: 12px 16px;
+            background: var(--surface, #181b1e);
+            color: var(--text-2, #a0a7b0);
+            border: 1px solid var(--border-strong, #3a4148);
+            border-radius: 16px;
+            box-shadow: var(--shadow-overlay, 0 8px 24px rgba(0,0,0,0.45));
+            font: 13px/1.5 'Geist', system-ui, sans-serif;
         }
-        @keyframes cookie-slide-out {
-            from { opacity: 1; transform: translateX(-50%) translateY(0); }
-            to   { opacity: 0; transform: translateX(-50%) translateY(16px); }
-        }
-        #cookie-banner a {
-            color: #60a5fa;
-            text-decoration: none;
-        }
-        #cookie-banner a:hover { text-decoration: underline; }
+        #cookie-banner a { color: var(--accent-text, #7aa7fa); text-decoration: underline; text-underline-offset: 3px; }
+        #cookie-banner code { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.92em; color: var(--text, #e6e8eb); }
         #cookie-ok {
-            flex-shrink: 0;
-            padding: 0.48rem 1.15rem;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 0.85rem;
-            font-weight: 600;
-            background: #3b82f6;
-            color: #fff;
-            transition: background 0.15s, transform 0.12s;
-            white-space: nowrap;
+            flex: none; height: 30px; padding: 0 12px;
+            border: 1px solid var(--border-strong, #3a4148); border-radius: 10px;
+            background: var(--surface-2, #1f2327); color: var(--text, #e6e8eb);
+            font: 500 13px/1 'Geist', system-ui, sans-serif; cursor: pointer;
         }
-        #cookie-ok:hover { background: #2563eb; transform: translateY(-1px); }
-        #cookie-ok:active { transform: translateY(0); }
+        #cookie-ok:hover { background: var(--surface-3, #272c31); }
+        #cookie-ok:focus-visible { outline: 2px solid var(--accent-hover, #5a90f8); outline-offset: 2px; }
     `;
     document.head.appendChild(style);
 
+    const banner = document.createElement('div');
+    banner.id = 'cookie-banner';
+    banner.setAttribute('role', 'region');
+    banner.setAttribute('aria-label', 'Cookie notice');
+
     const text = document.createElement('span');
     text.innerHTML = `
-        🍪 We use a single session cookie (<code style="
-            font-size:0.78em;background:rgba(255,255,255,0.08);
-            border:1px solid rgba(255,255,255,0.12);border-radius:4px;
-            padding:0.1em 0.35em;font-family:monospace">token</code>)
-        required for authentication. No tracking, no ads.
-        <a href="/legal/privacy.html" target="_blank">Privacy Policy</a>
+        Meetify sets one session cookie, <code>token</code>, to keep you signed in.
+        No tracking, no ads. <a href="/legal/privacy.html" target="_blank" rel="noopener">Privacy policy</a>
     `;
 
     const btn = document.createElement('button');
     btn.id = 'cookie-ok';
+    btn.type = 'button';
     btn.textContent = 'Got it';
     btn.addEventListener('click', () => {
-        localStorage.setItem('cookie_accepted', '1');
-        banner.style.animation = 'cookie-slide-out 0.25s ease forwards';
-        setTimeout(() => banner.remove(), 260);
+        try { localStorage.setItem('cookie_accepted', '1'); } catch { /* ignore */ }
+        banner.remove();
     });
 
-    banner.appendChild(text);
-    banner.appendChild(btn);
+    banner.append(text, btn);
 
-    applyTheme();
-
-    // Re-apply on theme toggle (in case user switches theme before clicking OK)
-    const observer = new MutationObserver(applyTheme);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-
-    // Add to DOM after page is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => document.body.appendChild(banner));
     } else {

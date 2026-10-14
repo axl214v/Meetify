@@ -8,9 +8,9 @@ function formatUptime(seconds) {
     const d = Math.floor(seconds / 86400);
     const h = Math.floor((seconds % 86400) / 3600);
     const m = Math.floor((seconds % 3600) / 60);
-    if (d > 0) return `${d}d ${h}h uptime`;
-    if (h > 0) return `${h}h ${m}m uptime`;
-    return `${m}m uptime`;
+    if (d > 0) return `${d}d ${h}h`;
+    if (h > 0) return `${h}h ${m}m`;
+    return m > 0 ? `${m}m` : 'under a minute';
 }
 
 async function loadServerStatus() {
@@ -18,82 +18,75 @@ async function loadServerStatus() {
     const text = document.getElementById('statusText');
     try {
         const res = await fetch(`${API_BASE}/api/health`);
-        if (res.ok) {
-            const data = await res.json();
-            dot.classList.add('online');
-            text.textContent = `Online · ${formatUptime(Math.floor(data.uptime))}`;
-        } else {
-            dot.classList.add('offline');
-            text.textContent = 'Server unavailable';
-        }
+        if (!res.ok) throw new Error(res.status);
+        const data = await res.json();
+        dot.classList.add('online');
+        text.textContent = `Server online, up ${formatUptime(Math.floor(data.uptime))}`;
     } catch {
         dot.classList.add('offline');
         text.textContent = 'Server unavailable';
     }
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
+function showUserNav(user) {
+    const name = user.username || user.email;
+    const avatar = document.getElementById('navAvatar');
 
+    if (user.avatar_url) {
+        avatar.textContent = '';
+        const img = document.createElement('img');
+        img.src = user.avatar_url;
+        img.alt = '';
+        avatar.appendChild(img);
+    } else {
+        avatar.textContent = getInitials(name);
+    }
+    document.getElementById('navAvatar').parentElement.title = name;
+    document.getElementById('navGuest').classList.add('hidden');
+    document.getElementById('navUser').classList.remove('hidden');
+}
+
+function showGuestNav() {
+    // Guests cannot create or join rooms: the two hero actions become account actions
+    const cta = document.getElementById('heroCta');
+    cta.textContent = 'Create account';
+    cta.href = '/auth/Reg.html';
+    const second = document.getElementById('heroSecondary');
+    second.textContent = 'Sign in';
+    second.href = '/auth/Auth.html';
+    document.getElementById('navGuest').classList.remove('hidden');
+    document.getElementById('navUser').classList.add('hidden');
+}
+
+// One reveal pattern: fade up once when a block scrolls into view
+function setupReveal() {
+    const items = document.querySelectorAll('.reveal');
+    if (!('IntersectionObserver' in window)) {
+        items.forEach((el) => el.classList.add('in'));
+        return;
+    }
+    const io = new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+            if (e.isIntersecting) {
+                e.target.classList.add('in');
+                io.unobserve(e.target);
+            }
+        });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+    items.forEach((el) => io.observe(el));
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    setupReveal();
     loadServerStatus();
 
-    // Check auth and update nav accordingly
     try {
-        const res = await fetch(`${API_BASE}/api/auth/me`, {
-            credentials: 'include'
-        });
-
-        if (res.ok) {
-            const data = await res.json();
-            const user = data.user;
-
-            // Show logged-in nav
-            document.getElementById('navGuest').classList.add('hidden');
-            document.getElementById('navUser').classList.remove('hidden');
-
-            // Fill user name and avatar initials
-            document.getElementById('navUserName').textContent =
-                user.username || user.email;
-
-            const initials = getInitials(user.username || user.email);
-            document.getElementById('navAvatar').textContent = initials;
-
-            // If user has avatar — show image instead
-            if (user.avatar_url) {
-                const avatar = document.getElementById('navAvatar');
-                avatar.style.backgroundImage = `url(${user.avatar_url})`;
-                avatar.style.backgroundSize = 'cover';
-                avatar.style.backgroundPosition = 'center';
-                avatar.textContent = '';
-            }
-
-            // CTA goes to conferences when logged in
-            document.getElementById('heroCta').addEventListener('click', () => {
-                window.location.href = '/Conf/pages/conf.html';
-            });
-
-            // Hide login button in hero since user is logged in
-            document.querySelector('.hero-secondary').style.display = 'none';
-
-        } else {
-            // Not logged in — show guest nav
-            document.getElementById('navGuest').classList.remove('hidden');
-            document.getElementById('navUser').classList.add('hidden');
-
-            // CTA goes to register
-            document.getElementById('heroCta').addEventListener('click', () => {
-                window.location.href = '/auth/Reg.html';
-            });
-        }
-    } catch (err) {
-        console.warn('Auth check failed:', err.message);
-
-        // Show guest nav on error
-        document.getElementById('navGuest').classList.remove('hidden');
-        document.getElementById('navUser').classList.add('hidden');
-
-        document.getElementById('heroCta').addEventListener('click', () => {
-            window.location.href = '/auth/Reg.html';
-        });
+        const res = await fetch(`${API_BASE}/api/auth/me`, { credentials: 'include' });
+        if (!res.ok) throw new Error(res.status);
+        const data = await res.json();
+        showUserNav(data.user);
+    } catch {
+        showGuestNav();
     }
 });
 

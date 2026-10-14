@@ -15,7 +15,11 @@
 
     // Get saved theme or default
     function getSavedTheme() {
-        return localStorage.getItem(STORAGE_KEY) || DEFAULT_THEME;
+        let saved = null;
+        try { saved = localStorage.getItem(STORAGE_KEY); } catch { /* storage blocked */ }
+        if (saved === 'dark' || saved === 'light') return saved;
+        // No saved choice: follow the system theme
+        return window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches ? 'light' : DEFAULT_THEME;
     }
 
     // Toggle between dark and light
@@ -23,7 +27,7 @@
         const current = document.documentElement.getAttribute('data-theme') || DEFAULT_THEME;
         const next = current === 'dark' ? 'light' : 'dark';
         applyTheme(next);
-        localStorage.setItem(STORAGE_KEY, next);
+        try { localStorage.setItem(STORAGE_KEY, next); } catch { /* ignore */ }
         updateButton(next);
     }
 
@@ -31,6 +35,13 @@
     function updateButton(theme) {
         const btn = document.getElementById('themeToggleBtn');
         if (!btn) return;
+        if (btn.hasAttribute('data-static')) {
+            // Redesigned pages ship their own icon; only update the labels
+            const label = theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme';
+            btn.title = label;
+            btn.setAttribute('aria-label', label);
+            return;
+        }
         btn.textContent = theme === 'dark' ? '☀️' : '🌙';
         btn.title = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
     }
