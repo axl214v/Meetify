@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meetify style guide</title>
+<link rel="stylesheet" href="../src/app/assets/fonts/fonts.css">
+<link rel="stylesheet" href="../src/app/styles/tokens.css">
+<link rel="stylesheet" href="../src/app/styles/components.css">
+<style>
+    .sg-section { padding-block: var(--space-7); border-bottom: 1px solid var(--border); }
+    .sg-section > h2 { font-size: var(--text-xl); margin-bottom: var(--space-2); }
+    .sg-section > .muted { margin-bottom: var(--space-5); }
+    .sg-row { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
+    .sg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: var(--space-3); }
+    .sw { border: 1px solid var(--border); border-radius: var(--radius-inner); overflow: hidden; background: var(--surface); }
+    .sw i { display: block; height: 48px; border-bottom: 1px solid var(--border); }
+    .sw span { display: block; padding: var(--space-2) var(--space-3); font-size: var(--text-xs); color: var(--text-2); }
+    .sw b { display: block; font-size: var(--text-sm); color: var(--text); font-weight: 500; }
+    .sg-stack { display: flex; flex-direction: column; gap: var(--space-4); max-width: 440px; }
+    .type-row { display: flex; align-items: baseline; gap: var(--space-4); padding-block: var(--space-3); border-bottom: 1px solid var(--border); }
+    .type-row small { width: 170px; flex: none; color: var(--text-3); font-size: var(--text-xs); }
+    .radii { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+    .radii div { width: 120px; height: 84px; background: var(--surface-2); border: 1px solid var(--border-strong); display: grid; place-items: center; font-size: var(--text-xs); color: var(--text-2); text-align: center; }
+    .page-title { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); margin-block: var(--space-5) var(--space-4); }
+    .glow-demo { height: 220px; display: grid; place-items: center; }
+    .glow-demo .panel { width: 280px; padding: var(--space-5); }
+    .sg-nav-demo { background: var(--bg); padding-block: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-panel); }
+    .sg-nav-demo .nav-pill-wrap { position: static; margin: 0; }
+</style>
+</head>
+<body>
+
+<div class="nav-pill-wrap">
+    <nav class="nav-pill" aria-label="Primary">
+        <strong>Meetify</strong>
+        <div class="nav-pill-links"><a href="#colour">Colour</a><a href="#type">Type</a><a href="#shape">Shape</a><a href="#components">Components</a></div>
+        <div class="nav-pill-actions"><button class="btn btn-sm" id="theme" type="button">Light theme</button></div>
+    </nav>
+</div>
+
+<main class="container">
+
+<section class="sg-section" id="colour">
+    <h2>Colour</h2>
+    <p class="muted">Near-black with a faint blue cast, one blue accent from the logo. Switch the theme in the header.</p>
+    <div class="sg-grid" id="swatches"></div>
+</section>
+
+<section class="sg-section" id="type">
+    <h2>Type</h2>
+    <p class="muted">Geist for everything. JetBrains Mono for data only.</p>
+    <div class="type-row"><small>text-2xl 60 / 600</small><span style="font-size:var(--text-2xl);font-weight:600;letter-spacing:-0.03em;line-height:1.05">Private rooms</span></div>
+    <div class="type-row"><small>text-xl 32 / 600</small><span style="font-size:var(--text-xl);font-weight:600;letter-spacing:-0.02em">How privacy works</span></div>
+    <div class="type-row"><small>text-lg 24 / 600</small><span style="font-size:var(--text-lg);font-weight:600;letter-spacing:-0.02em">Upcoming this week</span></div>
+    <div class="type-row"><small>text-md 19 / 400</small><span style="font-size:var(--text-md)">Calls between browsers stay between browsers.</span></div>
+    <div class="type-row"><small>text-base 16 / 400</small><span>Body text and inputs use this size.</span></div>
+    <div class="type-row"><small>text-sm 14 / 500</small><span style="font-size:var(--text-sm);font-weight:500">Buttons, table cells, labels and hints.</span></div>
+    <div class="type-row"><small>text-xs 12 / 500</small><span style="font-size:var(--text-xs);font-weight:500">Badges and meta</span></div>
+    <div class="type-row"><small>mono, data only</small><span class="mono">room 128 · 2026-10-14 18:30 UTC</span></div>
+</section>
+
+<section class="sg-section" id="shape">
+    <h2>Shape, depth and glow</h2>
+    <p class="muted">Large soft panels, smaller controls. Light is glow, not coloured shadow.</p>
+    <div class="radii" style="margin-bottom:var(--space-6)">
+        <div style="border-radius:var(--radius-sm)">sm 6<br>badges</div>
+        <div style="border-radius:var(--radius-control)">control 10<br>buttons, inputs</div>
+        <div style="border-radius:var(--radius-inner)">inner 12<br>blocks in panels</div>
+        <div style="border-radius:var(--radius-panel)">panel 18<br>cards, tiles</div>
+        <div style="border-radius:var(--radius-overlay)">overlay 22<br>dialogs, mockup</div>
+        <div style="border-radius:var(--radius-pill)">pill<br>header</div>
+    </div>
+    <div class="glow-demo glow"><div class="panel"><h3>Behind a key object</h3><p class="muted" style="font-size:var(--text-sm);margin-top:var(--space-2)">.glow puts blurred accent light behind one object per view.</p></div></div>
+</section>
+
+<section class="sg-section" id="components">
+    <h2>Buttons</h2>
+    <p class="muted">Press scales to 0.98. Primary glows on hover. Hover each one.</p>
+    <div class="sg-row">
+        <button class="btn btn-primary">Create room</button>
+        <button class="btn">Join a room</button>
+        <button class="btn btn-ghost">Cancel</button>
+        <button class="btn btn-danger">Delete room</button>
+        <button class="btn" disabled>Disabled</button>
+        <button class="btn btn-sm">Small</button>
+        <button class="btn btn-primary btn-lg">Large primary</button>
+        <button class="btn btn-icon" aria-label="Settings"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.5"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"/></svg></button>
+    </div>
+</section>
+
+<section class="sg-section">
+    <h2>Floating header</h2>
+    <p class="muted">Glass, centred links, glowing top edge. Marketing pages only.</p>
+    <div class="sg-nav-demo">
+        <div class="nav-pill-wrap">
+            <nav class="nav-pill" aria-label="Example">
+                <strong>Meetify</strong>
+                <div class="nav-pill-links"><a href="#">Privacy</a><a href="#">Audit</a><a href="#">Tools</a><a href="#">FAQ</a></div>
+                <div class="nav-pill-actions"><a class="btn btn-ghost btn-sm" href="#">Sign in</a><a class="btn btn-primary btn-sm" href="#">Create account</a></div>
+            </nav>
+        </div>
+    </div>
+</section>
+
+<section class="sg-section">
+    <h2>Form</h2>
+    <div class="sg-stack">
+        <div class="field"><label for="a">Room name</label><input id="a" class="input" placeholder="Weekly sync"><span class="hint">Shown to everyone who joins.</span></div>
+        <div class="field"><label for="b">Password</label><input id="b" class="input" type="password" value="abc" aria-invalid="true"><span class="error">Password must be at least 8 characters.</span></div>
+        <div class="field"><label for="c">Mode</label><select id="c" class="select"><option>P2P, up to 8 people</option><option>SFU, larger rooms</option></select></div>
+        <div class="field"><label for="d">Description</label><textarea id="d" class="textarea"></textarea></div>
+        <label class="check"><input type="checkbox" checked> Public room</label>
+    </div>
+</section>
+
+<section class="sg-section">
+    <h2>Badges, notices, tabs, FAQ</h2>
+    <div class="sg-row" style="margin-bottom:var(--space-5)">
+        <span class="badge badge-success">Live</span>
+        <span class="badge badge-accent">Scheduled</span>
+        <span class="badge">Ended</span>
+        <span class="badge badge-warning">Unverified</span>
+        <span class="badge badge-danger">Banned</span>
+    </div>
+    <div class="sg-stack" style="max-width:540px;margin-bottom:var(--space-5)">
+        <div class="notice notice-success">Room created. Share the link to invite people.</div>
+        <div class="notice notice-warning">Your email is not verified. Check your inbox.</div>
+        <div class="notice notice-danger">Could not reach the SFU. Switch the room to P2P or try again.</div>
+        <div class="notice notice-info">Maintenance on 2026-10-20, 02:00 UTC. Rooms will restart.</div>
+    </div>
+    <div class="tabs" role="tablist" style="margin-bottom:var(--space-6)">
+        <button class="tab" role="tab" aria-selected="true">All</button>
+        <button class="tab" role="tab" aria-selected="false">Live</button>
+        <button class="tab" role="tab" aria-selected="false">Scheduled</button>
+    </div>
+    <div style="max-width:620px">
+        <details class="disclosure"><summary>Are calls recorded?</summary><div>No. Meetify does not record calls and has no recording feature.</div></details>
+        <details class="disclosure"><summary>Do I need an account?</summary><div>Yes, to create or join a room.</div></details>
+    </div>
+</section>
+
+<section class="sg-section">
+    <h2>Page pattern: conference list</h2>
+    <div class="page-title">
+        <h1>Conferences</h1>
+        <button class="btn btn-primary">Create room</button>
+    </div>
+    <div class="tabs" style="margin-bottom:var(--space-4)" role="tablist">
+        <button class="tab" role="tab" aria-selected="true">All</button>
+        <button class="tab" role="tab" aria-selected="false">Live</button>
+        <button class="tab" role="tab" aria-selected="false">Scheduled</button>
+    </div>
+    <div class="panel" style="overflow-x:auto">
+        <table class="table">
+            <thead><tr><th>Name</th><th>Host</th><th>Starts</th><th class="num">People</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+                <tr><td>Weekly sync</td><td>anna</td><td class="mono">2026-10-14 18:30</td><td class="num">5 / 8</td><td><span class="badge badge-success">Live</span></td><td class="num"><button class="btn btn-sm">Join</button></td></tr>
+                <tr><td>Design review</td><td>mark</td><td class="mono">2026-10-15 10:00</td><td class="num">0 / 50</td><td><span class="badge badge-accent">Scheduled</span></td><td class="num"><button class="btn btn-sm">Details</button></td></tr>
+                <tr><td>Retro</td><td>anna</td><td class="mono">2026-10-10 16:00</td><td class="num">8 / 8</td><td><span class="badge">Ended</span></td><td class="num"></td></tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="panel" style="margin-top:var(--space-4)">
+        <div class="empty">
+            <h3>No rooms scheduled</h3>
+            <p>Create a room and share its number. People join from the browser with an account.</p>
+            <button class="btn btn-primary">Create room</button>
+        </div>
+    </div>
+</section>
+
+<section class="sg-section" style="border-bottom:0">
+    <h2>Dialog</h2>
+    <div class="dialog" style="margin:0">
+        <div class="dialog-body">
+            <h3 style="font-size:var(--text-md)">Delete room “Weekly sync”?</h3>
+            <p class="muted">The room and its history are removed. Participants currently inside are disconnected.</p>
+        </div>
+        <div class="dialog-foot"><button class="btn btn-ghost">Cancel</button><button class="btn btn-danger">Delete room</button></div>
+    </div>
+    <p class="muted" style="margin-top:var(--space-6)">The landing page (<code>src/app/index.html</code>) is the reference for the marketing patterns: hero with live room mockup, privacy diagrams, tools, FAQ.</p>
+</section>
+
+</main>
+
+<script>
+(function () {
+    var root = document.documentElement, btn = document.getElementById('theme');
+    function sync() { btn.textContent = root.dataset.theme === 'dark' ? 'Light theme' : 'Dark theme'; swatches(); }
+    btn.addEventListener('click', function () { root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark'; sync(); });
+    function swatches() {
+        var names = ['bg','surface','surface-2','surface-3','border','border-strong','text','text-2','text-3','accent','accent-hover','accent-text','accent-cyan','success','warning','danger'];
+        var cs = getComputedStyle(root), out = '';
+        names.forEach(function (n) { var v = cs.getPropertyValue('--' + n).trim(); out += '<div class="sw"><i style="background:var(--' + n + ')"></i><span><b>--' + n + '</b>' + v + '</span></div>'; });
+        document.getElementById('swatches').innerHTML = out;
+    }
+    sync();
+})();
+</script>
+</body>
+</html>
