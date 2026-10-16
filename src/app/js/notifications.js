@@ -12,32 +12,19 @@
     // ── Styles ─────────────────────────────────────────────────────────────
     const style = document.createElement('style');
     style.textContent = `
-        /* dark = default (project default) */
+        /* Mapped onto the design tokens (tokens.css); fallbacks keep unmigrated pages readable */
         :root {
-            --nb-bg:       #0d1220;
-            --nb-surface:  #111827;
-            --nb-border:   rgba(255,255,255,0.08);
-            --nb-border-h: rgba(255,255,255,0.14);
-            --nb-text:     #f1f5f9;
-            --nb-text2:    #94a3b8;
-            --nb-text3:    #475569;
-            --nb-hover:    rgba(255,255,255,0.04);
-            --nb-accent:   #3b82f6;
-            --nb-accent2:  #6366f1;
-            --nb-danger:   #ef4444;
-        }
-        html[data-theme="light"] {
-            --nb-bg:       #ffffff;
-            --nb-surface:  #f8fafc;
-            --nb-border:   rgba(0,0,0,0.08);
-            --nb-border-h: rgba(0,0,0,0.15);
-            --nb-text:     #0f172a;
-            --nb-text2:    #64748b;
-            --nb-text3:    #94a3b8;
-            --nb-hover:    rgba(0,0,0,0.03);
-            --nb-accent:   #3b82f6;
-            --nb-accent2:  #6366f1;
-            --nb-danger:   #ef4444;
+            --nb-bg:       var(--surface, #0d1220);
+            --nb-surface:  var(--surface-2, #111827);
+            --nb-border:   var(--border, rgba(255,255,255,0.08));
+            --nb-border-h: var(--border-strong, rgba(255,255,255,0.14));
+            --nb-text:     var(--text, #f1f5f9);
+            --nb-text2:    var(--text-2, #94a3b8);
+            --nb-text3:    var(--text-3, #74829c);
+            --nb-hover:    var(--surface-2, rgba(255,255,255,0.04));
+            --nb-accent:   var(--accent, #3b82f6);
+            --nb-accent2:  var(--accent, #3b82f6);
+            --nb-danger:   var(--danger, #ef4444);
         }
 
         /* ── Container ── */
@@ -50,7 +37,7 @@
             flex-direction: column;
             align-items: flex-end;
             gap: 8px;
-            font-family: 'Outfit', system-ui, sans-serif;
+            font-family: var(--font, 'Outfit', system-ui, sans-serif);
             pointer-events: none;
         }
 
@@ -278,7 +265,7 @@
             overflow: hidden;
             position: relative;
             cursor: pointer;
-            font-family: 'Outfit', system-ui, sans-serif;
+            font-family: var(--font, 'Outfit', system-ui, sans-serif);
             animation: nb-tin 0.3s cubic-bezier(0.4,0,0.2,1) forwards;
         }
         .nb-toast.nb-tout { animation: nb-tout 0.2s ease-in forwards; }
@@ -323,7 +310,7 @@
             overflow: hidden;
             transform: scale(0.94) translateY(8px);
             transition: transform 0.22s cubic-bezier(0.4,0,0.2,1);
-            font-family: 'Outfit', system-ui, sans-serif;
+            font-family: var(--font, 'Outfit', system-ui, sans-serif);
         }
         #nb-modal-overlay.open #nb-modal {
             transform: scale(1) translateY(0);

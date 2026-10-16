@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('requirePassword')?.addEventListener('change', function() {
         const passwordField = document.getElementById('passwordField');
         if (passwordField) {
-            passwordField.style.display = this.checked ? 'block' : 'none';
+            passwordField.style.display = this.checked ? 'flex' : 'none';
             if (!this.checked) document.getElementById('password').value = '';
         }
     });

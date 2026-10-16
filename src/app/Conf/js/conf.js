@@ -82,6 +82,7 @@ async function loadConferences() {
 
     loadingIndicator.style.display = 'flex';
     conferencesList.innerHTML = '';
+    conferencesList.style.display = 'none';
     emptyState.style.display = 'none';
     pagination.style.display = 'none';
 
@@ -108,9 +109,10 @@ async function loadConferences() {
         loadingIndicator.style.display = 'none';
 
         if (conferences.length === 0) {
-            emptyState.style.display = 'block';
+            emptyState.style.display = 'flex';
         } else {
             renderConferences(conferences);
+            conferencesList.style.display = 'block';
             const maxPage = Math.ceil(totalConferences / ITEMS_PER_PAGE);
             if (maxPage > 1 && currentFilter === 'all') {
                 pagination.style.display = 'flex';
@@ -121,7 +123,7 @@ async function loadConferences() {
     } catch (error) {
         console.error('Load conferences error:', error);
         loadingIndicator.style.display = 'none';
-        emptyState.style.display = 'block';
+        emptyState.style.display = 'flex';
         showNotification('Failed to load conferences. Please try again.', 'error');
     }
 }
@@ -133,59 +135,46 @@ function renderConferences(list) {
     list.forEach(conf => conferencesList.appendChild(createConferenceCard(conf)));
 }
 
-// Create conference card
-function createConferenceCard(conf) {
-    const card = document.createElement('div');
-    card.className = 'conference-card';
+// Create conference row
+const STATUS_BADGE = { Ongoing: 'badge-success', Scheduled: 'badge-accent', Active: 'badge-success', Ended: '' };
 
-    const status      = getConferenceStatus(conf);
-    const statusClass = status.toLowerCase().replace(' ', '-');
+function createConferenceCard(conf) {
+    const row = document.createElement('article');
+    row.className = 'conf-row';
+
+    const status = getConferenceStatus(conf);
     const participantCount = conf.participant_count || 0;
     const maxParticipants  = conf.max_participants;
     const participantText  = maxParticipants ? `${participantCount}/${maxParticipants}` : participantCount;
     const isHost = conf.is_host === 1 || conf.is_host === true;
-    const hostBadge = isHost ? '<span class="host-badge">👑 Host</span>' : '';
+    const host = escapeHtml(conf.host_username || conf.host_email || 'Unknown');
 
-    card.innerHTML = `
-        <div class="card-header">
-            <h3>${escapeHtml(conf.name)}</h3>
-            <span class="status-badge ${statusClass}">${status}</span>
-        </div>
-        ${conf.description ? `<p class="card-description">${escapeHtml(conf.description)}</p>` : ''}
-        <div class="card-info">
-            ${isHost ? `
-            <div class="info-item">
-                <span class="info-label">Conference ID:</span>
-                <span class="conf-id-value">#${conf.id}</span>
-            </div>` : ''}
-            <div class="info-item">
-                <span class="info-label">Host:</span>
-                <span>${escapeHtml(conf.host_username || conf.host_email || 'Unknown')}</span>
+    row.innerHTML = `
+        <div class="conf-main">
+            <div class="conf-title">
+                <h3>${escapeHtml(conf.name)}</h3>
+                <span class="badge ${STATUS_BADGE[status] || ''}">${status}</span>
+                ${isHost ? '<span class="badge badge-accent">Host</span>' : ''}
+                ${conf.hasPassword ? '<span class="badge">Password</span>' : ''}
             </div>
-            <div class="info-item">
-                <span class="info-label">Participants:</span>
-                <span>👥 ${participantText}</span>
+            ${conf.description ? `<p class="conf-desc">${escapeHtml(conf.description)}</p>` : ''}
+            <div class="conf-meta">
+                ${isHost ? `<span>ID <span class="mono">${conf.id}</span></span>` : `<span>Host ${host}</span>`}
+                <span>${participantText} people</span>
+                ${conf.start_time ? `<span>${formatDate(conf.start_time)}</span>` : ''}
             </div>
-            ${conf.start_time ? `
-                <div class="info-item">
-                    <span class="info-label">Start:</span>
-                    <span>📅 ${formatDate(conf.start_time)}</span>
-                </div>` : ''}
         </div>
-        <div class="card-actions">
-            ${hostBadge}
+        <div class="conf-actions">
             ${isHost ? `
-                <button onclick="editConference(${conf.id})" class="secondary">✏️ Edit</button>
-                <button onclick="deleteConference(${conf.id})" class="danger">🗑️ Delete</button>
+                <button onclick="editConference(${conf.id})" class="btn btn-sm" type="button">Edit</button>
+                <button onclick="deleteConference(${conf.id})" class="btn btn-danger btn-sm" type="button">Delete</button>
             ` : `
-                <button onclick="joinConference(${conf.id}, ${!!conf.hasPassword})">
-                ${conf.hasPassword ? '🔒' : '🚀'} Join
-            </button>
+                <button onclick="joinConference(${conf.id}, ${!!conf.hasPassword})" class="btn btn-primary btn-sm" type="button">Join</button>
             `}
         </div>
     `;
 
-    return card;
+    return row;
 }
 
 // Get conference status
@@ -255,28 +244,20 @@ async function joinConference(conferenceId, requiresPassword = false) {
     }
 }
 
-// Добавить функцию промпта (использует showConfirm из conf_utils.js как основу):
+// Password prompt for protected rooms
 function showPasswordPrompt() {
     return new Promise(resolve => {
+        ensureUiStyles();
         const overlay = document.createElement('div');
-        overlay.style.cssText = `
-            position:fixed;inset:0;background:rgba(0,0,0,0.6);
-            display:grid;place-items:center;z-index:9999;backdrop-filter:blur(4px);
-        `;
+        overlay.className = 'mf-backdrop';
         overlay.innerHTML = `
-            <div style="background:var(--surface,#161d2e);border:1px solid var(--border-hover,rgba(255,255,255,0.14));
-                border-radius:16px;padding:32px;width:360px;text-align:center;box-shadow:0 12px 48px rgba(0,0,0,0.6)">
-                <div style="font-size:32px;margin-bottom:16px">🔒</div>
-                <h3 style="margin-bottom:8px;font-size:16px;font-weight:700">Password Required</h3>
-                <p style="color:var(--text-2,#94a3b8);font-size:13px;margin-bottom:20px">Enter the conference password</p>
-                <input id="confPasswordInput" type="password" placeholder="Password"
-                    style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid var(--border,rgba(255,255,255,0.07));
-                    background:var(--bg-2,#0d1220);color:var(--text,#f1f5f9);font-size:14px;margin-bottom:16px;outline:none">
-                <div style="display:flex;gap:8px">
-                    <button id="confPassCancel" style="flex:1;padding:10px;border-radius:8px;background:transparent;
-                        border:1px solid var(--border,rgba(255,255,255,0.07));color:var(--text-2,#94a3b8);cursor:pointer">Cancel</button>
-                    <button id="confPassConfirm" style="flex:1;padding:10px;border-radius:8px;background:#3b82f6;
-                        border:none;color:#fff;font-weight:600;cursor:pointer">Join</button>
+            <div class="mf-dialog" role="dialog" aria-modal="true" aria-labelledby="mfPassTitle">
+                <h3 id="mfPassTitle">Room password</h3>
+                <p>This room is protected. Enter the password to join.</p>
+                <input id="confPasswordInput" type="password" placeholder="Password" autocomplete="off">
+                <div class="mf-actions">
+                    <button class="mf-btn" id="confPassCancel" type="button">Cancel</button>
+                    <button class="mf-btn primary" id="confPassConfirm" type="button">Join</button>
                 </div>
             </div>
         `;
@@ -316,7 +297,7 @@ async function editConference(conferenceId) {
         document.getElementById('editPassword').value = '';
         document.getElementById('editPasswordGroup').style.display = 'none';
 
-        document.getElementById('editModal').style.display = 'flex';
+        document.getElementById('editModal').style.display = 'grid';
     } catch (err) {
         console.error('editConference error:', err);
         showNotification('Failed to load conference data.', 'error');
@@ -373,7 +354,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const data = await response.json();
             if (response.ok) {
-                showNotification('Conference updated successfully', 'success');
+                showNotification('Conference updated', 'success');
                 closeEditModal();
                 loadConferences();
             } else {

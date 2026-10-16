@@ -1,123 +1,81 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Join Conference - Meetify</title>
     <meta name="robots" content="noindex, nofollow">
-    <link rel="stylesheet" href="../../assets/fonts/fonts.css">
-    <link rel="stylesheet" href="/styles/brand.css">
-    <link rel="stylesheet" href="/styles/conf.css">
-    <link rel="stylesheet" href="/styles/theme-additions.css">
+    <script>(function(){var d=document.documentElement,t;try{t=localStorage.getItem('meetify-theme')}catch(e){}if(t!=='dark'&&t!=='light'){t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}d.setAttribute('data-theme',t)})();</script>
+    <link rel="preload" href="/assets/fonts/geist-latin.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/assets/fonts/fonts.css">
+    <link rel="stylesheet" href="/styles/tokens.css">
+    <link rel="stylesheet" href="/styles/components.css">
+    <link rel="stylesheet" href="/styles/app.css">
     <link rel="icon" href="/assets/logo-mark.png">
-    <script>(function(){var t=localStorage.getItem('theme')||'dark';document.documentElement.setAttribute('data-theme',t)})();</script>
 </head>
 <body>
-    <nav class="brand-nav">
-        <a class="brand-nav-logo" href="/">
-            <img src="/assets/logo.png" alt="Meetify">
-        </a>
-        <div class="brand-nav-right">
-            <button class="btn btn-ghost" onclick="window.location.href='conf.html'">← Back to Dashboard</button>
-            <button class="brand-theme-btn" id="themeToggleBtn" aria-label="Toggle theme">
-                <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>
-                <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-            </button>
+    <header class="topbar">
+        <div class="container topbar-inner">
+            <a class="brand" href="/" aria-label="Meetify home"><img src="/assets/logo.png" alt="Meetify" width="106" height="26"></a>
+            <nav class="topbar-nav" aria-label="Primary">
+                <a class="nav-link" href="/Conf/pages/conf.html">Conferences</a>
+                <a class="nav-link" href="/Conf/pages/conf_join.html" aria-current="page">Join a room</a>
+                <a class="nav-link" href="/profile/profile.html">Profile</a>
+            </nav>
+            <span class="topbar-spacer"></span>
+            <span class="topbar-user" id="userName"></span>
+            <button class="btn btn-ghost btn-icon btn-sm" id="themeToggleBtn" data-static type="button" aria-label="Switch theme"><svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></button>
         </div>
-    </nav>
+    </header>
 
-    <main>
-        <div class="conference-form">
-            <h3>🔗 Enter Conference Details</h3>
-            
-            <form id="joinConferenceForm">
-                <!-- Conference ID -->
-                <div class="form-group">
-                    <label for="conferenceId" class="conference-label">Conference ID *</label>
-                    <input 
-                        type="text" 
-                        id="conferenceId" 
-                        name="conferenceId"
-                        placeholder="Enter conference ID (e.g., 12345)" 
-                        required
-                        autocomplete="off"
-                    >
-                    <small class="input-hint">Enter the ID provided by the conference host</small>
+    <main class="container page page-narrow">
+        <div class="page-head">
+            <div>
+                <h1>Join a room</h1>
+                <p>Enter the room ID from the host.</p>
+            </div>
+        </div>
+
+        <div class="panel form-panel">
+            <form id="joinConferenceForm" class="form-stack" novalidate onsubmit="return false">
+                <div class="field">
+                    <label for="conferenceId">Room ID</label>
+                    <input class="input mono" type="text" id="conferenceId" name="conferenceId" placeholder="12345" required autocomplete="off">
                 </div>
 
-                <!-- Password Field (hidden by default) -->
-                <div id="passwordField" class="form-group" style="display: none;">
-                    <label for="password" class="conference-label">Password *</label>
-                    <input 
-                        type="password" 
-                        id="password" 
-                        name="password"
-                        placeholder="Enter conference password"
-                    >
-                    <small class="input-hint">This conference is password protected</small>
+                <div class="field" id="passwordField" style="display: none;">
+                    <label for="password">Password</label>
+                    <input class="input" type="password" id="password" name="password" placeholder="Room password">
+                    <span class="hint">This room is protected by a password.</span>
                 </div>
 
-                <!-- Conference Preview (shown after ID entered) -->
-                <div id="conferencePreview" class="conference-preview" style="display: none;">
-                    <h4>📹 Conference Details</h4>
-                    <div class="preview-content">
-                        <div class="preview-item">
-                            <span class="preview-label">Name:</span>
-                            <span id="previewName">-</span>
-                        </div>
-                        <div class="preview-item">
-                            <span class="preview-label">Host:</span>
-                            <span id="previewHost">-</span>
-                        </div>
-                        <div class="preview-item">
-                            <span class="preview-label">Participants:</span>
-                            <span id="previewParticipants">-</span>
-                        </div>
-                        <div class="preview-item">
-                            <span class="preview-label">Status:</span>
-                            <span id="previewStatus" class="status-badge">-</span>
-                        </div>
-                    </div>
-                </div>
+                <dl id="conferencePreview" class="preview" style="display: none;">
+                    <dt>Name</dt><dd id="previewName">-</dd>
+                    <dt>Host</dt><dd id="previewHost">-</dd>
+                    <dt>People</dt><dd id="previewParticipants">-</dd>
+                    <dt>Status</dt><dd><span id="previewStatus" class="badge">-</span></dd>
+                </dl>
 
-                <!-- Submit Button -->
-                <div class="button-container">
-                    <button type="button" id="checkBtn" onclick="checkConference()">
-                        Check Conference
-                    </button>
-                    <button type="button" id="joinBtn" style="display: none;">
-                        Join Conference
-                    </button>
-                    <button type="button" class="secondary" onclick="window.location.href='conf.html'">
-                        Cancel
-                    </button>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-primary btn-lg" id="checkBtn" onclick="checkConference()">Find room</button>
+                    <button type="button" class="btn btn-primary btn-lg" id="joinBtn" style="display: none;">Join room</button>
+                    <a class="btn btn-lg" href="/Conf/pages/conf.html">Cancel</a>
                 </div>
             </form>
 
-            <!-- Info Messages -->
-            <div id="errorMessage" class="error-message" style="display: none;">
-                <strong>⚠️ Error:</strong>
-                <span id="errorText"></span>
-            </div>
-
-            <div id="successMessage" class="info-message" style="display: none;">
-                <strong>✅ Success:</strong>
-                <span id="successText"></span>
-            </div>
+            <div id="errorMessage" class="message error" style="display: none; margin-top: var(--space-4);" role="alert"><span id="errorText"></span></div>
+            <div id="successMessage" class="message ok" style="display: none; margin-top: var(--space-4);" role="status"><span id="successText"></span></div>
         </div>
 
-        <!-- Quick Access to Recent Conferences -->
-        <div class="recent-conferences">
-            <h3>🕒 Recently Joined</h3>
-            <div id="recentList" class="recent-list">
-                <p class="loading-text">Loading recent conferences...</p>
+        <section class="recent">
+            <h2>Recently joined</h2>
+            <div id="recentList" class="panel" style="padding:0; overflow:hidden;">
+                <p class="muted">Loading...</p>
             </div>
-        </div>
+        </section>
     </main>
 
-    <footer>
-        <p>&copy; 2026 Meetify</p>
-    </footer>
+    <footer class="app-foot">&copy; 2026 Meetify</footer>
 
     <script src="/js/theme.js"></script>
     <script src="/Conf/js/conf_utils.js"></script>

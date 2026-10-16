@@ -239,68 +239,51 @@ async function copyToClipboard(text) {
  * @param {string} type - 'success' | 'error' | 'info' | 'warning'
  * @param {number} duration - ms (default 3500)
  */
-function showNotification(message, type = 'info', duration = 3500) {
-    // Remove existing toasts
-    document.querySelectorAll('.notification-toast').forEach(el => el.remove());
- 
-    const colors = {
-        success: { bg: 'rgba(16,185,129,0.12)',  border: 'rgba(16,185,129,0.3)',  text: '#6ee7b7', icon: '✓' },
-        error:   { bg: 'rgba(239,68,68,0.12)',   border: 'rgba(239,68,68,0.3)',   text: '#fca5a5', icon: '✕' },
-        warning: { bg: 'rgba(245,158,11,0.12)',  border: 'rgba(245,158,11,0.3)',  text: '#fcd34d', icon: '⚠' },
-        info:    { bg: 'rgba(59,130,246,0.12)',  border: 'rgba(59,130,246,0.3)',  text: '#93c5fd', icon: 'ℹ' },
-    };
- 
-    const c = colors[type] || colors.info;
- 
-    const toast = document.createElement('div');
-    toast.className = 'notification-toast';
-    toast.innerHTML = `<span class="toast-icon">${c.icon}</span><span class="toast-text">${message}</span>`;
- 
-    toast.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        background: #1a1f2e;
-        border: 1px solid ${c.border};
-        color: ${c.text};
-        padding: 0.8rem 1.2rem;
-        border-radius: 10px;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-        z-index: 99999;
-        font-family: 'Outfit', sans-serif;
-        font-size: 0.9rem;
-        font-weight: 500;
-        max-width: 360px;
-        word-break: break-word;
-        animation: toastIn 0.25s cubic-bezier(0.4,0,0.2,1) both;
-        backdrop-filter: blur(12px);
+function ensureUiStyles() {
+    if (document.getElementById('mf-ui-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'mf-ui-styles';
+    style.textContent = `
+        .mf-toast { position: fixed; top: 16px; right: 16px; z-index: 99999; max-width: 360px; display: flex; align-items: flex-start; gap: 10px;
+            padding: 12px 16px; background: var(--surface, #0b0f17); color: var(--text, #eef2fa); font: 500 14px/1.45 var(--font, system-ui, sans-serif);
+            border: 1px solid var(--border-strong, rgba(148,170,215,.24)); border-left: 3px solid var(--accent, #2f7cf6); border-radius: 10px;
+            box-shadow: var(--shadow-overlay, 0 16px 48px rgba(0,0,0,.6)); word-break: break-word; animation: mfIn .2s ease both; }
+        .mf-toast.success { border-left-color: var(--success, #3fb985); }
+        .mf-toast.error { border-left-color: var(--danger, #ec6a62); }
+        .mf-toast.warning { border-left-color: var(--warning, #dcab48); }
+        .mf-toast.out { animation: mfOut .2s ease forwards; }
+        @keyframes mfIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+        @keyframes mfOut { to { opacity: 0; transform: translateY(-6px); } }
+        .mf-backdrop { position: fixed; inset: 0; z-index: 99998; display: grid; place-items: center; padding: 16px; background: var(--overlay, rgba(3,5,9,.7)); }
+        .mf-dialog { width: 100%; max-width: 400px; padding: 24px; background: var(--surface, #0b0f17); color: var(--text, #eef2fa); font-family: var(--font, system-ui, sans-serif);
+            border: 1px solid var(--border-strong, rgba(148,170,215,.24)); border-radius: 22px; box-shadow: var(--shadow-overlay, 0 16px 48px rgba(0,0,0,.6)); }
+        .mf-dialog h3 { font-size: 19px; font-weight: 600; letter-spacing: -.01em; margin: 0 0 8px; }
+        .mf-dialog p { color: var(--text-2, #9ba8c0); font-size: 14px; line-height: 1.55; margin: 0 0 20px; }
+        .mf-dialog input { width: 100%; height: 40px; padding: 0 12px; margin-bottom: 20px; font: inherit; font-size: 16px; color: inherit; background: var(--surface-2, #111724); border: 1px solid var(--border-strong, rgba(148,170,215,.24)); border-radius: 10px; outline: none; }
+        .mf-dialog input:focus { border-color: var(--accent, #2f7cf6); box-shadow: 0 0 0 3px var(--accent-subtle, rgba(47,124,246,.15)); }
+        .mf-actions { display: flex; gap: 8px; justify-content: flex-end; }
+        .mf-btn { height: 40px; padding: 0 16px; font: 500 14px var(--font, system-ui, sans-serif); color: var(--text, #eef2fa); background: var(--surface-2, #111724); border: 1px solid var(--border-strong, rgba(148,170,215,.24)); border-radius: 10px; cursor: pointer; }
+        .mf-btn:hover { background: var(--surface-3, #19202f); }
+        .mf-btn.primary { background: var(--accent, #2f7cf6); border-color: transparent; color: #fff; }
+        .mf-btn.primary:hover { background: var(--accent-hover, #4b93ff); }
+        .mf-btn.danger { background: var(--danger, #ec6a62); border-color: transparent; color: #fff; }
+        @media (prefers-reduced-motion: reduce) { .mf-toast { animation: none; } }
     `;
- 
-    // Inject keyframes once
-    if (!document.getElementById('toast-styles')) {
-        const style = document.createElement('style');
-        style.id = 'toast-styles';
-        style.textContent = `
-            @keyframes toastIn {
-                from { opacity: 0; transform: translateX(20px) translateY(-4px); }
-                to   { opacity: 1; transform: translateX(0) translateY(0); }
-            }
-            @keyframes toastOut {
-                from { opacity: 1; transform: translateX(0); }
-                to   { opacity: 0; transform: translateX(20px); }
-            }
-            .toast-icon { font-size: 0.85rem; flex-shrink: 0; }
-        `;
-        document.head.appendChild(style);
-    }
- 
+    document.head.appendChild(style);
+}
+
+function showNotification(message, type = 'info', duration = 3500) {
+    ensureUiStyles();
+    document.querySelectorAll('.mf-toast').forEach(el => el.remove());
+
+    const toast = document.createElement('div');
+    toast.className = `mf-toast ${type}`;
+    toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
+    toast.textContent = message;
     document.body.appendChild(toast);
- 
+
     setTimeout(() => {
-        toast.style.animation = 'toastOut 0.2s ease forwards';
+        toast.classList.add('out');
         setTimeout(() => toast.remove(), 200);
     }, duration);
 }
@@ -314,80 +297,26 @@ function showNotification(message, type = 'info', duration = 3500) {
  */
 function showConfirm(message, confirmLabel = 'Confirm', type = 'danger') {
     return new Promise((resolve) => {
-        // Remove existing
-        document.querySelectorAll('.confirm-overlay').forEach(el => el.remove());
- 
+        ensureUiStyles();
+        document.querySelectorAll('.mf-backdrop').forEach(el => el.remove());
+
         const overlay = document.createElement('div');
-        overlay.className = 'confirm-overlay';
-        overlay.style.cssText = `
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(4px);
-            z-index: 99998;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            animation: toastIn 0.15s ease both;
-        `;
- 
-        const btnColor = type === 'danger'
-            ? 'background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);'
-            : 'background:rgba(59,130,246,0.15);color:#93c5fd;border:1px solid rgba(59,130,246,0.3);';
- 
+        overlay.className = 'mf-backdrop';
         overlay.innerHTML = `
-            <div style="
-                background:#161d2e;
-                border:1px solid rgba(255,255,255,0.08);
-                border-radius:14px;
-                padding:1.75rem 2rem;
-                max-width:380px;
-                width:90%;
-                box-shadow:0 20px 60px rgba(0,0,0,0.5);
-                font-family:'Outfit',sans-serif;
-            ">
-                <p style="color:#e2e8f0;font-size:0.95rem;line-height:1.6;margin-bottom:1.5rem;">${message}</p>
-                <div style="display:flex;gap:0.75rem;justify-content:flex-end;">
-                    <button id="confirmCancel" style="
-                        background:rgba(255,255,255,0.05);
-                        color:#94a3b8;
-                        border:1px solid rgba(255,255,255,0.08);
-                        padding:0.55rem 1.2rem;
-                        border-radius:8px;
-                        cursor:pointer;
-                        font-family:'Outfit',sans-serif;
-                        font-size:0.88rem;
-                        font-weight:500;
-                    ">Cancel</button>
-                    <button id="confirmOk" style="
-                        ${btnColor}
-                        padding:0.55rem 1.2rem;
-                        border-radius:8px;
-                        cursor:pointer;
-                        font-family:'Outfit',sans-serif;
-                        font-size:0.88rem;
-                        font-weight:600;
-                    ">${confirmLabel}</button>
+            <div class="mf-dialog" role="alertdialog" aria-modal="true">
+                <p style="color: var(--text, #eef2fa); font-size: 16px; margin-bottom: 20px;">${message}</p>
+                <div class="mf-actions">
+                    <button class="mf-btn" id="confirmCancel" type="button">Cancel</button>
+                    <button class="mf-btn ${type === 'danger' ? 'danger' : 'primary'}" id="confirmOk" type="button">${confirmLabel}</button>
                 </div>
-            </div>
-        `;
- 
+            </div>`;
         document.body.appendChild(overlay);
- 
-        overlay.querySelector('#confirmOk').addEventListener('click', () => {
-            overlay.remove();
-            resolve(true);
-        });
- 
-        overlay.querySelector('#confirmCancel').addEventListener('click', () => {
-            overlay.remove();
-            resolve(false);
-        });
- 
-        // Close on backdrop click
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) { overlay.remove(); resolve(false); }
-        });
+
+        const done = (v) => { overlay.remove(); resolve(v); };
+        overlay.querySelector('#confirmOk').addEventListener('click', () => done(true));
+        overlay.querySelector('#confirmCancel').addEventListener('click', () => done(false));
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) done(false); });
+        overlay.querySelector('#confirmCancel').focus();
     });
 }
 

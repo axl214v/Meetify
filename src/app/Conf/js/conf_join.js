@@ -75,8 +75,8 @@ async function checkConference() {
             currentConference = err.conference;
             conferenceIdInput.classList.add('success');
             displayConferencePreview(err.conference);
-            passwordField.style.display = 'block';
-            joinBtn.style.display = 'inline-block';
+            passwordField.style.display = 'flex';
+            joinBtn.style.display = 'inline-flex';
             showError('This conference is password protected. Enter the password to join.');
             return;
             } 
@@ -103,11 +103,11 @@ async function checkConference() {
         
         // Show password field if required
         if (currentConference.hasPassword) {
-            passwordField.style.display = 'block';
+            passwordField.style.display = 'flex';
         }
         
         // Show join button
-        joinBtn.style.display = 'inline-block';
+        joinBtn.style.display = 'inline-flex';
         
     } catch (error) {
         console.error('Check conference error:', error);
@@ -129,23 +129,23 @@ function displayConferencePreview(conference) {
 
     previewName.textContent = conference.name || '—';
     previewHost.textContent = conference.isPrivate
-        ? '🔒 Private'
+        ? 'Private'
         : (conference.host_username || conference.host_email || 'Unknown');
 
     if (conference.isPrivate) {
         previewParticipants.textContent = '—';
         previewStatus.textContent = 'Private';
-        previewStatus.className = 'status-badge ended';
+        previewStatus.className = 'badge';
     } else {
         const participantCount = conference.participantCount || conference.participant_count || 0;
         const maxParticipants  = conference.max_participants;
-        previewParticipants.textContent = `👥 ${maxParticipants ? `${participantCount}/${maxParticipants}` : participantCount}`;
+        previewParticipants.textContent = `${maxParticipants ? `${participantCount}/${maxParticipants}` : participantCount}`;
         const status = getConferenceStatus(conference);
         previewStatus.textContent = status;
-        previewStatus.className   = `status-badge ${status.toLowerCase().replace(' ', '-')}`;
+        previewStatus.className   = `badge ${ {Ongoing:'badge-success',Scheduled:'badge-accent',Active:'badge-success'}[status] || '' }`;
     }
 
-    conferencePreview.style.display = 'block';
+    conferencePreview.style.display = 'grid';
 }
 
 // Get conference status
@@ -311,11 +311,11 @@ async function loadRecentConferences() {
         const recent = JSON.parse(localStorage.getItem('recentConferences') || '[]');
         
         if (recent.length === 0) {
-            recentList.innerHTML = '<p class="empty-text">No recent conferences</p>';
+            recentList.innerHTML = '<p class="muted">No recent conferences</p>';
             return;
         }
         
-        recentList.innerHTML = '<p class="loading-text">Loading...</p>';
+        recentList.innerHTML = '<p class="muted">Loading...</p>';
         
         // Fetch details for each recent conference
         const conferencePromises = recent.map(id => 
@@ -330,7 +330,7 @@ async function loadRecentConferences() {
         const conferences = results.filter(r => r && r.conference).map(r => r.conference);
         
         if (conferences.length === 0) {
-            recentList.innerHTML = '<p class="empty-text">No recent conferences available</p>';
+            recentList.innerHTML = '<p class="muted">No recent conferences available</p>';
             return;
         }
         
@@ -341,13 +341,13 @@ async function loadRecentConferences() {
                     <strong>${escapeHtml(conf.name)}</strong>
                     <small>${escapeHtml(conf.host_username || conf.host_email)}</small>
                 </div>
-                <button class="quick-join-btn">Join</button>
+                <button class="btn btn-sm" type="button">Join</button>
             </div>
         `).join('');
         
     } catch (error) {
         console.error('Load recent conferences error:', error);
-        recentList.innerHTML = '<p class="empty-text">Error loading recent conferences</p>';
+        recentList.innerHTML = '<p class="muted">Error loading recent conferences</p>';
     }
 }
 
