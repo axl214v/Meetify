@@ -165,7 +165,7 @@ function setupThemeToggle() {
     document.getElementById('themeToggle').addEventListener('click', () => {
         const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', next);
-        localStorage.setItem('theme', next);
+        try { localStorage.setItem('meetify-theme', next); } catch (e) {}
     });
 }
 
@@ -525,10 +525,10 @@ async function loadServerStats() {
         // Color mem bar by usage
         const bar = document.getElementById('memBar');
         bar.style.background = d.memPercent > 85
-            ? 'linear-gradient(90deg, #e05555, #f07070)'
+            ? 'var(--danger)'
             : d.memPercent > 65
-                ? 'linear-gradient(90deg, #f0a030, #f8c060)'
-                : 'linear-gradient(90deg, var(--accent), var(--accent2))';
+                ? 'var(--warning)'
+                : 'var(--accent)';
 
         const [l1, l5, l15] = d.loadAvg;
         document.getElementById('load1').textContent  = l1.toFixed(2);
@@ -637,9 +637,9 @@ function timeAgo(ts) {
 
 // ── Email broadcast ────────────────────────────────────────────────────────
 const EMAIL_STATUS = {
-    sending:     { label: 'Sending…',    color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
-    completed:   { label: 'Completed',   color: '#10b981', bg: 'rgba(16,185,129,0.15)' },
-    interrupted: { label: 'Interrupted', color: '#ef4444', bg: 'rgba(239,68,68,0.15)'  }
+    sending:     { label: 'Sending…',    color: 'var(--warning)', bg: 'var(--warning-subtle)' },
+    completed:   { label: 'Completed',   color: 'var(--success)', bg: 'var(--success-subtle)' },
+    interrupted: { label: 'Interrupted', color: 'var(--danger)', bg: 'var(--danger-subtle)'  }
 };
 let emailPollTimer = null;
 let emailAudience  = 0;
@@ -691,7 +691,7 @@ async function loadEmailHistory() {
                     <td>${badge}</td>
                     <td>${fmt(c.recipients_total)}</td>
                     <td>${fmt(c.sent_count)}</td>
-                    <td style="${c.failed_count ? 'color:#f87171;' : ''}">${fmt(c.failed_count)}</td>
+                    <td style="${c.failed_count ? 'color:var(--danger);' : ''}">${fmt(c.failed_count)}</td>
                     <td>${escHtml(c.created_by_name || '—')}</td>
                 </tr>`;
             }).join('');
@@ -701,7 +701,7 @@ async function loadEmailHistory() {
         if (data.sending && !emailPollTimer) emailPollTimer = setInterval(loadEmailHistory, 3000);
         if (!data.sending) stopEmailPolling();
     } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#f87171;padding:24px;">${escHtml(e.message || 'Error loading history')}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--danger);padding:24px;">${escHtml(e.message || 'Error loading history')}</td></tr>`;
         stopEmailPolling();
     }
 }
@@ -755,10 +755,10 @@ async function sendEmailBroadcast() {
 
 // ── Notifications ──────────────────────────────────────────────────────────
 const NOTIF_CATEGORIES = {
-    info:        { label: 'Info',        color: '#3b82f6', bg: 'rgba(59,130,246,0.15)'  },
-    update:      { label: 'Update',      color: '#10b981', bg: 'rgba(16,185,129,0.15)'  },
-    maintenance: { label: 'Maintenance', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)'  },
-    warning:     { label: 'Warning',     color: '#ef4444', bg: 'rgba(239,68,68,0.15)'   }
+    info:        { label: 'Info',        color: 'var(--accent-text)', bg: 'var(--accent-subtle)'  },
+    update:      { label: 'Update',      color: 'var(--success)', bg: 'var(--success-subtle)'  },
+    maintenance: { label: 'Maintenance', color: 'var(--warning)', bg: 'var(--warning-subtle)'  },
+    warning:     { label: 'Warning',     color: 'var(--danger)', bg: 'var(--danger-subtle)'   }
 };
 
 async function loadNotifications() {
@@ -766,7 +766,7 @@ async function loadNotifications() {
         const res  = await apiFetch('/api/admin/notifications');
         const data = await res.json();
         const tbody = document.getElementById('notifsBody');
-        if (!res.ok) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#f87171;padding:24px;">${escHtml(data.error)}</td></tr>`; return; }
+        if (!res.ok) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--danger);padding:24px;">${escHtml(data.error)}</td></tr>`; return; }
 
         const list = data.notifications;
         if (!list.length) {
@@ -786,7 +786,7 @@ async function loadNotifications() {
             </tr>`;
         }).join('');
     } catch (e) {
-        document.getElementById('notifsBody').innerHTML = `<tr><td colspan="6" style="text-align:center;color:#f87171;padding:24px;">Error loading notifications</td></tr>`;
+        document.getElementById('notifsBody').innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--danger);padding:24px;">Error loading notifications</td></tr>`;
     }
 }
 
@@ -874,7 +874,7 @@ async function loadAdminTickets() {
             </tr>`;
         }).join('');
     } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#f87171;padding:24px;">${escHtml(e.message)}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--danger);padding:24px;">${escHtml(e.message)}</td></tr>`;
     }
 }
 

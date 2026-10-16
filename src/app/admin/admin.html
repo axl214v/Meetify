@@ -5,22 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meetify — Admin</title>
     <meta name="robots" content="noindex, nofollow">
-    <link rel="stylesheet" href="../assets/fonts/fonts.css">
-    <link rel="stylesheet" href="/styles/brand.css">
+    <script>(function(){var d=document.documentElement,t;try{t=localStorage.getItem('meetify-theme')}catch(e){}if(t!=='dark'&&t!=='light'){t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}d.setAttribute('data-theme',t)})();</script>
+    <link rel="preload" href="/assets/fonts/geist-latin.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/assets/fonts/fonts.css">
+    <link rel="stylesheet" href="/styles/tokens.css">
     <link rel="stylesheet" href="/styles/admin.css">
-    <script>
-        (function() {
-            const t = localStorage.getItem('theme') || 'dark';
-            document.documentElement.setAttribute('data-theme', t);
-        })();
-    </script>
+    <link rel="icon" href="/assets/logo-mark.png">
 </head>
 <body>
     <!-- Sidebar -->
     <aside class="sidebar">
         <div class="sidebar-logo">
             <img src="/assets/logo.png" alt="Meetify" class="sidebar-logo-img">
-            <span class="logo-badge">ADMIN</span>
+            <span class="logo-badge">Admin</span>
         </div>
 
         <nav class="sidebar-nav">
@@ -600,7 +597,7 @@
                     <span>Preview</span>
                 </div>
                 <iframe id="emailPreviewFrame" title="Email preview" sandbox=""
-                    style="width:100%;height:640px;border:1px solid var(--border);border-radius:8px;background:#020c1a;"></iframe>
+                    style="width:100%;height:640px;border:1px solid var(--border);border-radius:8px;background:var(--bg);"></iframe>
             </div>
 
             <div class="panel-card">
