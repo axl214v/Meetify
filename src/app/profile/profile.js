@@ -7,94 +7,8 @@ const API_BASE = window.location.origin;
 let currentUser = null;
 let currentHistoryRole = 'all';
 
-// ============================================
-// Toast notification (no alert dependency)
-// ============================================
-
-function showToast(message, type = 'info', duration = 3500) {
-    document.querySelectorAll('.profile-toast').forEach(el => el.remove());
-
-    const colors = {
-        success: { border: 'rgba(16,185,129,0.3)',  text: '#6ee7b7', icon: '✓' },
-        error:   { border: 'rgba(239,68,68,0.3)',   text: '#fca5a5', icon: '✕' },
-        warning: { border: 'rgba(245,158,11,0.3)',  text: '#fcd34d', icon: '⚠' },
-        info:    { border: 'rgba(59,130,246,0.3)',  text: '#93c5fd', icon: 'ℹ' },
-    };
-
-    const c = colors[type] || colors.info;
-    const toast = document.createElement('div');
-    toast.className = 'profile-toast';
-    toast.innerHTML = `<span>${c.icon}</span><span>${message}</span>`;
-    toast.style.cssText = `
-        position:fixed;top:20px;right:20px;
-        display:flex;align-items:center;gap:10px;
-        background:#1a1f2e;border:1px solid ${c.border};
-        color:${c.text};padding:0.8rem 1.2rem;
-        border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,0.4);
-        z-index:99999;font-family:'Outfit',sans-serif;
-        font-size:0.9rem;font-weight:500;max-width:360px;
-        animation:toastIn 0.25s ease both;backdrop-filter:blur(12px);
-    `;
-
-    if (!document.getElementById('profile-toast-styles')) {
-        const s = document.createElement('style');
-        s.id = 'profile-toast-styles';
-        s.textContent = `
-            @keyframes toastIn  { from{opacity:0;transform:translateX(16px)} to{opacity:1;transform:translateX(0)} }
-            @keyframes toastOut { from{opacity:1;transform:translateX(0)}    to{opacity:0;transform:translateX(16px)} }
-        `;
-        document.head.appendChild(s);
-    }
-
-    document.body.appendChild(toast);
-    setTimeout(() => {
-        toast.style.animation = 'toastOut 0.2s ease forwards';
-        setTimeout(() => toast.remove(), 200);
-    }, duration);
-}
-
-// ============================================
-// Confirm dialog (replaces native confirm())
-// ============================================
-
-function showConfirm(message, confirmLabel = 'Confirm', type = 'danger') {
-    return new Promise((resolve) => {
-        document.querySelectorAll('.profile-confirm').forEach(el => el.remove());
-
-        const overlay = document.createElement('div');
-        overlay.className = 'profile-confirm';
-        overlay.style.cssText = `
-            position:fixed;inset:0;background:rgba(0,0,0,0.6);
-            backdrop-filter:blur(4px);z-index:99998;
-            display:flex;align-items:center;justify-content:center;
-        `;
-
-        const btnStyle = type === 'danger'
-            ? 'background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);'
-            : 'background:rgba(59,130,246,0.15);color:#93c5fd;border:1px solid rgba(59,130,246,0.3);';
-
-        overlay.innerHTML = `
-            <div style="background:#161d2e;border:1px solid rgba(255,255,255,0.08);
-                border-radius:14px;padding:1.75rem 2rem;max-width:380px;width:90%;
-                box-shadow:0 20px 60px rgba(0,0,0,0.5);font-family:'Outfit',sans-serif;">
-                <p style="color:#e2e8f0;font-size:0.95rem;line-height:1.6;margin-bottom:1.5rem;">${message}</p>
-                <div style="display:flex;gap:0.75rem;justify-content:flex-end;">
-                    <button id="pc-cancel" style="background:rgba(255,255,255,0.05);color:#94a3b8;
-                        border:1px solid rgba(255,255,255,0.08);padding:0.55rem 1.2rem;
-                        border-radius:8px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:0.88rem;">Cancel</button>
-                    <button id="pc-ok" style="${btnStyle}padding:0.55rem 1.2rem;
-                        border-radius:8px;cursor:pointer;font-family:'Outfit',sans-serif;
-                        font-size:0.88rem;font-weight:600;">${confirmLabel}</button>
-                </div>
-            </div>
-        `;
-
-        document.body.appendChild(overlay);
-        overlay.querySelector('#pc-ok').addEventListener('click', () => { overlay.remove(); resolve(true); });
-        overlay.querySelector('#pc-cancel').addEventListener('click', () => { overlay.remove(); resolve(false); });
-        overlay.addEventListener('click', e => { if (e.target === overlay) { overlay.remove(); resolve(false); } });
-    });
-}
+// Toasts and confirm dialogs come from Conf/js/conf_utils.js
+const showToast = showNotification;
 
 // ============================================
 // Init
@@ -188,8 +102,8 @@ async function loadHistory() {
                         <div class="history-item-meta">${date} · ${conf.participant_count || 0} participants</div>
                     </div>
                     <div class="history-item-badges">
-                        ${isHost ? '<span class="status-badge" style="background:rgba(245,158,11,0.12);color:#fbbf24;border:1px solid rgba(245,158,11,0.25)">Host</span>' : ''}
-                        <span class="status-badge ${status.toLowerCase()}">${status}</span>
+                        ${isHost ? '<span class="badge badge-accent">Host</span>' : ''}
+                        <span class="badge ${ {Active:'badge-success',Scheduled:'badge-accent'}[status] || '' }">${status}</span>
                     </div>
                 </div>
             `;
@@ -205,7 +119,7 @@ async function loadHistory() {
 // ============================================
 
 function setupEventListeners() {
-    document.getElementById('backBtn').addEventListener('click', () => {
+    document.getElementById('backBtn')?.addEventListener('click', () => {
         window.location.href = '/Conf/pages/conf.html';
     });
 
@@ -459,7 +373,7 @@ function showAvatarImage(url) {
     img.src = url;
     img.classList.remove('hidden');
     initials.classList.add('hidden');
-    removeBtn.style.display = 'block';
+    removeBtn.style.display = 'inline-flex';
 }
 
 function showMsg(id, message, type) {
@@ -486,12 +400,12 @@ function updatePasswordStrength(password) {
     if (/[^A-Za-z0-9]/.test(password))  score++;
 
     const levels = [
-        { label: 'Too short',   color: '#ef4444' },
-        { label: 'Weak',        color: '#f59e0b' },
-        { label: 'Fair',        color: '#f59e0b' },
-        { label: 'Good',        color: '#10b981' },
-        { label: 'Strong',      color: '#10b981' },
-        { label: 'Very strong', color: '#3b82f6' }
+        { label: 'Too short',   color: 'var(--danger)' },
+        { label: 'Weak',        color: 'var(--warning)' },
+        { label: 'Fair',        color: 'var(--warning)' },
+        { label: 'Good',        color: 'var(--success)' },
+        { label: 'Strong',      color: 'var(--success)' },
+        { label: 'Very strong', color: 'var(--accent-text)' }
     ];
 
     const level = levels[Math.min(score, 5)];
