@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,118 +18,55 @@
     <meta name="twitter:title" content="Create account — Meetify">
     <meta name="twitter:description" content="Create a Meetify account to host and join private video rooms in your browser.">
     <meta name="twitter:image" content="https://meetify.cc/assets/og-image.png">
-    <script>(function(){var t=localStorage.getItem('theme')||'dark';document.documentElement.setAttribute('data-theme',t)})();</script>
-    <link rel="preload" href="/assets/fonts/outfit-latin.woff2" as="font" type="font/woff2" crossorigin>
+    <script>(function(){var d=document.documentElement,t;try{t=localStorage.getItem('meetify-theme')}catch(e){}if(t!=='dark'&&t!=='light'){t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}d.setAttribute('data-theme',t)})();</script>
+    <link rel="preload" href="/assets/fonts/geist-latin.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="/assets/fonts/fonts.css">
-    <link rel="stylesheet" href="/styles/brand.css">
-    <link rel="stylesheet" href="/styles/auth_reg.css">
+    <link rel="stylesheet" href="/styles/tokens.css">
+    <link rel="stylesheet" href="/styles/components.css">
+    <link rel="stylesheet" href="/styles/auth.css">
     <link rel="icon" href="/assets/logo-mark.png">
 </head>
 <body>
+    <header class="auth-top">
+        <a class="brand" href="/" aria-label="Meetify home"><img src="/assets/logo.png" alt="Meetify" width="114" height="28"></a>
+        <button class="btn btn-ghost btn-icon btn-sm" id="themeToggleBtn" data-static type="button" aria-label="Switch theme"><svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></button>
+    </header>
 
-    <!-- Back to home -->
-    <a class="auth-back" href="/">← Home</a>
-
-    <!-- Theme toggle -->
-    <button class="auth-theme-toggle" id="themeToggleBtn" title="Toggle theme" aria-label="Toggle theme">
-        <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>
-        <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-    </button>
-
-    <div class="auth-page">
-
-        <!-- Brand -->
-        <div class="auth-brand">
-            <img src="/assets/logo.png" alt="Meetify" class="auth-brand-logo-img">
-        </div>
-
-        <!-- Card -->
-        <div class="auth-card">
-            <h1 class="auth-card-title">Create account</h1>
-            <p class="auth-card-sub">Join Meetify — it's free</p>
-
-            <div class="auth-form">
-                <div class="form-group">
+    <main class="auth-main">
+        <div class="auth-stage glow">
+        <section class="auth-panel panel">
+            <h1>Create account</h1>
+            <p class="auth-sub">An account is needed to create or join rooms.</p>
+            <form class="auth-form" onsubmit="return false" novalidate>
+                <div class="field">
                     <label for="name">Display name</label>
-                    <input
-                        type="text"
-                        id="name"
-                        name="name"
-                        placeholder="Ivan Petrov"
-                        maxlength="100"
-                        autocomplete="name"
-                        required
-                    >
+                    <input class="input" type="text" id="name" name="name" placeholder="Ivan Petrov" maxlength="100" autocomplete="name" required>
                 </div>
-
-                <div class="form-group">
+                <div class="field">
                     <label for="email">Email</label>
-                    <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        placeholder="you@example.com"
-                        maxlength="100"
-                        autocomplete="email"
-                        required
-                    >
+                    <input class="input" type="email" id="email" name="email" placeholder="you@example.com" maxlength="100" autocomplete="email" required>
                 </div>
-
-                <div class="form-group">
+                <div class="field">
                     <label for="password">Password</label>
-                    <input
-                        type="password"
-                        id="password"
-                        name="password"
-                        placeholder="Min 8 characters"
-                        maxlength="100"
-                        autocomplete="new-password"
-                        required
-                    >
-                    <span id="password-strength"></span>
+                    <input class="input" type="password" id="password" name="password" placeholder="Min 8 characters" maxlength="100" autocomplete="new-password" required>
+                    <span id="password-strength" aria-live="polite"></span>
                 </div>
-
-                <div class="form-group form-group-consent">
-                    <label class="consent-label">
-                        <input type="checkbox" id="ageConsent" name="ageConsent">
-                        <span class="consent-box"></span>
-                        <span class="consent-text">I confirm that I am at least <strong>16 years old</strong></span>
-                    </label>
-                </div>
-
-                <div class="form-group form-group-consent">
-                    <label class="consent-label">
-                        <input type="checkbox" id="consent" name="consent">
-                        <span class="consent-box"></span>
-                        <span class="consent-text">
-                            I agree to the
-                            <a href="/legal/terms.html" target="_blank">Terms of Service</a>
-                            and
-                            <a href="/legal/privacy.html" target="_blank">Privacy Policy</a>
-                        </span>
-                    </label>
-                </div>
-
-                <button class="auth-submit" id="submit">Create Account</button>
-
-                <!-- Inline message instead of alert() -->
-                <div class="auth-message" id="authMessage"></div>
+                <label class="consent"><input type="checkbox" id="ageConsent" name="ageConsent"><span>I am at least <strong>16 years old</strong></span></label>
+                <label class="consent"><input type="checkbox" id="consent" name="consent"><span>I agree to the <a href="/legal/terms.html" target="_blank" rel="noopener">Terms of Service</a> and <a href="/legal/privacy.html" target="_blank" rel="noopener">Privacy Policy</a></span></label>
+                <button class="btn btn-primary btn-lg" id="submit" type="button">Create account</button>
+                <div class="auth-message" id="authMessage" role="alert"></div>
+            </form>
+            <div class="auth-foot">
+                <span>Already have an account? <a href="/auth/Auth.html">Sign in</a></span>
             </div>
-
-            <!-- Footer links -->
-            <div class="auth-footer">
-                <div class="auth-footer-row">
-                    <span>Already have an account?</span>
-                    <button class="auth-footer-btn" id="authb">Sign in</button>
-                </div>
-            </div>
+        </section>
         </div>
+    </main>
 
-        <div class="page-footer">
-            <p>© 2026 Meetify · <a href="/">Home</a></p>
-        </div>
-
-    </div>
+    <footer class="auth-legal">
+        <a href="/legal/terms.html">Terms</a>
+        <a href="/legal/privacy.html">Privacy</a>
+    </footer>
 
     <script src="/js/theme.js"></script>
     <script src="/js/reg.js"></script>

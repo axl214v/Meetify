@@ -62,12 +62,12 @@ document.getElementById('newPassword')?.addEventListener('input', function () {
     if (/[^A-Za-z0-9]/.test(password))   score++;
 
     const levels = [
-        { label: 'Too short',    color: '#ef4444' },
-        { label: 'Weak',         color: '#ef4444' },
-        { label: 'Fair',         color: '#f59e0b' },
-        { label: 'Good',         color: '#10b981' },
-        { label: 'Strong',       color: '#10b981' },
-        { label: 'Very strong',  color: '#3b82f6' },
+        { label: 'Too short',    color: 'var(--danger)' },
+        { label: 'Weak',         color: 'var(--danger)' },
+        { label: 'Fair',         color: 'var(--warning)' },
+        { label: 'Good',         color: 'var(--success)' },
+        { label: 'Strong',       color: 'var(--success)' },
+        { label: 'Very strong',  color: 'var(--accent-text)' },
     ];
 
     const level = levels[Math.min(score, 5)];

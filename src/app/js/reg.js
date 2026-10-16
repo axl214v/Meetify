@@ -59,8 +59,8 @@ document.getElementById('submit')?.addEventListener('click', async function (e) 
     nameInput.classList.remove('error', 'success');
     emailInput.classList.remove('error', 'success');
     passwordInput.classList.remove('error', 'success');
-    document.getElementById('ageConsent')?.closest('.form-group-consent')?.classList.remove('consent-error');
-    document.getElementById('consent')?.closest('.form-group-consent')?.classList.remove('consent-error');
+    document.getElementById('ageConsent')?.closest('.consent')?.classList.remove('consent-error');
+    document.getElementById('consent')?.closest('.consent')?.classList.remove('consent-error');
 
     // Validation
     if (!name || !email || !password) {
@@ -73,13 +73,13 @@ document.getElementById('submit')?.addEventListener('click', async function (e) 
 
     if (!ageConsent) {
         showMsg('You must be at least 16 years old to register.');
-        document.getElementById('ageConsent')?.closest('.form-group-consent')?.classList.add('consent-error');
+        document.getElementById('ageConsent')?.closest('.consent')?.classList.add('consent-error');
         return;
     }
 
     if (!consent) {
         showMsg('Please agree to the Terms of Service and Privacy Policy.');
-        document.getElementById('consent')?.closest('.form-group-consent')?.classList.add('consent-error');
+        document.getElementById('consent')?.closest('.consent')?.classList.add('consent-error');
         return;
     }
 
@@ -181,12 +181,12 @@ document.getElementById('password')?.addEventListener('input', function () {
     if (/[^A-Za-z0-9]/.test(password))   score++;
 
     const levels = [
-        { label: 'Too short',    color: '#ef4444' },
-        { label: 'Weak',         color: '#ef4444' },
-        { label: 'Fair',         color: '#f59e0b' },
-        { label: 'Good',         color: '#10b981' },
-        { label: 'Strong',       color: '#10b981' },
-        { label: 'Very strong',  color: '#3b82f6' }
+        { label: 'Too short',    color: 'var(--danger)' },
+        { label: 'Weak',         color: 'var(--danger)' },
+        { label: 'Fair',         color: 'var(--warning)' },
+        { label: 'Good',         color: 'var(--success)' },
+        { label: 'Strong',       color: 'var(--success)' },
+        { label: 'Very strong',  color: 'var(--accent-text)' }
     ];
 
     const level = levels[Math.min(score, 5)];
