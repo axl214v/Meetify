@@ -1,4 +1,5 @@
-document.getElementById('sp-year').textContent = new Date().getFullYear();
+const yearEl = document.getElementById('sp-year');
+if (yearEl) yearEl.textContent = new Date().getFullYear();
 
 function esc(str) {
     const d = document.createElement('div');
@@ -10,20 +11,16 @@ function urlHost(url) {
     try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; }
 }
 
-function renderGrid(containerId, links, isDonate) {
+function renderGrid(containerId, links) {
     const el = document.getElementById(containerId);
     if (!links.length) {
-        el.innerHTML = `<div class="sp-empty">Nothing here yet</div>`;
+        el.innerHTML = `<p class="muted-pad">Nothing here yet.</p>`;
         return;
     }
     el.innerHTML = links.map(l => `
-        <a class="sp-card${isDonate ? ' sp-card-donate' : ''}" href="${esc(l.url)}" target="_blank" rel="noopener noreferrer">
-            <div class="sp-card-icon">${esc(l.icon || '🔗')}</div>
-            <div class="sp-card-body">
-                <div class="sp-card-label">${esc(l.label)}</div>
-                <div class="sp-card-url">${esc(urlHost(l.url))}</div>
-            </div>
-            <span class="sp-card-arrow">→</span>
+        <a class="link-row" href="${esc(l.url)}" target="_blank" rel="noopener noreferrer">
+            <span class="link-label">${esc(l.label)}</span>
+            <span class="link-sub">${esc(urlHost(l.url))}</span>
         </a>
     `).join('');
 }
@@ -38,16 +35,16 @@ async function loadLinks() {
         const crypto = links.filter(l => l.category === 'crypto');
         const social = links.filter(l => l.category !== 'donate' && l.category !== 'crypto');
 
-        renderGrid('donate-grid', donate, true);
+        renderGrid('donate-grid', donate);
         renderGrid('social-grid', social, false);
         renderCrypto('crypto-grid', crypto);
 
         if (!donate.length) document.getElementById('section-donate').style.display = 'none';
         if (!crypto.length) document.getElementById('section-crypto').style.display = 'none';
     } catch {
-        document.getElementById('donate-grid').innerHTML = '<div class="sp-empty">Failed to load</div>';
-        document.getElementById('social-grid').innerHTML = '<div class="sp-empty">Failed to load</div>';
-        document.getElementById('crypto-grid').innerHTML = '<div class="sp-empty">Failed to load</div>';
+        document.getElementById('donate-grid').innerHTML = '<p class="muted-pad">Could not load. Try again later.</p>';
+        document.getElementById('social-grid').innerHTML = '<p class="muted-pad">Could not load. Try again later.</p>';
+        document.getElementById('crypto-grid').innerHTML = '<p class="muted-pad">Could not load. Try again later.</p>';
     }
 }
 
@@ -58,22 +55,19 @@ function renderCrypto(containerId, items) {
     cryptoItems = items;
     const el = document.getElementById(containerId);
     if (!items.length) {
-        el.innerHTML = `<div class="sp-empty">Nothing here yet</div>`;
+        el.innerHTML = `<p class="muted-pad">Nothing here yet.</p>`;
         return;
     }
     el.innerHTML = items.map((c, i) => `
-        <div class="sp-crypto-card">
-            <div class="sp-crypto-head">
-                <div class="sp-card-icon">${esc(c.icon || '🪙')}</div>
-                <div class="sp-crypto-meta">
-                    <div class="sp-card-label">${esc(c.label)}</div>
-                    ${c.network ? `<div class="sp-crypto-net">${esc(c.network)}</div>` : ''}
-                </div>
+        <div class="crypto-row">
+            <div class="crypto-head">
+                <span class="link-label">${esc(c.label)}</span>
+                ${c.network ? `<span class="badge">${esc(c.network)}</span>` : ''}
             </div>
-            <div class="sp-crypto-addr">${esc(c.address)}</div>
-            <div class="sp-crypto-actions">
-                <button class="sp-crypto-btn" data-copy="${i}">📋 Copy</button>
-                <button class="sp-crypto-btn sp-crypto-btn-primary" data-qr="${i}">▦ QR</button>
+            <div class="crypto-addr">${esc(c.address)}</div>
+            <div class="crypto-actions">
+                <button class="btn btn-sm" data-copy="${i}" type="button">Copy</button>
+                <button class="btn btn-sm" data-qr="${i}" type="button">QR code</button>
             </div>
         </div>
     `).join('');
@@ -88,9 +82,8 @@ function copyText(text, btn) {
     const done = () => {
         if (!btn) return;
         const old = btn.innerHTML;
-        btn.classList.add('copied');
-        btn.innerHTML = '✓ Copied';
-        setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = old; }, 1600);
+        btn.textContent = 'Copied';
+        setTimeout(() => { btn.innerHTML = old; }, 1600);
     };
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
@@ -124,17 +117,17 @@ function openQR(item) {
         qr.make();
         holder.innerHTML = qr.createSvgTag({ cellSize: 6, margin: 2, scalable: true });
     } catch (e) {
-        holder.innerHTML = '<span style="font-size:12px;color:#888;">QR error</span>';
+        holder.innerHTML = '<span style="font-size:12px;color:#555;">QR error</span>';
     }
 
     const copyBtn = document.getElementById('qrCopy');
     copyBtn.onclick = () => copyText(item.address, copyBtn);
 
-    document.getElementById('qrModal').classList.add('open');
+    document.getElementById('qrModal').classList.remove('hidden');
 }
 
 function closeQR() {
-    document.getElementById('qrModal').classList.remove('open');
+    document.getElementById('qrModal').classList.add('hidden');
 }
 
 document.getElementById('qrClose').addEventListener('click', closeQR);

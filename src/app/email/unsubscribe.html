@@ -1,64 +1,60 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email preferences — Meetify</title>
     <meta name="robots" content="noindex, nofollow">
-    <script>(function(){var t=localStorage.getItem('theme')||'dark';document.documentElement.setAttribute('data-theme',t)})();</script>
-    <link rel="preload" href="/assets/fonts/outfit-latin.woff2" as="font" type="font/woff2" crossorigin>
+    <script>(function(){var d=document.documentElement,t;try{t=localStorage.getItem('meetify-theme')}catch(e){}if(t!=='dark'&&t!=='light'){t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}d.setAttribute('data-theme',t)})();</script>
+    <link rel="preload" href="/assets/fonts/geist-latin.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="/assets/fonts/fonts.css">
-    <link rel="stylesheet" href="/styles/brand.css">
-    <link rel="stylesheet" href="/styles/auth_reg.css">
-    <link rel="stylesheet" href="/styles/verify-email.css">
+    <link rel="stylesheet" href="/styles/tokens.css">
+    <link rel="stylesheet" href="/styles/components.css">
+    <link rel="stylesheet" href="/styles/auth.css">
     <link rel="icon" href="/assets/logo-mark.png">
 </head>
 <body>
-    <a class="auth-back" href="/">← Home</a>
+    <header class="auth-top">
+        <a class="brand" href="/" aria-label="Meetify home"><img src="/assets/logo.png" alt="Meetify" width="114" height="28"></a>
+        <button class="btn btn-ghost btn-icon btn-sm" id="themeToggleBtn" data-static type="button" aria-label="Switch theme"><svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></button>
+    </header>
 
-    <div class="auth-page">
-        <div class="auth-brand">
-            <img src="/assets/logo.png" alt="Meetify" class="auth-brand-logo-img">
-        </div>
-
-        <div class="auth-card">
-
-            <!-- State: confirm -->
+    <main class="auth-main">
+        <div class="auth-stage glow">
+        <section class="auth-panel panel">
             <div id="stateConfirm" style="display:none">
-                <div class="verify-icon">✉️</div>
-                <h1 class="auth-card-title">Unsubscribe from emails?</h1>
-                <p class="auth-card-sub">You will stop receiving announcements and news from Meetify. Important account emails, such as password resets, will still be sent.</p>
-                <button class="auth-submit" id="confirmBtn">Unsubscribe</button>
+                <div class="state-icon " aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16v12H4zM4 7l8 6 8-6"/></svg></div>
+                <h1>Unsubscribe from emails?</h1>
+                <p class="auth-sub">You will stop receiving announcements and news from Meetify. Important account emails, such as password resets, will still be sent.</p>
+                <div class="auth-form"><button class="btn btn-primary btn-lg" id="confirmBtn" type="button">Unsubscribe</button></div>
             </div>
 
-            <!-- State: done -->
             <div id="stateDone" style="display:none">
-                <div class="verify-icon">✅</div>
-                <h1 class="auth-card-title">You're unsubscribed</h1>
-                <p class="auth-card-sub">You won't receive announcement emails from Meetify anymore.</p>
-                <button class="auth-submit" id="resubBtn">Changed your mind? Resubscribe</button>
+                <div class="state-icon ok" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+                <h1>You are unsubscribed</h1>
+                <p class="auth-sub">You will not receive announcement emails from Meetify anymore.</p>
+                <div class="auth-form"><button class="btn btn-lg" id="resubBtn" type="button">Resubscribe</button></div>
             </div>
 
-            <!-- State: resubscribed -->
             <div id="stateResub" style="display:none">
-                <div class="verify-icon">👍</div>
-                <h1 class="auth-card-title">Welcome back</h1>
-                <p class="auth-card-sub">You're subscribed to Meetify announcements again.</p>
+                <div class="state-icon ok" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+                <h1>You are subscribed again</h1>
+                <p class="auth-sub">You will receive Meetify announcements again.</p>
             </div>
 
-            <!-- State: error -->
             <div id="stateError" style="display:none">
-                <div class="verify-icon">❌</div>
-                <h1 class="auth-card-title">Something went wrong</h1>
-                <p class="auth-card-sub" id="errorText">This link is invalid or has expired.</p>
+                <div class="state-icon bad" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></div>
+                <h1>Something went wrong</h1>
+                <p class="auth-sub" id="errorText">This link is invalid or has expired.</p>
             </div>
-
+        </section>
         </div>
+    </main>
 
-        <div class="page-footer">
-            <p>© 2026 Meetify · <a href="/">Home</a></p>
-        </div>
-    </div>
+    <footer class="auth-legal">
+        <a href="/legal/terms.html">Terms</a>
+        <a href="/legal/privacy.html">Privacy</a>
+    </footer>
 
     <script src="/js/theme.js"></script>
     <script src="/email/unsubscribe.js"></script>
