@@ -150,13 +150,15 @@ If an animation starts to feel like decoration, cut it. The owner will say.
 - **Conference list / admin / support**: `.topbar`, page title with the one primary action on the right, tabs or filters, then a table or list.
 - **Room**: video grid takes the viewport; one control bar. Chrome stays neutral so participant video is the colour. Accent only for active control state; leave button in `--danger`.
 
-## Migration order
+## Migration status
 
-1. Landing (first; owner reviews, then adjust these rules).
-2. Auth, conference list/create/join.
-3. Profile, support, donate, legal, error pages.
-4. Admin.
-5. Conference room.
-6. Delete `brand.css`, `theme-additions.css`, dead selectors in `styles.css`, Outfit font files, the emoji path in `theme.js`.
+All pages are migrated (2026-10-17). Stylesheets: `tokens.css` + `components.css` everywhere, plus one page-group file:
+`index.css` (landing), `auth.css` (auth, unsubscribe), `app.css` (conference list/create/join, profile, support),
+`public.css` (donate, legal, error pages), `admin.css` (admin; tokens only, no `components.css`, legacy variable names aliased).
 
-Each migrated page is checked in both themes and at 360px before the next one starts.
+Known compromises, to review on screen:
+- **Room** keeps its inline styles (mapped onto tokens) and is dark-only: participant video is the colour, so the chrome does not follow the theme toggle. Controls are neutral; muted/off is `--danger`, screen sharing is `--accent`.
+- **Admin** is a restyle of the existing markup, not a rebuild: same layout and tabs, flat tokens, no emoji/gradients.
+- Dead components (`Conf/components/controls.js`, `video-grid.js`, `participants.js`) are not loaded by any page and still contain emoji. Delete or rebuild before reuse.
+- The conference-list dialogs (`showConfirm`, password prompt, toasts) live in `Conf/js/conf_utils.js` and inject their own small stylesheet with token fallbacks.
+- Legal copy was restyled, not rewritten. Re-read it against the code before release (it still says "Swiss-hosted" and "no IP logs").

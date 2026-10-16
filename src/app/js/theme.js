@@ -31,19 +31,13 @@
         updateButton(next);
     }
 
-    // Update button icon and label
+    // Update button label (the icon is part of the page markup)
     function updateButton(theme) {
         const btn = document.getElementById('themeToggleBtn');
         if (!btn) return;
-        if (btn.hasAttribute('data-static')) {
-            // Redesigned pages ship their own icon; only update the labels
-            const label = theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme';
-            btn.title = label;
-            btn.setAttribute('aria-label', label);
-            return;
-        }
-        btn.textContent = theme === 'dark' ? '☀️' : '🌙';
-        btn.title = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+        const label = theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme';
+        btn.title = label;
+        btn.setAttribute('aria-label', label);
     }
 
     // Apply saved theme on load

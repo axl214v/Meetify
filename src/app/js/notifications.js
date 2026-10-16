@@ -37,7 +37,7 @@
             flex-direction: column;
             align-items: flex-end;
             gap: 8px;
-            font-family: var(--font, 'Outfit', system-ui, sans-serif);
+            font-family: var(--font, system-ui, sans-serif);
             pointer-events: none;
         }
 
@@ -265,7 +265,7 @@
             overflow: hidden;
             position: relative;
             cursor: pointer;
-            font-family: var(--font, 'Outfit', system-ui, sans-serif);
+            font-family: var(--font, system-ui, sans-serif);
             animation: nb-tin 0.3s cubic-bezier(0.4,0,0.2,1) forwards;
         }
         .nb-toast.nb-tout { animation: nb-tout 0.2s ease-in forwards; }
@@ -310,7 +310,7 @@
             overflow: hidden;
             transform: scale(0.94) translateY(8px);
             transition: transform 0.22s cubic-bezier(0.4,0,0.2,1);
-            font-family: var(--font, 'Outfit', system-ui, sans-serif);
+            font-family: var(--font, system-ui, sans-serif);
         }
         #nb-modal-overlay.open #nb-modal {
             transform: scale(1) translateY(0);
