@@ -1,7 +1,8 @@
 const API = window.location.origin;
 let currentUser = null;
 
-const STATUS_LABEL = { open: 'Open', in_progress: 'In Progress', closed: 'Closed' };
+const STATUS_LABEL = { open: 'Open', in_progress: 'In progress', closed: 'Closed' };
+const STATUS_BADGE = { open: 'badge-accent', in_progress: 'badge-warning', closed: '' };
 const CAT_LABEL    = { technical: 'Technical', account: 'Account', general: 'General', other: 'Other' };
 
 function esc(str) {
@@ -71,7 +72,7 @@ async function loadTickets() {
         const items = data.tickets || [];
 
         if (!items.length) {
-            list.innerHTML = `<div class="empty"><div class="empty-icon">📭</div><p>No tickets yet.</p><a class="btn btn-primary" id="emptyNewBtn" href="#">+ Create your first ticket</a></div>`;
+            list.innerHTML = `<div class="state"><h3>No tickets yet</h3><p>If something is not working, tell us.</p><div class="state-actions"><a class="btn btn-primary" id="emptyNewBtn" href="#">New ticket</a></div></div>`;
             document.getElementById('emptyNewBtn')?.addEventListener('click', e => {
                 e.preventDefault();
                 document.getElementById('btnNewTicket').click();
@@ -80,22 +81,22 @@ async function loadTickets() {
         }
 
         list.innerHTML = items.map(t => `
-            <a class="ticket-row" href="/support/ticket.html?id=${t.id}">
-                <div class="t-dot ${t.status}"></div>
-                <div class="t-info">
-                    <div class="t-title">${esc(t.title)}</div>
-                    <div class="t-meta">
-                        <span>${timeAgo(t.updated_at)}</span>
+            <a class="conf-row ticket-row" href="/support/ticket.html?id=${t.id}">
+                <div class="conf-main">
+                    <div class="conf-title">
+                        <h3>${esc(t.title)}</h3>
+                        <span class="badge ${STATUS_BADGE[t.status] || ''}">${esc(STATUS_LABEL[t.status] || t.status)}</span>
+                    </div>
+                    <div class="conf-meta">
                         <span>${esc(CAT_LABEL[t.category] || t.category)}</span>
+                        <span>${timeAgo(t.updated_at)}</span>
+                        <span>${t.reply_count} ${t.reply_count === 1 ? 'reply' : 'replies'}</span>
                     </div>
                 </div>
-                <span class="t-badge b-${t.status}">${esc(STATUS_LABEL[t.status] || t.status)}</span>
-                <span class="t-replies">💬 ${t.reply_count}</span>
-                <span class="t-arrow">→</span>
             </a>
         `).join('');
     } catch {
-        list.innerHTML = '<div class="empty"><p>Failed to load tickets.</p></div>';
+        list.innerHTML = '<div class="state"><p>Could not load tickets. Try again later.</p></div>';
     }
 }
 
@@ -105,8 +106,8 @@ async function doCreateTicket() {
     const message  = document.getElementById('fMessage').value.trim();
     const btn      = document.getElementById('btnSubmitForm');
 
-    if (!title)   { alert('Title is required'); return; }
-    if (!message) { alert('Message is required'); return; }
+    if (!title)   { showNotification('Add a title.', 'error'); return; }
+    if (!message) { showNotification('Add a message.', 'error'); return; }
 
     btn.disabled = true;
     btn.textContent = 'Submitting...';
@@ -118,10 +119,10 @@ async function doCreateTicket() {
             body:        JSON.stringify({ title, category, message })
         });
         const data = await res.json();
-        if (!res.ok) { alert(data.error || 'Failed to create ticket'); return; }
+        if (!res.ok) { showNotification(data.error || 'Could not create the ticket.', 'error'); return; }
         window.location.href = `/support/ticket.html?id=${data.ticketId}`;
     } catch {
-        alert('Network error. Please try again.');
+        showNotification('Network error. Try again.', 'error');
     } finally {
         btn.disabled = false;
         btn.textContent = 'Submit Ticket';

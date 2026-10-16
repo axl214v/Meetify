@@ -13,7 +13,8 @@ function fmtDate(ts) {
     return new Date(ts).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
-const STATUS_LABEL = { open: 'Open', in_progress: 'In Progress', closed: 'Closed' };
+const STATUS_BADGE = { open: 'badge-accent', in_progress: 'badge-warning', closed: '' };
+const STATUS_LABEL = { open: 'Open', in_progress: 'In progress', closed: 'Closed' };
 const CAT_LABEL    = { technical: 'Technical', account: 'Account', general: 'General', other: 'Other' };
 
 async function init() {
@@ -35,7 +36,7 @@ async function loadTicket() {
     try {
         const res  = await fetch(`${API}/api/support/tickets/${ticketId}`, { credentials: 'include' });
         const data = await res.json();
-        if (!res.ok) { page.innerHTML = `<p style="color:#ef4444;">${esc(data.error)}</p>`; return; }
+        if (!res.ok) { page.innerHTML = `<div class="panel state"><p>${esc(data.error)}</p><a class="btn" href="/support/support.html">Back to support</a></div>`; return; }
 
         const { ticket, replies } = data;
         const isAdmin = currentUser.role === 'admin';
@@ -44,48 +45,44 @@ async function loadTicket() {
         document.title = `#${ticket.id} — ${ticket.title}`;
 
         const adminActions = isAdmin ? `
-            <div class="admin-actions">
-                <select class="status-select" id="statusSelect">
+            <div class="form-actions">
+                <select class="select" id="statusSelect" style="width:auto;">
                     <option value="open"        ${ticket.status === 'open'        ? 'selected' : ''}>Open</option>
-                    <option value="in_progress" ${ticket.status === 'in_progress' ? 'selected' : ''}>In Progress</option>
+                    <option value="in_progress" ${ticket.status === 'in_progress' ? 'selected' : ''}>In progress</option>
                     <option value="closed"      ${ticket.status === 'closed'      ? 'selected' : ''}>Closed</option>
                 </select>
-                <button class="btn btn-danger" id="deleteTicketBtn" style="font-size:12px;padding:5px 12px;">Delete</button>
+                <button class="btn btn-danger" id="deleteTicketBtn" type="button">Delete</button>
             </div>
         ` : '';
 
         page.innerHTML = `
-            <a class="back" href="/support/support.html">← My Tickets</a>
-
-            <div class="ticket-hd">
-                <div class="ticket-hd-row">
-                    <div class="ticket-title-big">${esc(ticket.title)}</div>
-                    ${adminActions}
+            <div class="page-head">
+                <div>
+                    <h1>${esc(ticket.title)}</h1>
+                    <p class="conf-meta" style="margin-top: var(--space-2);">
+                        <span class="badge ${STATUS_BADGE[ticket.status] || ''}">${esc(STATUS_LABEL[ticket.status] || ticket.status)}</span>
+                        <span>${esc(CAT_LABEL[ticket.category] || ticket.category)}</span>
+                        <span>#${ticket.id}</span>
+                        <span>${esc(ticket.username)}</span>
+                        <span>${fmtDate(ticket.created_at)}</span>
+                    </p>
                 </div>
-                <div class="meta-row">
-                    <span class="sbadge sb-${ticket.status}">${esc(STATUS_LABEL[ticket.status] || ticket.status)}</span>
-                    <span class="cat-pill">${esc(CAT_LABEL[ticket.category] || ticket.category)}</span>
-                    <span>#${ticket.id}</span>
-                    <span>by ${esc(ticket.username)}</span>
-                    <span>${fmtDate(ticket.created_at)}</span>
-                </div>
+                ${adminActions}
             </div>
-
-            <div class="divider"></div>
 
             <div class="thread" id="thread">
                 ${replies.map(r => renderMessage(r)).join('')}
             </div>
 
-            <div class="divider"></div>
-
             ${isClosed
-                ? `<div class="closed-notice">This ticket is closed. <a href="/support/support.html">Open a new ticket</a> if you need further help.</div>`
-                : `<div class="reply-wrap">
-                    <textarea id="replyText" placeholder="Write your reply..."></textarea>
-                    <div class="reply-actions">
-                        <button class="btn btn-primary" id="sendReply">Send Reply</button>
-                        ${isAdmin ? `<button class="btn btn-secondary" id="sendAndClose">Send &amp; Close</button>` : ''}
+                ? `<div class="notice notice-info">This ticket is closed. <a href="/support/support.html">Open a new ticket</a> if you still need help.</div>`
+                : `<div class="panel form-panel">
+                    <div class="form-stack">
+                        <div class="field"><label for="replyText">Reply</label><textarea class="textarea" id="replyText" rows="4" placeholder="Write your reply"></textarea></div>
+                        <div class="form-actions">
+                            <button class="btn btn-primary" id="sendReply" type="button">Send reply</button>
+                            ${isAdmin ? `<button class="btn" id="sendAndClose" type="button">Send and close</button>` : ''}
+                        </div>
                     </div>
                    </div>`
             }
@@ -96,7 +93,7 @@ async function loadTicket() {
                 await updateStatus(e.target.value);
             });
             document.getElementById('deleteTicketBtn')?.addEventListener('click', async () => {
-                if (!confirm('Delete this ticket permanently?')) return;
+                if (!await showConfirm('Delete this ticket permanently?', 'Delete')) return;
                 const r = await fetch(`${API}/api/admin/support/tickets/${ticketId}`, { method: 'DELETE', credentials: 'include' });
                 if (r.ok) location.href = '/admin/admin.html';
             });
@@ -121,25 +118,21 @@ async function loadTicket() {
         }
 
     } catch (e) {
-        page.innerHTML = `<p style="color:#ef4444;">Failed to load ticket.</p>`;
+        page.innerHTML = `<div class="panel state"><p>Could not load the ticket.</p><a class="btn" href="/support/support.html">Back to support</a></div>`;
     }
 }
 
 function renderMessage(r) {
     const isAdmin = r.is_admin;
-    const initial = (r.username || '?')[0].toUpperCase();
     return `
-        <div class="msg ${isAdmin ? 'msg-admin' : ''}">
-            <div class="msg-avatar ${isAdmin ? 'msg-admin-av' : 'msg-user-av'}">${initial}</div>
-            <div class="msg-body">
-                <div class="msg-header">
-                    <span class="msg-name">${esc(r.username)}</span>
-                    ${isAdmin ? '<span class="msg-admin-label">Admin</span>' : ''}
-                    <span class="msg-time">${fmtDate(r.created_at)}</span>
-                </div>
-                <div class="msg-text">${esc(r.message)}</div>
+        <article class="panel msg-card ${isAdmin ? 'msg-admin' : ''}">
+            <div class="msg-head">
+                <strong>${esc(r.username)}</strong>
+                ${isAdmin ? '<span class="badge badge-accent">Team</span>' : ''}
+                <span class="msg-time">${fmtDate(r.created_at)}</span>
             </div>
-        </div>
+            <p class="msg-text">${esc(r.message)}</p>
+        </article>
     `;
 }
 
@@ -154,7 +147,7 @@ async function sendReply() {
     });
     if (!res.ok) {
         const d = await res.json();
-        alert(d.error || 'Failed to send reply');
+        showNotification(d.error || 'Could not send the reply.', 'error');
     }
 }
 

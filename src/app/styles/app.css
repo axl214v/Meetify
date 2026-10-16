@@ -124,3 +124,16 @@ body { min-height: 100vh; display: flex; flex-direction: column; }
 .notice-row p { color: var(--text-2); }
 .notice-row strong { display: block; }
 @media (max-width: 860px) { .profile-layout { grid-template-columns: minmax(0, 1fr); } }
+
+/* Support */
+.form-card { display: none; }
+.form-card.open { display: block; }
+.ticket-row { color: inherit; text-decoration: none; }
+.ticket-row:hover { color: inherit; }
+.muted-pad { padding: var(--space-5); color: var(--text-3); font-size: var(--text-sm); }
+.thread { display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-5); }
+.msg-card { padding: var(--space-4) var(--space-5); }
+.msg-admin { border-color: var(--accent-subtle); background: var(--surface-2); }
+.msg-head { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2); font-size: var(--text-sm); }
+.msg-time { color: var(--text-3); margin-left: auto; }
+.msg-text { white-space: pre-wrap; overflow-wrap: anywhere; line-height: var(--leading-base); }
