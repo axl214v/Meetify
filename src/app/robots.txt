@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /Conf/
+Disallow: /profile/
+Disallow: /support/
+Disallow: /err/
+Disallow: /email/
+Disallow: /auth/resetpass
+Disallow: /auth/verify-email
+
+Sitemap: https://meetify.cc/sitemap.xml
