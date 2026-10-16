@@ -175,8 +175,8 @@ function updateRemoteMediaState(userId, audio, video) {
 
     const micStatus = document.querySelector(`#video-${userId} .mic-status`);
     const videoStatus = document.querySelector(`#video-${userId} .video-status`);
-    if (micStatus) micStatus.textContent = audio ? '🎤' : '🔇';
-    if (videoStatus) videoStatus.textContent = video ? '📹' : '📵';
+    if (micStatus) micStatus.innerHTML = audio ? Icons.mic : Icons.micOff;
+    if (videoStatus) videoStatus.innerHTML = video ? Icons.cam : Icons.camOff;
 }
 
 /**
@@ -217,8 +217,8 @@ function updateMediaControlsUI() {
 
     micBtn?.classList.toggle('muted', !isAudioEnabled);
     videoBtn?.classList.toggle('off', !isVideoEnabled);
-    if (micStatus) micStatus.textContent = isAudioEnabled ? '🎤' : '🔇';
-    if (videoStatus) videoStatus.textContent = isVideoEnabled ? '📹' : '📵';
+    if (micStatus) micStatus.innerHTML = isAudioEnabled ? Icons.mic : Icons.micOff;
+    if (videoStatus) videoStatus.innerHTML = isVideoEnabled ? Icons.cam : Icons.camOff;
 }
 
 /**
@@ -521,14 +521,14 @@ function addRemoteVideo(userId, stream, userName = 'Unknown') {
     overlayRight.className = 'overlay-right';
     const micPill = document.createElement('div');
     micPill.className = 'status-pill mic-status';
-    micPill.textContent = '🎤';
+    micPill.innerHTML = Icons.mic;
     const videoPill = document.createElement('div');
     videoPill.className = 'status-pill video-status';
-    videoPill.textContent = '📹';
+    videoPill.innerHTML = Icons.cam;
     const pinBtn = document.createElement('button');
     pinBtn.className = 'pin-btn';
     pinBtn.title = 'Pin (spotlight)';
-    pinBtn.textContent = '📍';
+    pinBtn.innerHTML = Icons.pin;
     pinBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         togglePin(String(userId));
@@ -554,8 +554,8 @@ function addRemoteVideo(userId, stream, userName = 'Unknown') {
 
     if (remoteMediaStates[userId]) {
         const { audio, video: videoEnabled } = remoteMediaStates[userId];
-        micPill.textContent = audio ? '🎤' : '🔇';
-        videoPill.textContent = videoEnabled ? '📹' : '📵';
+        micPill.innerHTML = audio ? Icons.mic : Icons.micOff;
+        videoPill.innerHTML = videoEnabled ? Icons.cam : Icons.camOff;
     }
 
     updateParticipantCount();
@@ -608,7 +608,7 @@ function applyPinLayout() {
         const btn = c.querySelector('.pin-btn');
         if (btn) {
             btn.title = isPinned ? 'Unpin' : 'Pin (spotlight)';
-            btn.textContent = isPinned ? '📌' : '📍';
+            btn.innerHTML = isPinned ? Icons.pinOn : Icons.pin;
         }
     });
 }
@@ -681,7 +681,7 @@ function setMicEnabled(enabled, { emit = true } = {}) {
     const btn = document.getElementById('toggleMic');
     const status = document.getElementById('localMicStatus');
     btn?.classList.toggle('muted', !isAudioEnabled);
-    if (status) status.textContent = isAudioEnabled ? '🎤' : '🔇';
+    if (status) status.innerHTML = isAudioEnabled ? Icons.mic : Icons.micOff;
 
     if (emit) {
         socket?.emit('media-state-change', { conferenceId, audio: isAudioEnabled, video: isVideoEnabled });
@@ -700,7 +700,7 @@ function setCameraEnabled(enabled, { emit = true } = {}) {
     const btn = document.getElementById('toggleVideo');
     const status = document.getElementById('localVideoStatus');
     btn?.classList.toggle('off', !isVideoEnabled);
-    if (status) status.textContent = isVideoEnabled ? '📹' : '📵';
+    if (status) status.innerHTML = isVideoEnabled ? Icons.cam : Icons.camOff;
 
     if (emit) {
         socket?.emit('media-state-change', { conferenceId, audio: isAudioEnabled, video: isVideoEnabled });
@@ -745,7 +745,7 @@ async function toggleScreenShare() {
             screenTrack.onended = () => stopScreenShare();
             isScreenSharing = true;
             btn.classList.add('sharing');
-            btn.textContent = '⏹️';
+            btn.innerHTML = Icons.screenStop;
             socket?.emit('screen-share-start', { conferenceId });
 
         } catch (error) {
@@ -786,7 +786,7 @@ async function stopScreenShare() {
     document.getElementById('localVideo').srcObject = localStream;
     isScreenSharing = false;
     document.getElementById('toggleScreen').classList.remove('sharing');
-    document.getElementById('toggleScreen').textContent = '🖥️';
+    document.getElementById('toggleScreen').innerHTML = Icons.screen;
     socket?.emit('screen-share-stop', { conferenceId });
 }
 
@@ -848,10 +848,10 @@ function renderParticipants(participants) {
         const canManageCoHost = isHost && !isSelf && !isParticipantHost;
 
         const badges = [
-            isParticipantHost ? '👑' : '',
-            isCoHost && !isParticipantHost ? '🛡️' : '',
-            isChatBanned ? '🔇' : ''
-        ].filter(Boolean).join(' ');
+            isParticipantHost ? `<span class="pbadge" title="Host">${Icons.crown}</span>` : '',
+            isCoHost && !isParticipantHost ? `<span class="pbadge" title="Co-host">${Icons.shield}</span>` : '',
+            isChatBanned ? '<span class="pbadge pbadge-text" title="Muted in chat">chat off</span>' : ''
+        ].filter(Boolean).join('');
 
         const avatarHtml = p.avatar_url
             ? `<img class="participant-avatar-img" src="${escapeHtml(p.avatar_url)}" alt="${escapeHtml(name)}">`
@@ -859,14 +859,14 @@ function renderParticipants(participants) {
 
         const actionMenu = canActOn ? `
             <div class="mod-menu-wrap">
-                <button class="mod-menu-btn" onclick="toggleModMenu(this, ${uid})" title="Moderation options">⋮</button>
+                <button class="mod-menu-btn" onclick="toggleModMenu(this, ${uid})" title="Moderation options" aria-label="Moderation options">${Icons.more}</button>
                 <div class="mod-menu" id="mod-menu-${uid}">
-                    <button onclick="hostForceMute(${uid}, 'audio')">🔇 Mute mic</button>
-                    <button onclick="hostForceMute(${uid}, 'video')">📵 Turn off camera</button>
-                    <button onclick="hostForceMute(${uid}, 'screen')">🖥️ Stop screen share</button>
-                    <button onclick="hostChatBan(${uid}, ${!isChatBanned})">${isChatBanned ? '💬 Unban chat' : '🚫 Ban from chat'}</button>
-                    ${canManageCoHost ? `<button onclick="${isCoHost ? 'hostDemoteCoHost' : 'hostPromoteCoHost'}(${uid})">${isCoHost ? '🛡️ Remove co-host' : '🛡️ Make co-host'}</button>` : ''}
-                    <button class="danger" onclick="hostKick(${uid}, '${escapeHtml(name).replace(/'/g, "\\'")}')">❌ Kick</button>
+                    <button onclick="hostForceMute(${uid}, 'audio')">Mute mic</button>
+                    <button onclick="hostForceMute(${uid}, 'video')">Turn off camera</button>
+                    <button onclick="hostForceMute(${uid}, 'screen')">Stop screen share</button>
+                    <button onclick="hostChatBan(${uid}, ${!isChatBanned})">${isChatBanned ? 'Unban chat' : 'Ban from chat'}</button>
+                    ${canManageCoHost ? `<button onclick="${isCoHost ? 'hostDemoteCoHost' : 'hostPromoteCoHost'}(${uid})">${isCoHost ? 'Remove co-host' : 'Make co-host'}</button>` : ''}
+                    <button class="danger" onclick="hostKick(${uid}, '${escapeHtml(name).replace(/'/g, "\\'")}')">Remove from room</button>
                 </div>
             </div>
         ` : '';
@@ -877,10 +877,6 @@ function renderParticipants(participants) {
                 <div class="participant-info">
                     <strong>${escapeHtml(name)} ${badges}</strong>
                     <small>Joined ${formatJoinTime(p.joined_at || p.joinedAt)}</small>
-                </div>
-                <div class="participant-media">
-                    <div class="media-icon">🎤</div>
-                    <div class="media-icon">📹</div>
                 </div>
                 ${actionMenu}
             </div>

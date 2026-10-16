@@ -1,36 +1,37 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Conference Room - Meetify</title>
     <meta name="robots" content="noindex, nofollow">
-    <link rel="stylesheet" href="../../assets/fonts/fonts.css">
+    <link rel="preload" href="/assets/fonts/geist-latin.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/assets/fonts/fonts.css">
+    <link rel="stylesheet" href="/styles/tokens.css">
     <link rel="icon" href="/assets/logo-mark.png">
     <style>
         /* ============================================ */
         /* Variables                                    */
         /* ============================================ */
 
+        /* Room chrome stays dark and neutral so participant video is the colour (DESIGN.md).
+           Legacy names are mapped onto tokens.css. */
         :root {
-            --room-bg:      #020c1a;
-            --room-surface: #081828;
-            --room-card:    #0d2040;
-            --room-border:  rgba(37,99,235,0.15);
-            --room-text:    #e8f0fe;
-            --room-muted:   #7a96be;
-            --accent:       #2563eb;
-            --accent-2:     #0ea5e9;
-            --success:      #22c55e;
-            --danger:       #ef4444;
-            --warn:         #f59e0b;
-            --purple:       #8b5cf6;
-            --cyan:         #06b6d4;
-            --grad:         linear-gradient(135deg,#2563eb 0%,#0ea5e9 100%);
-            --grad-text:    linear-gradient(135deg,#60a5fa 0%,#22d3ee 100%);
-            --glow:         rgba(37,99,235,0.30);
-            --font:         'Outfit', sans-serif;
-            --font-mono:    'JetBrains Mono', monospace;
+            --room-bg:      var(--bg);
+            --room-surface: var(--surface);
+            --room-card:    var(--surface-2);
+            --room-border:  var(--border-strong);
+            --room-text:    var(--text);
+            --room-muted:   var(--text-2);
+            --accent-2:     var(--accent-cyan);
+            --success:      #3fb985;
+            --danger:       #ec6a62;
+            --warn:         #dcab48;
+            --purple:       var(--avatar-1);
+            --cyan:         var(--accent);
+            --grad:         var(--accent);
+            --grad-text:    var(--accent-text);
+            --glow:         rgba(47,124,246,0.30);
         }
 
         /* ============================================ */
@@ -637,7 +638,7 @@
             border: none;
             color: #cbd5e1;
             padding: 0.6rem 1rem;
-            font-family: 'Outfit', sans-serif;
+            font-family: var(--font);
             font-size: 0.85rem;
             cursor: pointer;
             transition: background 0.12s;
@@ -1045,6 +1046,29 @@
             .control-btn { width: 36px; height: 36px; font-size: 0.88rem; }
             .control-btn.leave { padding: 0 10px; font-size: 0.75rem; }
         }
+
+        /* ============================================ */
+        /* Design-system overrides (flat chrome)        */
+        /* ============================================ */
+        .room-header, .controls-bar { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
+        .room-header::after, .controls-bar::before { display: none; }
+        .placeholder-avatar, .overlay-avatar-initials { background: var(--avatar-1); }
+        .control-btn { border-radius: var(--radius-control); transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease); }
+        .control-btn:hover { transform: none; background: var(--surface-3); border-color: var(--border-strong); }
+        .control-btn:active { transform: scale(0.97); }
+        .control-btn.mic, .control-btn.video, .control-btn.screen, .control-btn.participants, .control-btn.chat { background: var(--surface-2); border-color: var(--border-strong); color: var(--text); }
+        .control-btn.mic:hover, .control-btn.video:hover, .control-btn.screen:hover, .control-btn.participants:hover, .control-btn.chat:hover { background: var(--surface-3); }
+        .control-btn.mic.muted, .control-btn.video.off { background: var(--danger-subtle); border-color: transparent; color: var(--danger); }
+        .control-btn.screen.sharing { background: var(--accent-subtle); border-color: var(--accent); color: var(--accent-text); }
+        .control-btn svg, .status-pill svg, .pin-btn svg, .close-sidebar svg { display: block; }
+        .control-btn.leave { width: auto; padding: 0 var(--space-4); gap: var(--space-2); background: var(--danger); border-color: transparent; color: #fff; font-size: var(--text-sm); font-weight: 500; font-family: var(--font); }
+        .control-btn.leave:hover { background: var(--danger); filter: brightness(1.08); }
+        .status-pill { display: inline-flex; align-items: center; justify-content: center; color: #fff; }
+        #sendBtn { background: var(--accent); box-shadow: none; }
+        #sendBtn:hover { background: var(--accent-hover); box-shadow: none; opacity: 1; }
+        .pbadge { display: inline-flex; vertical-align: middle; margin-left: 6px; color: var(--accent-text); }
+        .pbadge-text { font-size: var(--text-xs); color: var(--text-2); font-weight: 500; }
+        .close-sidebar, .mod-menu-btn { display: inline-grid; place-items: center; }
     </style>
 </head>
 <body>
@@ -1086,9 +1110,9 @@
                         <span class="participant-name">You</span>
                     </div>
                     <div class="overlay-right">
-                        <div class="status-pill" id="localMicStatus">🎤</div>
-                        <div class="status-pill" id="localVideoStatus">📹</div>
-                        <button class="pin-btn" id="localPinBtn" title="Pin (spotlight)">📍</button>
+                        <div class="status-pill" id="localMicStatus" data-icon="mic"></div>
+                        <div class="status-pill" id="localVideoStatus" data-icon="cam"></div>
+                        <button class="pin-btn" id="localPinBtn" title="Pin (spotlight)" aria-label="Pin" data-icon="pin"></button>
                     </div>
                 </div>
             </div>
@@ -1108,9 +1132,9 @@
     <!-- Controls -->
     <div class="controls-bar">
         <div class="ctrl-group">
-            <button class="control-btn mic" id="toggleMic" title="Toggle Microphone">🎤</button>
+            <button class="control-btn mic" id="toggleMic" title="Toggle microphone" aria-label="Toggle microphone" data-icon="mic"></button>
             <div class="ctrl-with-menu">
-                <button class="control-btn video" id="toggleVideo" title="Toggle Camera">📹</button>
+                <button class="control-btn video" id="toggleVideo" title="Toggle camera" aria-label="Toggle camera" data-icon="cam"></button>
                 <button class="ctrl-sub-btn" id="videoMenuBtn" title="Camera options" aria-label="Camera options">&#8964;</button>
                 <div class="ctrl-dropdown" id="videoMenu" role="menu">
                     <button class="ctrl-dropdown-item" id="flipHBtn" role="menuitem">
@@ -1124,31 +1148,31 @@
                     </button>
                 </div>
             </div>
-            <button class="control-btn screen" id="toggleScreen" title="Share Screen">🖥️</button>
+            <button class="control-btn screen" id="toggleScreen" title="Share screen" aria-label="Share screen" data-icon="screen"></button>
         </div>
 
         <div class="ctrl-sep"></div>
 
         <div class="ctrl-group">
-            <button class="control-btn participants" id="toggleParticipants" title="Participants">👥</button>
-            <button class="control-btn chat" id="toggleChat" title="Chat">
-                💬
+            <button class="control-btn participants" id="toggleParticipants" title="Participants" aria-label="Participants" data-icon="users"></button>
+            <button class="control-btn chat" id="toggleChat" title="Chat" aria-label="Chat">
+                <span data-icon="chat"></span>
                 <span class="notification-badge" id="chatBadge" style="display:none;">0</span>
             </button>
         </div>
 
         <div class="ctrl-sep"></div>
 
-        <button class="control-btn leave" id="leaveBtn">
-            ✕ Leave
+        <button class="control-btn leave" id="leaveBtn" aria-label="Leave room">
+            <span data-icon="leave"></span><span>Leave</span>
         </button>
     </div>
 
     <!-- Participants Sidebar -->
     <div class="sidebar" id="participantsSidebar">
         <div class="sidebar-header">
-            <h3>👥 Participants</h3>
-            <button class="close-sidebar" onclick="closeSidebar('participants')">✕</button>
+            <h3>Participants</h3>
+            <button class="close-sidebar" onclick="closeSidebar('participants')" aria-label="Close" data-icon="close"></button>
         </div>
         <div class="sidebar-content" id="participantsList">
             <!-- Loaded dynamically -->
@@ -1158,8 +1182,8 @@
     <!-- Chat Sidebar -->
     <div class="sidebar" id="chatSidebar">
         <div class="sidebar-header">
-            <h3>💬 Chat</h3>
-            <button class="close-sidebar" onclick="closeSidebar('chat')">✕</button>
+            <h3>Chat</h3>
+            <button class="close-sidebar" onclick="closeSidebar('chat')" aria-label="Close" data-icon="close"></button>
         </div>
         <div class="chat-messages" id="chatMessages">
             <!-- Messages appear here -->
@@ -1175,7 +1199,6 @@
 <script src="/socket.io/socket.io.js"></script>
 <script src="/Conf/js/conf_utils.js"></script>
 <script src="/Conf/components/chat.js"></script>
-<script src="/js/theme.js"></script>
 <!-- mediasoup-client for SFU (Group) calls — async ESM, conf_room.js waits for 'mediasoup-ready' event -->
 <script type="module">
     try {
@@ -1187,6 +1210,7 @@
         window.dispatchEvent(new Event('mediasoup-ready'));
     }
 </script>
+<script src="/Conf/js/icons.js"></script>
 <script src="/Conf/js/conf_room.js"></script>
 <script src="/err/error-logger.js"></script>
 </body>
