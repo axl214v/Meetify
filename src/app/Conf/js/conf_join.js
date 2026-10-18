@@ -61,6 +61,11 @@ async function checkConference() {
             credentials: 'include'
         });
         
+        if (response.status === 401) {
+            window.location.href = `/auth/Auth.html?next=${encodeURIComponent(`/Conf/pages/conf_join.html?id=${parseInt(conferenceId)}`)}`;
+            return;
+        }
+
         if (response.status === 404) {
             showError('Conference not found. Please check the ID.');
             conferenceIdInput.classList.add('error');

@@ -21,6 +21,7 @@
         crown:     svg('<path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"/>', 14),
         shield:    svg('<path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/>', 14),
         more:      svg('<circle cx="12" cy="5" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="19" r="1.4" fill="currentColor"/>', 16),
+        link:      svg('<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>'),
         close:     svg('<path d="M6 6l12 12M18 6L6 18"/>', 16),
         leave:     svg('<path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 8l-4 4 4 4M6 12h10"/>', 16)
     };

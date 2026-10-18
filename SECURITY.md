@@ -8,8 +8,8 @@ there are no long-term support branches yet. Always run the most recent version
 
 | Version | Supported |
 | ------- | --------- |
-| 1.5.x-beta (latest) | ✅ |
-| < 1.5.0-beta | ❌ — please upgrade |
+| 2.0.x-beta (latest) | ✅ |
+| < 2.0.0-beta | ❌ — please upgrade |
 
 ## Reporting a Vulnerability
 

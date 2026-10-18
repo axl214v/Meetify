@@ -13,6 +13,25 @@ containers as `APP_VERSION` by `make up`.
 
 _Nothing yet._
 
+## [2.0.0-beta] — 2026-10-18
+
+### Added
+- **Redesign.** New visual system across every page: landing, sign-in, rooms, profile,
+  support, donate, legal and admin, with matching light and dark themes.
+- **Invite links.** A button in the room copies a link to the join page. If the person
+  is signed out they are sent to sign in (or register) and land back on the invite.
+  The link never contains the room password.
+
+### Security
+- Joining a room now requires the same access as the join page (host or someone who
+  has joined with the password); a room can no longer be entered directly.
+- Moderation hardening: co-hosts can no longer remove, mute or ban the host or other
+  co-hosts, and moderator actions only apply to the room you are in.
+- Chat, media state and call signaling are limited to your own room; chat messages
+  are size-limited and rate-limited.
+- No client IP addresses are written to server logs, matching the privacy policy.
+- The public error-report endpoint is rate-limited and size-capped.
+
 ## [1.5.0-beta] — 2026-10-05
 
 ### Added
@@ -267,7 +286,8 @@ Baseline release (pre-changelog). Summarized from history.
   timestamps), public/private conferences, participant tracking.
 - Admin panel, avatar upload, and client-side error logging to `/api/logs`.
 
-[Unreleased]: https://github.com/axl214v/Meetify/compare/v1.5.0-beta...HEAD
+[Unreleased]: https://github.com/axl214v/Meetify/compare/v2.0.0-beta...HEAD
+[2.0.0-beta]: https://github.com/axl214v/Meetify/compare/v1.5.0-beta...v2.0.0-beta
 [1.5.0-beta]: https://github.com/axl214v/Meetify/compare/v1.4.0-beta...v1.5.0-beta
 [1.4.0-beta]: https://github.com/axl214v/Meetify/compare/v1.3.0-beta...v1.4.0-beta
 [1.3.0-beta]: https://github.com/axl214v/Meetify/compare/v1.2.0-beta...v1.3.0-beta

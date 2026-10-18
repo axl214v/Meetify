@@ -124,7 +124,7 @@ document.getElementById('submit')?.addEventListener('click', async function (e) 
             showMsg('Account created! Redirecting to login...', 'success');
 
             setTimeout(() => {
-                window.location.href = '/auth/Auth.html';
+                window.location.href = '/auth/Auth.html' + window.location.search;
             }, 1000);
 
         } else {
@@ -155,8 +155,10 @@ document.getElementById('submit')?.addEventListener('click', async function (e) 
 // ============================================
 
 document.getElementById('authb')?.addEventListener('click', () => {
-    window.location.href = '/auth/Auth.html';
+    window.location.href = '/auth/Auth.html' + window.location.search;
 });
+// Keep ?next= when switching between sign-in and sign-up
+document.querySelectorAll('a[href="/auth/Auth.html"]').forEach(a => { a.href += window.location.search; });
 
 document.getElementById('password')?.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') document.getElementById('submit')?.click();

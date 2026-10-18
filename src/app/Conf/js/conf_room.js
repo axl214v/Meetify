@@ -138,11 +138,12 @@ async function loadConferenceDetails() {
             const err = await response.json();
             showNotification(
                 err.requiresPassword
-                    ? 'Password required — join from the conference list.'
+                    ? 'Password required — opening the join page.'
                     : 'Access denied.',
                 'error'
             );
-            setTimeout(() => window.location.href = 'conf.html', 1500);
+            setTimeout(() => window.location.href = err.requiresPassword
+                ? `conf_join.html?id=${encodeURIComponent(conferenceId)}` : 'conf.html', 1200);
             return;
         }
 
@@ -156,8 +157,8 @@ async function loadConferenceDetails() {
 
         // Прямой заход по URL без участия — редирект
         if (!data.conference.isParticipant && !data.conference.isHost) {
-            showNotification('You are not a participant of this conference.', 'error');
-            setTimeout(() => window.location.href = 'conf.html', 1500);
+            showNotification('Join this conference first.', 'info');
+            setTimeout(() => window.location.href = `conf_join.html?id=${encodeURIComponent(conferenceId)}`, 800);
             return;
         }
 
@@ -392,7 +393,9 @@ async function initSocket() {
     socket.on('join-rejected', ({ reason } = {}) => {
         const msg = reason === 'full'
             ? 'This Private call is full (max 8 participants).'
-            : 'You have been kicked from this conference.';
+            : reason === 'forbidden'
+                ? 'Join this conference first (password or invite required).'
+                : 'You have been kicked from this conference.';
         cleanupAndRedirect(msg);
     });
 
@@ -626,6 +629,17 @@ function toggleStrip() {
     btn.textContent = collapsed ? 'Show' : 'Hide';
 }
 
+// Invite link points at the join page; it never carries the room password.
+async function copyInviteLink() {
+    const link = `${window.location.origin}/Conf/pages/conf_join.html?id=${encodeURIComponent(conferenceId)}`;
+    try {
+        await navigator.clipboard.writeText(link);
+        showNotification('Invite link copied', 'success');
+    } catch {
+        window.prompt('Copy the invite link:', link);
+    }
+}
+
 function setupEventListeners() {
     document.getElementById('toggleMic').addEventListener('click', toggleMicrophone);
     document.getElementById('toggleVideo').addEventListener('click', toggleCamera);
@@ -637,6 +651,7 @@ function setupEventListeners() {
         updateChatBadge(0);
     });
     document.getElementById('leaveBtn').addEventListener('click', leaveConference);
+    document.getElementById('inviteBtn').addEventListener('click', copyInviteLink);
 
     document.getElementById('localPinBtn').addEventListener('click', (e) => {
         e.stopPropagation();
@@ -844,7 +859,7 @@ function renderParticipants(participants) {
         const isCoHost = coHosts.has(uid);
         const isChatBanned = chatBanned.has(uid);
         const isSelf = uid === currentUser?.id;
-        const canActOn = isModerator() && !isSelf && !isParticipantHost;
+        const canActOn = isModerator() && !isSelf && !isParticipantHost && (isHost || !isCoHost);
         const canManageCoHost = isHost && !isSelf && !isParticipantHost;
 
         const badges = [

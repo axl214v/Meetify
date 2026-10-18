@@ -24,6 +24,12 @@ function clearMsg() {
 // Redirect if already logged in
 // ============================================
 
+// Where to go after sign-in: only same-origin join links, anything else falls back to the list.
+function getNextUrl() {
+    const next = new URLSearchParams(window.location.search).get('next') || '';
+    return /^\/Conf\/pages\/conf_join\.html\?id=\d+$/.test(next) ? next : '/Conf/pages/conf.html';
+}
+
 async function checkAuthentication() {
     try {
         const response = await fetch(`${API_BASE}/api/auth/me`, {
@@ -31,7 +37,7 @@ async function checkAuthentication() {
             credentials: 'include'
         });
         if (response.ok) {
-            window.location.href = '/Conf/pages/conf.html';
+            window.location.href = getNextUrl();
         }
     } catch (error) {
         console.error('Auth check failed:', error);
@@ -94,7 +100,7 @@ document.getElementById('submit')?.addEventListener('click', async function (e) 
             showMsg('Success! Redirecting...', 'success');
 
             setTimeout(() => {
-                window.location.href = '/Conf/pages/conf.html';
+                window.location.href = getNextUrl();
             }, 400);
 
         } else if (response.status === 401) {
@@ -129,3 +135,5 @@ document.getElementById('reset')?.addEventListener('click', () => {
 document.getElementById('password')?.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') document.getElementById('submit')?.click();
 });
+// Keep ?next= when switching between sign-in and sign-up
+document.querySelectorAll('a[href="/auth/Reg.html"]').forEach(a => { a.href += window.location.search; });
