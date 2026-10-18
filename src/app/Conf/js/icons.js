@@ -23,7 +23,7 @@
         more:      svg('<circle cx="12" cy="5" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="19" r="1.4" fill="currentColor"/>', 16),
         link:      svg('<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>'),
         close:     svg('<path d="M6 6l12 12M18 6L6 18"/>', 16),
-        leave:     svg('<path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 8l-4 4 4 4M6 12h10"/>', 16)
+        leave:     svg('<path d="M10.7 13.3a16 16 0 0 1-2.4-3l1.5-1.5a1.5 1.5 0 0 0 .3-1.6L9 4.5A1.5 1.5 0 0 0 7.4 3.5L4.6 4A2 2 0 0 0 3 6c.6 8.4 7.6 15.4 16 16a2 2 0 0 0 2-1.6l.5-2.8a1.5 1.5 0 0 0-1-1.6l-3.2-1.1a1.5 1.5 0 0 0-1.6.3l-1.5 1.5"/>', 18)
     };
     document.querySelectorAll('[data-icon]').forEach(el => { if (window.Icons[el.dataset.icon]) el.innerHTML = window.Icons[el.dataset.icon]; });
 })();

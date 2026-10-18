@@ -54,6 +54,7 @@ let conferenceMode = 'p2p';
 // SFU state (only used for Group calls)
 let sfuSocket        = null;
 let sfuDevice        = null;
+let sfuServerFingerprints = null; // DTLS fingerprints of the media server, shown in the security panel
 let sfuSendTransport = null;
 let sfuRecvTransport = null;
 const sfuProducers   = {};   // { audio, video, screen }
@@ -154,6 +155,8 @@ async function loadConferenceDetails() {
         isHost         = data.conference.isHost || false;
         hostId         = data.conference.host_id || null;
         conferenceMode = data.conference.mode || 'p2p';
+        document.getElementById('modeBadge').textContent = conferenceMode === 'sfu' ? 'Group' : 'P2P';
+        document.getElementById('roomId').textContent = `#${data.conference.id}`;
 
         // Прямой заход по URL без участия — редирект
         if (!data.conference.isParticipant && !data.conference.isHost) {
@@ -1129,6 +1132,7 @@ async function initSfu() {
     const sendParams = await sfuSocketAck('sfu:create-transport', { conferenceId });
     if (sendParams.error) throw new Error(sendParams.error);
 
+    sfuServerFingerprints = sendParams.dtlsParameters?.fingerprints || null;
     sfuSendTransport = sfuDevice.createSendTransport(sendParams);
     sfuSendTransport.on('connect', ({ dtlsParameters }, cb, eb) => {
         sfuSocketAck('sfu:connect-transport', { transportId: sfuSendTransport.id, dtlsParameters })
