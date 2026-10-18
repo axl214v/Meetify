@@ -165,6 +165,7 @@ function createConferenceCard(conf) {
             </div>
         </div>
         <div class="conf-actions">
+            <button onclick="copyInviteLink(${conf.id}, this)" class="btn btn-sm" type="button" title="Copy invite link">Copy link</button>
             ${isHost ? `
                 <button onclick="editConference(${conf.id})" class="btn btn-sm" type="button">Edit</button>
                 <button onclick="deleteConference(${conf.id})" class="btn btn-danger btn-sm" type="button">Delete</button>
@@ -207,6 +208,19 @@ function updatePagination(maxPage) {
     document.getElementById('prevPage').disabled = currentPage === 1;
     document.getElementById('nextPage').disabled = currentPage === maxPage;
     document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${maxPage}`;
+}
+
+// Invite link points at the join page; it never carries the room password.
+async function copyInviteLink(conferenceId, btn) {
+    const link = `${window.location.origin}/Conf/pages/conf_join.html?id=${conferenceId}`;
+    try {
+        await navigator.clipboard.writeText(link);
+        const label = btn.textContent;
+        btn.textContent = 'Copied';
+        setTimeout(() => { btn.textContent = label; }, 1500);
+    } catch {
+        window.prompt('Copy the invite link:', link);
+    }
 }
 
 // Join conference
