@@ -57,6 +57,10 @@
                 <span class="nav-icon">◇</span>
                 <span>Support</span>
             </button>
+            <button class="nav-item" data-tab="feedback">
+                <span class="nav-icon">◇</span>
+                <span>Feedback</span>
+            </button>
             <button class="nav-item" data-tab="logs">
                 <span class="nav-icon">⬡</span>
                 <span>Error Logs</span>
@@ -761,6 +765,31 @@
                         </thead>
                         <tbody id="ticketsBody">
                             <tr><td colspan="8" style="text-align:center;color:var(--text2);padding:24px;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── FEEDBACK ── -->
+        <section class="tab-panel" id="tab-feedback">
+            <header class="panel-header">
+                <div>
+                    <h1>Feedback</h1>
+                    <p class="panel-sub" id="feedbackSub">Anonymous messages from the feedback page</p>
+                </div>
+                <div class="header-controls">
+                    <button class="btn-refresh" id="refreshFeedback">↻</button>
+                </div>
+            </header>
+            <div class="panel-card">
+                <div style="overflow-x:auto;max-width:100%;">
+                    <table class="data-table full">
+                        <thead>
+                            <tr><th>#</th><th>Rating</th><th>Type</th><th>Message</th><th>Contact</th><th>Sent</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="feedbackBody">
+                            <tr><td colspan="7" style="text-align:center;color:var(--text2);padding:24px;">Loading...</td></tr>
                         </tbody>
                     </table>
                 </div>

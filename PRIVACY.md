@@ -14,6 +14,7 @@ Meetify is an independent project maintained by a single developer. This policy 
 | Password hash (bcrypt) | Authentication — your plaintext password is never stored |
 | Username | Display name inside the app |
 | Avatar image | Optional, only if you upload one |
+| Feedback | The text you send on the feedback page. It is anonymous and not linked to your account; an email is kept only if you add one to get a reply |
 
 We do **not** collect IP address logs, behavioral analytics, or advertising data.
 

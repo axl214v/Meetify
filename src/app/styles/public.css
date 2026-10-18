@@ -63,3 +63,21 @@ a.link-row:hover { background: var(--surface-2); color: inherit; }
 .err-box .btn { margin-top: var(--space-5); }
 
 @media (max-width: 600px) { .site-top { padding-inline: var(--space-4); } .site-main { padding-top: var(--space-6); } }
+
+/* Feedback form */
+.fb-form { margin-top: var(--space-6); padding: var(--space-6); }
+.fb-form .form-stack { display: flex; flex-direction: column; gap: var(--space-5); }
+.fb-form .field { gap: var(--space-2); }
+.fb-form .field > label { display: block; }
+.fb-form .hint { color: var(--text-2); font-size: var(--text-sm); font-weight: 400; }
+.fb-form .error { color: var(--danger); font-size: var(--text-sm); }
+.fb-rating { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space-2); }
+.fb-rating .btn { width: 100%; justify-content: center; }
+.fb-form .form-actions { display: flex; padding-top: var(--space-2); }
+.fb-form .form-actions .btn { min-width: 160px; }
+.fb-trap { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.fb-done { margin-top: var(--space-6); padding: var(--space-8) var(--space-5); display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--space-3); color: var(--text-2); }
+.fb-done h3 { color: var(--text); font-size: var(--text-lg); }
+.fb-done .state-actions { margin-top: var(--space-2); }
+[hidden] { display: none !important; }
+@media (max-width: 600px) { .fb-form { padding: var(--space-5); } .fb-form .form-actions .btn { width: 100%; } }

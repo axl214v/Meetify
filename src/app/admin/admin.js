@@ -87,6 +87,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('sendEmailBroadcast').addEventListener('click',  confirmEmailBroadcast);
     document.getElementById('refreshEmails').addEventListener('click',       loadEmailHistory);
     document.getElementById('refreshTickets').addEventListener('click',  loadAdminTickets);
+    document.getElementById('refreshFeedback').addEventListener('click', loadFeedback);
     document.getElementById('ticketStatusFilter').addEventListener('change', loadAdminTickets);
     document.getElementById('addSocialBtn').addEventListener('click',   addSocialLink);
     document.getElementById('refreshSocials').addEventListener('click', loadSocials);
@@ -155,6 +156,7 @@ function switchTab(tab) {
     else                          stopEmailPolling();
     if (tab === 'socials')        loadSocials();
     if (tab === 'support')        loadAdminTickets();
+    if (tab === 'feedback')       loadFeedback();
     if (tab === 'logs')           { if (!logsState.loaded) loadLogsTab(); }
 }
 
@@ -1375,4 +1377,48 @@ function isActive(conf) {
 function debounce(fn, ms) {
     let t;
     return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+
+// ── Admin Feedback (anonymous) ────────────────────────────────────────────
+async function loadFeedback() {
+    const tbody = document.getElementById('feedbackBody');
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text2);padding:24px;">Loading...</td></tr>';
+    try {
+        const res  = await apiFetch('/api/admin/feedback');
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        document.getElementById('feedbackSub').textContent = data.stats.total
+            ? `${data.stats.total} messages${data.stats.avg_rating ? ' · average rating ' + data.stats.avg_rating + ' / 5' : ''}`
+            : 'Anonymous messages from the feedback page';
+
+        if (!data.items.length) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text2);padding:24px;">No feedback yet</td></tr>';
+            return;
+        }
+        tbody.innerHTML = data.items.map(f => `<tr>
+            <td class="mono">#${f.id}</td>
+            <td class="mono">${f.rating ? f.rating + ' / 5' : '—'}</td>
+            <td>${escHtml(f.category)}</td>
+            <td style="max-width:420px;white-space:pre-wrap;word-break:break-word;">${escHtml(f.message)}</td>
+            <td>${f.contact ? escHtml(f.contact) : '—'}</td>
+            <td>${timeAgo(f.created_at)}</td>
+            <td><div class="actions"><button class="btn-sm btn-sm-danger" onclick="confirmDeleteFeedback(${f.id})">Delete</button></div></td>
+        </tr>`).join('');
+    } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--danger);padding:24px;">${escHtml(e.message)}</td></tr>`;
+    }
+}
+
+function confirmDeleteFeedback(id) {
+    showConfirmModal('⚠', 'Delete feedback', `Delete message #${id}?`, async () => {
+        try {
+            const res = await apiFetch(`/api/admin/feedback/${id}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error((await res.json()).error);
+            toast('Deleted', 'success');
+            loadFeedback();
+        } catch (e) {
+            toast('Error: ' + e.message, 'error');
+        }
+    });
 }
