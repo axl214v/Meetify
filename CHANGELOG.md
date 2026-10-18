@@ -18,6 +18,13 @@ _Nothing yet._
 ### Added
 - **Redesign.** New visual system across every page: landing, sign-in, rooms, profile,
   support, donate, legal and admin, with matching light and dark themes.
+- **Feedback page.** Anonymous, no account needed; an email is only kept if you add
+  one to get a reply. Reviewed in a new Feedback tab in the admin panel.
+- **Connection security panel.** Click the P2P/Group or Live badge in a room to see
+  the encryption in use and a security code per connection. Both people see the same
+  code, so reading it aloud confirms nobody tampered with the call. Group calls state
+  plainly that media passes through the media server.
+- **Copy link** on every conference in the list, and the room now matches the landing look.
 - **Invite links.** A button in the room copies a link to the join page. If the person
   is signed out they are sent to sign in (or register) and land back on the invite.
   The link never contains the room password.
@@ -31,6 +38,9 @@ _Nothing yet._
   are size-limited and rate-limited.
 - No client IP addresses are written to server logs, matching the privacy policy.
 - The public error-report endpoint is rate-limited and size-capped.
+- Avatar uploads are checked by their real file signature, and uploaded files are
+  served so that they can never run as a page.
+- Participant lists no longer expose other users' email addresses.
 
 ## [1.5.0-beta] — 2026-10-05
 
