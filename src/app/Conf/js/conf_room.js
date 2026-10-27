@@ -6,6 +6,17 @@ let socket = null;
 let localStream = null;
 let screenStream = null;
 let peers = {};
+// ICE candidates that arrive before the remote description is set (addIceCandidate would throw)
+let pendingCandidates = {};
+
+async function flushPendingCandidates(userId) {
+    const queued = pendingCandidates[userId] || [];
+    delete pendingCandidates[userId];
+    for (const c of queued) {
+        try { await peers[userId].addIceCandidate(new RTCIceCandidate(c)); }
+        catch (e) { console.warn('addIceCandidate failed:', e); }
+    }
+}
 let conferenceId = null;
 let currentUser = null;
 let chat = null;
@@ -291,9 +302,10 @@ async function initSocket() {
         startQualityMonitor();
     });
     // New user joined — existing user is NOT initiator, waits for offer
-    socket.on('user-connected', async ({ userId, userName }) => {
+    socket.on('user-connected', ({ userId, userName }) => {
+        // The newcomer sends the offer; the peer connection is created once, when it arrives.
+        // (Creating it here too made the offer handler close it and open a second one with a new TURN relay.)
         console.log('User connected:', userId, userName);
-        await createPeerConnection(userId, false, userName);
     });
 
     // Peer left the conference, clean up local RTCPeerConnection and UI
@@ -330,6 +342,7 @@ async function initSocket() {
         console.log('Received offer from:', userId);
         await createPeerConnection(userId, false, userName);
         await peers[userId].setRemoteDescription(new RTCSessionDescription(offer));
+        await flushPendingCandidates(userId);
         const answer = await peers[userId].createAnswer();
         await peers[userId].setLocalDescription(answer);
         socket.emit('answer', { to: userId, answer });
@@ -339,12 +352,18 @@ async function initSocket() {
         console.log('Received answer from:', userId);
         if (peers[userId]) {
             await peers[userId].setRemoteDescription(new RTCSessionDescription(answer));
+            await flushPendingCandidates(userId);
         }
     });
 
     socket.on('ice-candidate', async ({ userId, candidate }) => {
-        if (peers[userId] && candidate) {
-            await peers[userId].addIceCandidate(new RTCIceCandidate(candidate));
+        if (!candidate) return;
+        const pc = peers[userId];
+        if (pc && pc.remoteDescription) {
+            try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); }
+            catch (e) { console.warn('addIceCandidate failed:', e); }
+        } else {
+            (pendingCandidates[userId] = pendingCandidates[userId] || []).push(candidate);
         }
     });
 
@@ -460,6 +479,14 @@ async function createPeerConnection(userId, isInitiator, userName = 'Unknown') {
                 candidate: event.candidate
             });
         }
+    };
+
+    peerConnection.oniceconnectionstatechange = () => {
+        console.log(`ICE state with ${userId}:`, peerConnection.iceConnectionState);
+    };
+
+    peerConnection.onicecandidateerror = (e) => {
+        console.warn(`ICE candidate error with ${userId}:`, e.errorCode, e.errorText, e.url);
     };
 
     peerConnection.onconnectionstatechange = () => {
