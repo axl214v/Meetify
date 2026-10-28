@@ -1189,12 +1189,13 @@ async function initSfu() {
             .then(() => cb()).catch(eb);
     });
 
-    // 5. Consume all existing producers in the room
+    // 5. React to new producers (others who join later or start screen share).
+    //    Subscribed before get-producers so nothing announced in between is lost.
+    sfuSocket.on('sfu:new-producer', info => { sfuConsume(info); });
+
+    // 6. Consume all existing producers in the room
     const { producers } = await sfuSocketAck('sfu:get-producers', { conferenceId });
     for (const info of producers) await sfuConsume(info);
-
-    // 6. React to new producers (others who join later or start screen share)
-    sfuSocket.on('sfu:new-producer', async info => { await sfuConsume(info); });
 
     // 7. Handle producers closed remotely (user left or stopped screen share)
     sfuSocket.on('sfu:producer-closed', ({ producerId }) => {
@@ -1237,27 +1238,37 @@ async function initSfu() {
     });
 }
 
+const sfuConsuming = new Set(); // producerIds being consumed right now
+
 async function sfuConsume({ producerId, userId, userName, kind }) {
-    if (!sfuDevice.canConsume({ producerId, rtpCapabilities: sfuDevice.rtpCapabilities })) return;
+    // The same producer can arrive from get-producers and from sfu:new-producer
+    if (sfuProdInfo[producerId] || sfuConsuming.has(producerId)) return;
+    sfuConsuming.add(producerId);
+    try {
+        // The server checks router.canConsume() and answers with an error if it fails
+        const params = await sfuSocketAck('sfu:consume', {
+            transportId:     sfuRecvTransport.id,
+            producerId,
+            rtpCapabilities: sfuDevice.rtpCapabilities,
+            conferenceId
+        });
+        if (params.error) { console.error('[SFU] consume error:', params.error); return; }
 
-    const params = await sfuSocketAck('sfu:consume', {
-        transportId:     sfuRecvTransport.id,
-        producerId,
-        rtpCapabilities: sfuDevice.rtpCapabilities,
-        conferenceId
-    });
-    if (params.error) { console.error('[SFU] consume error:', params.error); return; }
+        const consumer = await sfuRecvTransport.consume(params);
+        sfuConsumers[consumer.id] = consumer;
+        sfuProdInfo[producerId] = { userId, userName, kind, consumerId: consumer.id };
 
-    const consumer = await sfuRecvTransport.consume(params);
-    sfuConsumers[consumer.id] = consumer;
-    sfuProdInfo[producerId] = { userId, userName, kind, consumerId: consumer.id };
+        await sfuSocketAck('sfu:resume-consumer', { consumerId: consumer.id });
 
-    await sfuSocketAck('sfu:resume-consumer', { consumerId: consumer.id });
-
-    // Group audio+video into one MediaStream per user, then render (or update) their tile
-    if (!remoteStreams[userId]) remoteStreams[userId] = new MediaStream();
-    remoteStreams[userId].addTrack(consumer.track);
-    addRemoteVideo(userId, remoteStreams[userId], userName);
+        // Group audio+video into one MediaStream per user, then render (or update) their tile
+        if (!remoteStreams[userId]) remoteStreams[userId] = new MediaStream();
+        remoteStreams[userId].addTrack(consumer.track);
+        addRemoteVideo(userId, remoteStreams[userId], userName);
+    } catch (err) {
+        console.error('[SFU] consume failed:', err);
+    } finally {
+        sfuConsuming.delete(producerId);
+    }
 }
 
 // ============================================================

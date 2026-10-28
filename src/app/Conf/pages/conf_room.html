@@ -1303,7 +1303,7 @@
 <!-- mediasoup-client for SFU (Group) calls — async ESM, conf_room.js waits for 'mediasoup-ready' event -->
 <script type="module">
     try {
-        const { Device } = await import('https://esm.sh/mediasoup-client@3');
+        const { Device } = await import('/js/vendor/mediasoup-client.min.js');
         window.MediasoupDevice = Device;
     } catch (e) {
         console.warn('[mediasoup] Client load failed:', e.message);
