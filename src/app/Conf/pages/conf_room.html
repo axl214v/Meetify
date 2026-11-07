@@ -1154,6 +1154,77 @@
             .room-id { display: none; }
             .sec-panel { top: 60px; right: 12px; }
         }
+
+        /* Phone held sideways: the framed card eats the little height there is, so go edge to edge */
+        @media (max-height: 500px) and (orientation: landscape) {
+            body { min-height: 0; }
+            .room-container { margin: 0; height: 100dvh; border: 0; border-radius: 0; box-shadow: none; }
+            .room-header { height: 44px; }
+            .controls-bar { padding-block: 6px; }
+        }
+        /* Larger hit area for the camera/mic device chevron without growing it */
+        @media (pointer: coarse) {
+            .ctrl-sub-btn::after { content: ""; position: absolute; inset: -8px; }
+        }
+
+        /* ============================================ */
+        /* Adaptive tile grid + screen-share spotlight  */
+        /* JS keeps #videoGrid[data-count] = tiles in the grid. Tiles fill the area (no 16:9 box that  */
+        /* leaves the lower half empty); with many tiles the grid scrolls instead of shrinking them.   */
+        /* ============================================ */
+        .video-grid {
+            --cols: 1;
+            grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+            grid-auto-rows: minmax(150px, 1fr);
+            align-content: stretch;
+        }
+        .video-grid[data-count="2"], .video-grid[data-count="3"], .video-grid[data-count="4"] { --cols: 2; }
+        .video-grid[data-count="5"], .video-grid[data-count="6"], .video-grid[data-count="7"],
+        .video-grid[data-count="8"], .video-grid[data-count="9"] { --cols: 3; }
+        .video-grid[data-count="10"], .video-grid[data-count="11"], .video-grid[data-count="12"] { --cols: 4; }
+        .video-grid:not([data-count="1"]):not([data-count="2"]):not([data-count="3"]):not([data-count="4"]):not([data-count="5"]):not([data-count="6"]):not([data-count="7"]):not([data-count="8"]):not([data-count="9"]):not([data-count="10"]):not([data-count="11"]):not([data-count="12"]) { --cols: 4; }
+        .video-grid .video-container { aspect-ratio: auto; min-height: 0; min-width: 0; }
+
+        .overlay-left { min-width: 0; max-width: 100%; }
+        .participant-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        /* A shared screen is read, not watched: never crop it */
+        .screen-tile video { object-fit: contain; background: #000; }
+        .screen-tile .participant-name { max-width: 100%; }
+
+        /* Wide screens: with a spotlight, the strip becomes a column on the right */
+        @media (min-width: 1000px) and (min-height: 560px) {
+            .video-area:has(.filmstrip-section:not(.hidden)) { flex-direction: row; }
+            .video-area:has(.filmstrip-section:not(.hidden)) .video-grid { flex: 1 1 0; min-width: 0; }
+            .filmstrip-section { width: 264px; border-top: 0; border-left: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; }
+            .filmstrip { height: auto; flex: 1; min-height: 0; flex-direction: column; overflow-x: hidden; overflow-y: auto; padding: 0 var(--space-2) var(--space-2); }
+            .filmstrip .video-container { width: 100%; min-width: 0; height: auto; aspect-ratio: 16 / 9; flex: none; }
+        }
+
+        /* Phones, portrait: fewer columns, taller tiles */
+        @media (max-width: 700px) {
+            .video-grid { grid-auto-rows: minmax(120px, 1fr); }
+            .video-grid[data-count="2"], .video-grid[data-count="3"] { --cols: 1; }
+            .video-grid[data-count="4"], .video-grid[data-count="5"], .video-grid[data-count="6"],
+            .video-grid[data-count="7"], .video-grid[data-count="8"], .video-grid[data-count="9"] { --cols: 2; }
+            .video-grid[data-count="10"], .video-grid[data-count="11"], .video-grid[data-count="12"] { --cols: 2; }
+            .filmstrip { height: 104px; }
+            .filmstrip .video-container { width: 140px; min-width: 140px; }
+            .filmstrip .video-overlay { padding: 4px; }
+            .filmstrip .overlay-right .status-pill { display: none; }
+            .room-header { gap: var(--space-2); }
+            .room-title { max-width: 46vw; }
+        }
+
+        /* Phones, landscape: wide and short, so use columns */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .video-grid { grid-auto-rows: minmax(90px, 1fr); }
+            .video-grid[data-count="2"], .video-grid[data-count="3"] { --cols: 2; }
+            .video-grid[data-count="3"] { --cols: 3; }
+            .video-grid[data-count="4"] { --cols: 4; }
+            .filmstrip { height: 72px; }
+            .filmstrip .video-container { width: 112px; min-width: 112px; }
+        }
     </style>
 </head>
 <body>
@@ -1173,7 +1244,7 @@
             <div class="room-meta">
                 <div class="meta-chip">
                     <span class="dot"></span>
-                    <span id="participantCount">0</span> participants
+                    <span id="participantCount">0</span> <span id="participantLabel">participants</span>
                 </div>
                 <div class="meta-chip">
                     <span id="roomTimer">00:00</span>
@@ -1300,7 +1371,7 @@
 <script src="/socket.io/socket.io.js"></script>
 <script src="/Conf/js/conf_utils.js"></script>
 <script src="/Conf/components/chat.js"></script>
-<!-- mediasoup-client for SFU (Group) calls — async ESM, conf_room.js waits for 'mediasoup-ready' event -->
+<!-- mediasoup-client for SFU (Group) calls — own-origin ESM bundle (no CDN), conf_room.js waits for 'mediasoup-ready' event -->
 <script type="module">
     try {
         const { Device } = await import('/js/vendor/mediasoup-client.min.js');

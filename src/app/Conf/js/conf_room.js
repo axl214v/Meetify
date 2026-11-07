@@ -6,6 +6,10 @@ let socket = null;
 let localStream = null;
 let screenStream = null;
 let peers = {};
+// Screen share rides on its own transceiver next to the camera: sender per peer, and the first stream
+// a peer sends us is its camera stream (anything else with video is its screen)
+let screenSenders = {};
+let camStreams = {};
 // ICE candidates that arrive before the remote description is set (addIceCandidate would throw)
 let pendingCandidates = {};
 
@@ -188,6 +192,7 @@ async function loadConferenceDetails() {
 function updateRemoteMediaState(userId, audio, video) {
     remoteMediaStates[userId] = { audio, video };
 
+    document.getElementById(`video-${userId}`)?.classList.toggle('cam-off', !video);
     const micStatus = document.querySelector(`#video-${userId} .mic-status`);
     const videoStatus = document.querySelector(`#video-${userId} .video-status`);
     if (micStatus) micStatus.innerHTML = audio ? Icons.mic : Icons.micOff;
@@ -232,6 +237,7 @@ function updateMediaControlsUI() {
 
     micBtn?.classList.toggle('muted', !isAudioEnabled);
     videoBtn?.classList.toggle('off', !isVideoEnabled);
+    document.getElementById('localVideoContainer')?.classList.toggle('cam-off', !isVideoEnabled);
     if (micStatus) micStatus.innerHTML = isAudioEnabled ? Icons.mic : Icons.micOff;
     if (videoStatus) videoStatus.innerHTML = isVideoEnabled ? Icons.cam : Icons.camOff;
 }
@@ -275,11 +281,6 @@ async function initSocket() {
         let joinAudio = true;
         let joinVideo = true;
 
-        if (roomState?.someoneIsScreenSharing) {
-            joinVideo = false;
-            showNotification('Someone is screen sharing — camera disabled on join', 'info');
-        }
-
         if (participants.length > 5) {
             joinAudio = false;
             showNotification('Large room detected — microphone muted on join', 'info');
@@ -315,9 +316,13 @@ async function initSocket() {
             peers[userId].close();
             delete peers[userId];
         }
+        delete camStreams[userId];
+        delete screenSenders[userId];
+        roomScreenShareState.delete(userId);
         const videoContainer = document.getElementById(`video-${userId}`);
         if (videoContainer) videoContainer.remove();
         pinnedTiles.delete(String(userId));
+        removeScreenTile(userId);
         applyPinLayout();
         updateParticipantCount();
     });
@@ -326,7 +331,6 @@ async function initSocket() {
         roomScreenShareState.add(userId);
         showNotification(`${userName} started screen sharing`, 'info');
 
-        // Если есть video-контейнер этого юзера — помечаем
         const container = document.getElementById(`video-${userId}`);
         if (container) container.classList.add('screen-sharing');
     });
@@ -336,25 +340,43 @@ async function initSocket() {
 
         const container = document.getElementById(`video-${userId}`);
         if (container) container.classList.remove('screen-sharing');
+        removeScreenTile(userId);
     });
 
-    socket.on('offer', async ({ userId, offer, userName }) => {
+    socket.on('offer', ({ userId, offer, userName }) => enqueueSignal(userId, async () => {
         console.log('Received offer from:', userId);
-        await createPeerConnection(userId, false, userName);
+        const existing = peers[userId];
+        const isRenegotiation = existing && (existing.remoteDescription || existing.signalingState === 'have-local-offer');
+        if (isRenegotiation) {
+            // A screen track was added or removed. On a collision the peer with the higher id is
+            // polite: it drops its own offer and answers, the other one ignores the offer.
+            const collision = existing._makingOffer || existing.signalingState !== 'stable';
+            if (collision && Number(currentUser.id) < Number(userId)) return;
+        } else {
+            await createPeerConnection(userId, false, userName);
+        }
         await peers[userId].setRemoteDescription(new RTCSessionDescription(offer));
         await flushPendingCandidates(userId);
         const answer = await peers[userId].createAnswer();
         await peers[userId].setLocalDescription(answer);
         socket.emit('answer', { to: userId, answer });
-    });
 
-    socket.on('answer', async ({ userId, answer }) => {
+        // A newcomer's offer only matches our camera and mic, so a screen we are already sharing
+        // goes out in a second round
+        if (!isRenegotiation && isScreenSharing && screenStream) {
+            screenSenders[userId] = peers[userId].addTrack(screenStream.getVideoTracks()[0], screenStream);
+            await renegotiateNow(userId);
+        }
+    }));
+
+    socket.on('answer', ({ userId, answer }) => enqueueSignal(userId, async () => {
         console.log('Received answer from:', userId);
-        if (peers[userId]) {
-            await peers[userId].setRemoteDescription(new RTCSessionDescription(answer));
+        const pc = peers[userId];
+        if (pc && pc.signalingState === 'have-local-offer') {
+            await pc.setRemoteDescription(new RTCSessionDescription(answer));
             await flushPendingCandidates(userId);
         }
-    });
+    }));
 
     socket.on('ice-candidate', async ({ userId, candidate }) => {
         if (!candidate) return;
@@ -425,6 +447,7 @@ async function initSocket() {
     socket.on('user-kicked', ({ userId: kickedUserId, kickerName }) => {
         const el = document.getElementById(`video-${kickedUserId}`);
         if (el) el.remove();
+        removeScreenTile(kickedUserId);
         pinnedTiles.delete(String(kickedUserId));
         applyPinLayout();
         updateParticipantCount();
@@ -457,18 +480,32 @@ async function createPeerConnection(userId, isInitiator, userName = 'Unknown') {
     if (peers[userId]) {
         peers[userId].close();
     }
+    delete camStreams[userId];
+    delete screenSenders[userId];
 
     const peerConnection = new RTCPeerConnection(rtcConfig);
     peers[userId] = peerConnection;
+    // Object.keys(peers) turns ids into strings, the server looks sockets up by the original id type
+    peerConnection._userId = userId;
 
     localStream.getTracks().forEach(track => {
         peerConnection.addTrack(track, localStream);
     });
+    // We join while presenting (we send the offer): the screen goes out next to the camera
+    if (isInitiator && isScreenSharing && screenStream) {
+        screenSenders[userId] = peerConnection.addTrack(screenStream.getVideoTracks()[0], screenStream);
+    }
 
-    // When remote user publishes tracks, attach to a new video tile
+    // When remote user publishes tracks, attach to a video tile (camera) or a screen tile (second stream)
     peerConnection.ontrack = (event) => {
         const [remoteStream] = event.streams;
-        addRemoteVideo(userId, remoteStream, userName);
+        if (!remoteStream) return;
+        if (!camStreams[userId]) camStreams[userId] = remoteStream;
+        if (remoteStream.id === camStreams[userId].id) {
+            addRemoteVideo(userId, remoteStream, userName);
+        } else if (event.track.kind === 'video') {
+            addScreenTile(userId, remoteStream, userName);
+        }
     };
 
     // Forward local ICE candidates to remote peer via signaling
@@ -497,9 +534,12 @@ async function createPeerConnection(userId, isInitiator, userName = 'Unknown') {
                 peers[userId].close();
                 delete peers[userId];
             }
+            delete camStreams[userId];
+            delete screenSenders[userId];
             const videoContainer = document.getElementById(`video-${userId}`);
             if (videoContainer) videoContainer.remove();
             pinnedTiles.delete(String(userId));
+            removeScreenTile(userId);
             applyPinLayout();
             updateParticipantCount();
         }
@@ -512,6 +552,89 @@ async function createPeerConnection(userId, isInitiator, userName = 'Unknown') {
     }
 
     return peerConnection;
+}
+
+// Signaling for one peer runs one step at a time: an answer must be applied before the next offer
+const signalQueues = {};
+function enqueueSignal(userId, fn) {
+    const run = (signalQueues[userId] || Promise.resolve()).then(fn).catch(e => console.warn('signaling failed:', e));
+    signalQueues[userId] = run;
+    return run;
+}
+
+// New offer on a live connection after a local track was added or removed
+function renegotiate(userId) {
+    return enqueueSignal(userId, () => renegotiateNow(userId));
+}
+
+async function renegotiateNow(userId) {
+    const pc = peers[userId];
+    if (!pc) return;
+    try {
+        pc._makingOffer = true;
+        const offer = await pc.createOffer();
+        if (pc.signalingState !== 'stable') return;
+        await pc.setLocalDescription(offer);
+        socket.emit('offer', { to: pc._userId, offer: pc.localDescription });
+    } catch (e) {
+        console.warn('renegotiate failed:', e);
+    } finally {
+        pc._makingOffer = false;
+    }
+}
+
+// One tile per shared screen, next to the sharer's camera tile. A remote screen is spotlighted for us.
+function addScreenTile(userId, stream, userName = 'Unknown', { local = false } = {}) {
+    const key = `screen-${userId}`;
+    document.getElementById(key)?.remove();
+
+    const tile = document.createElement('div');
+    tile.id = key;
+    tile.className = 'video-container screen-tile';
+    tile.dataset.userId = key;
+
+    const video = document.createElement('video');
+    video.autoplay = true;
+    video.playsInline = true;
+    video.muted = true;
+    video.srcObject = stream;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'video-overlay';
+    const left = document.createElement('div');
+    left.className = 'overlay-left';
+    const nameEl = document.createElement('span');
+    nameEl.className = 'participant-name';
+    nameEl.textContent = local ? 'Your screen' : `${userName} · screen`;
+    left.appendChild(nameEl);
+    const right = document.createElement('div');
+    right.className = 'overlay-right';
+    const pinBtn = document.createElement('button');
+    pinBtn.className = 'pin-btn';
+    pinBtn.title = 'Pin (spotlight)';
+    pinBtn.innerHTML = Icons.pin;
+    pinBtn.addEventListener('click', (e) => { e.stopPropagation(); togglePin(key); });
+    right.appendChild(pinBtn);
+    overlay.appendChild(left);
+    overlay.appendChild(right);
+
+    tile.appendChild(video);
+    tile.appendChild(overlay);
+    document.getElementById(pinnedTiles.size > 0 ? 'filmstrip' : 'videoGrid').appendChild(tile);
+
+    if (!local) pinnedTiles.add(key);
+    applyPinLayout();
+    updateParticipantCount();
+}
+
+function removeScreenTile(userId) {
+    const key = `screen-${userId}`;
+    const tile = document.getElementById(key);
+    if (!tile) return;
+    tile.remove();
+    pinnedTiles.delete(key);
+    applyPinLayout();
+    updateParticipantCount();
 }
 
 function addRemoteVideo(userId, stream, userName = 'Unknown') {
@@ -589,8 +712,10 @@ function addRemoteVideo(userId, stream, userName = 'Unknown') {
         const { audio, video: videoEnabled } = remoteMediaStates[userId];
         micPill.innerHTML = audio ? Icons.mic : Icons.micOff;
         videoPill.innerHTML = videoEnabled ? Icons.cam : Icons.camOff;
+        videoContainer.classList.toggle('cam-off', !videoEnabled);
     }
 
+    if (pinnedTiles.has(String(userId))) applyPinLayout();
     updateParticipantCount();
 }
 
@@ -745,6 +870,7 @@ function setCameraEnabled(enabled, { emit = true } = {}) {
     const btn = document.getElementById('toggleVideo');
     const status = document.getElementById('localVideoStatus');
     btn?.classList.toggle('off', !isVideoEnabled);
+    document.getElementById('localVideoContainer')?.classList.toggle('cam-off', !isVideoEnabled);
     if (status) status.innerHTML = isVideoEnabled ? Icons.cam : Icons.camOff;
 
     if (emit) {
@@ -766,36 +892,34 @@ async function toggleScreenShare() {
                 audio: false
             });
             const screenTrack = screenStream.getVideoTracks()[0];
+            screenTrack.contentHint = 'detail';
+            isScreenSharing = true;
+            // Announce first so receivers know the next offer / producer is a screen
+            socket?.emit('screen-share-start', { conferenceId });
 
             if (conferenceMode === 'sfu') {
-                // SFU: close camera producer, produce screen track
-                if (sfuProducers.video) {
-                    sfuSocket?.emit('sfu:close-producer', { producerId: sfuProducers.video.id });
-                    sfuProducers.video.close();
-                    delete sfuProducers.video;
-                }
+                // SFU: the screen is a second video producer, the camera keeps running
                 sfuProducers.screen = await sfuSendTransport.produce({
                     track: screenTrack,
                     appData: { share: true }
                 });
             } else {
-                // P2P: replaceTrack on every peer connection
-                Object.values(peers).forEach(peer => {
-                    const sender = peer.getSenders().find(s => s.track?.kind === 'video');
-                    if (sender) sender.replaceTrack(screenTrack);
-                });
+                // P2P: add the screen as an extra track on every connection and renegotiate
+                for (const userId of Object.keys(peers)) {
+                    screenSenders[userId] = peers[userId].addTrack(screenTrack, screenStream);
+                    await renegotiate(userId);
+                }
             }
 
-            document.getElementById('localVideo').srcObject = screenStream;
+            addScreenTile('local', screenStream, 'You', { local: true });
             screenTrack.onended = () => stopScreenShare();
-            isScreenSharing = true;
             btn.classList.add('sharing');
             btn.innerHTML = Icons.screenStop;
-            socket?.emit('screen-share-start', { conferenceId });
 
         } catch (error) {
             console.error('Screen share error:', error);
-            showNotification('Failed to share screen', 'error');
+            if (isScreenSharing) await stopScreenShare();
+            else showNotification('Failed to share screen', 'error');
         }
     } else {
         await stopScreenShare();
@@ -809,26 +933,20 @@ async function stopScreenShare() {
     }
 
     if (conferenceMode === 'sfu') {
-        // SFU: close screen producer, re-produce camera
         if (sfuProducers.screen) {
             sfuSocket?.emit('sfu:close-producer', { producerId: sfuProducers.screen.id });
             sfuProducers.screen.close();
             delete sfuProducers.screen;
         }
-        const videoTrack = localStream.getVideoTracks()[0];
-        if (videoTrack && sfuSendTransport) {
-            sfuProducers.video = await sfuSendTransport.produce({ track: videoTrack });
-        }
     } else {
-        // P2P: replaceTrack back to camera
-        const videoTrack = localStream.getVideoTracks()[0];
-        Object.values(peers).forEach(peer => {
-            const sender = peer.getSenders().find(s => s.track?.kind === 'video');
-            if (sender) sender.replaceTrack(videoTrack);
-        });
+        for (const [userId, sender] of Object.entries(screenSenders)) {
+            try { peers[userId]?.removeTrack(sender); } catch (_) {}
+            delete screenSenders[userId];
+            await renegotiate(userId);
+        }
     }
 
-    document.getElementById('localVideo').srcObject = localStream;
+    removeScreenTile('local');
     isScreenSharing = false;
     document.getElementById('toggleScreen').classList.remove('sharing');
     document.getElementById('toggleScreen').innerHTML = Icons.screen;
@@ -944,6 +1062,8 @@ function formatJoinTime(timestamp) {
 function updateParticipantCount() {
     const count = Object.keys(peers).length + 1;
     document.getElementById('participantCount').textContent = count;
+    const label = document.getElementById('participantLabel');
+    if (label) label.textContent = count === 1 ? 'participant' : 'participants';
 }
 
 function sendMessage() {
@@ -1202,17 +1322,18 @@ async function initSfu() {
         const info = sfuProdInfo[producerId];
         if (!info) return;
 
-        const { userId, consumerId } = info;
+        const { userId, consumerId, isScreen } = info;
         delete sfuProdInfo[producerId];
 
         const consumer = sfuConsumers[consumerId];
         const stream   = remoteStreams[userId];
-        if (consumer && stream && consumer.track) {
+        if (consumer && stream && consumer.track && !isScreen) {
             stream.removeTrack(consumer.track);
         }
         if (consumer) { consumer.close(); delete sfuConsumers[consumerId]; }
+        if (isScreen) { removeScreenTile(userId); return; }
 
-        const stillHasProducer = Object.values(sfuProdInfo).some(pi => pi.userId === userId);
+        const stillHasProducer = Object.values(sfuProdInfo).some(pi => pi.userId === userId && !pi.isScreen);
         if (!stillHasProducer) {
             document.getElementById(`video-${userId}`)?.remove();
             pinnedTiles.delete(String(userId));
@@ -1230,7 +1351,8 @@ async function initSfu() {
         if (prodEntry) {
             const [producerId, info] = prodEntry;
             const stream = remoteStreams[info.userId];
-            if (stream && consumer.track) stream.removeTrack(consumer.track);
+            if (stream && consumer.track && !info.isScreen) stream.removeTrack(consumer.track);
+            if (info.isScreen) removeScreenTile(info.userId);
             delete sfuProdInfo[producerId];
         }
         consumer.close();
@@ -1240,7 +1362,7 @@ async function initSfu() {
 
 const sfuConsuming = new Set(); // producerIds being consumed right now
 
-async function sfuConsume({ producerId, userId, userName, kind }) {
+async function sfuConsume({ producerId, userId, userName, kind, appData }) {
     // The same producer can arrive from get-producers and from sfu:new-producer
     if (sfuProdInfo[producerId] || sfuConsuming.has(producerId)) return;
     sfuConsuming.add(producerId);
@@ -1256,9 +1378,18 @@ async function sfuConsume({ producerId, userId, userName, kind }) {
 
         const consumer = await sfuRecvTransport.consume(params);
         sfuConsumers[consumer.id] = consumer;
-        sfuProdInfo[producerId] = { userId, userName, kind, consumerId: consumer.id };
+        // A screen is the sender's second video (or its only one while the camera is off and a share was announced)
+        const hasCamera = Object.values(sfuProdInfo).some(i => i.userId === userId && i.kind === 'video' && !i.isScreen);
+        const isScreen = kind === 'video' &&
+            !!(appData?.share || params.appData?.share || hasCamera || roomScreenShareState.has(userId));
+        sfuProdInfo[producerId] = { userId, userName, kind, isScreen, consumerId: consumer.id };
 
         await sfuSocketAck('sfu:resume-consumer', { consumerId: consumer.id });
+
+        if (isScreen) {
+            addScreenTile(userId, new MediaStream([consumer.track]), userName);
+            return;
+        }
 
         // Group audio+video into one MediaStream per user, then render (or update) their tile
         if (!remoteStreams[userId]) remoteStreams[userId] = new MediaStream();
@@ -1346,7 +1477,7 @@ function _classifyTier({ rtt, loss }) {
 
 async function _applyQualityTier(tier) {
     const videoTrack = localStream?.getVideoTracks()[0];
-    if (videoTrack && !isScreenSharing) {
+    if (videoTrack) {
         try { await videoTrack.applyConstraints(QUALITY_PRESETS[tier]); } catch (_) {}
     }
 
@@ -1431,3 +1562,12 @@ window.hostPromoteCoHost = hostPromoteCoHost;
 window.hostDemoteCoHost = hostDemoteCoHost;
 window.togglePin = togglePin;
 window.toggleStrip = toggleStrip;
+
+// CSS lays the grid out by tile count
+(() => {
+    const grid = document.getElementById('videoGrid');
+    if (!grid) return;
+    const sync = () => { grid.dataset.count = String(grid.querySelectorAll(':scope > .video-container').length); };
+    new MutationObserver(sync).observe(grid, { childList: true });
+    sync();
+})();
