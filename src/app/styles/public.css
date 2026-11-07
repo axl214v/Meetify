@@ -81,3 +81,4 @@ a.link-row:hover { background: var(--surface-2); color: inherit; }
 .fb-done .state-actions { margin-top: var(--space-2); }
 [hidden] { display: none !important; }
 @media (max-width: 600px) { .fb-form { padding: var(--space-5); } .fb-form .form-actions .btn { width: 100%; } }
+@media (max-width: 600px) { .site-foot { text-align: center; align-items: center; } .site-foot > * { flex: none; } }

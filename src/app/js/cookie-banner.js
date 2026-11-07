@@ -18,6 +18,7 @@
             box-shadow: var(--shadow-overlay, 0 8px 24px rgba(0,0,0,0.45));
             font: 13px/1.5 'Geist', system-ui, sans-serif;
         }
+        #cookie-banner > span { min-width: 0; }
         #cookie-banner a { color: var(--accent-text, #7aa7fa); text-decoration: underline; text-underline-offset: 3px; }
         #cookie-banner code { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.92em; color: var(--text, #e6e8eb); }
         #cookie-ok {

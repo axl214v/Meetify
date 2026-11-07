@@ -87,7 +87,17 @@ body { min-height: 100vh; display: flex; flex-direction: column; }
     .form-row, .mode-cards { grid-template-columns: 1fr; }
     .form-panel { padding: var(--space-5); }
 }
-@media (max-width: 480px) { .topbar-nav .nav-link:nth-child(4) { display: none; } }
+/* Phones: keep the two primary links; Profile and Support stay reachable from the avatar/footer */
+@media (max-width: 480px) {
+    .topbar-inner { gap: var(--space-2); }
+    .topbar-spacer { display: none; }
+    .topbar-inner #themeToggleBtn { margin-left: auto; }
+    .topbar-inner .brand { margin-right: 0; }
+    .topbar-inner .brand img { height: 22px; width: auto; }
+    .topbar-nav { gap: var(--space-3); min-width: 0; overflow-x: auto; scrollbar-width: none; }
+    .topbar-nav::-webkit-scrollbar { display: none; }
+    .topbar-nav .nav-link:nth-child(n+3) { display: none; }
+}
 
 /* Profile */
 .profile-layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: var(--space-5); align-items: start; }
@@ -137,3 +147,10 @@ body { min-height: 100vh; display: flex; flex-direction: column; }
 .msg-head { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2); font-size: var(--text-sm); }
 .msg-time { color: var(--text-3); margin-left: auto; }
 .msg-text { white-space: pre-wrap; overflow-wrap: anywhere; line-height: var(--leading-base); }
+
+/* Phones: search spans the toolbar, action rows share the width, public footers center */
+@media (max-width: 600px) {
+    .toolbar .search { max-width: none; }
+    .form-actions { display: grid; grid-template-columns: 1fr 1fr; }
+    .form-actions .btn:last-child:nth-child(odd) { grid-column: 1 / -1; }
+}

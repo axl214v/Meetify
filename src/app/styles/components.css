@@ -14,6 +14,8 @@ body {
     -webkit-font-smoothing: antialiased;
     font-feature-settings: "ss01", "cv11";
 }
+/* The blurred .glow layers bleed past the viewport; clip (not hidden) keeps position: sticky working */
+html, body { overflow-x: clip; }
 h1, h2, h3, h4 { font-weight: 600; line-height: var(--leading-tight); letter-spacing: -0.02em; }
 h1 { font-size: var(--text-xl); }
 h2 { font-size: var(--text-lg); }
@@ -136,7 +138,8 @@ a.panel-link:hover { border-color: var(--border-strong); background: var(--surfa
 .topbar { background: var(--surface); border-bottom: 1px solid var(--border); }
 .topbar-inner { display: flex; align-items: center; gap: var(--space-4); height: 60px; }
 .topbar-spacer { flex: 1; }
-.nav-link { color: var(--text-2); font-weight: 500; font-size: var(--text-sm); text-decoration: none; padding: var(--space-1) 0; }
+.nav-link { color: var(--text-2); font-weight: 500; font-size: var(--text-sm); text-decoration: none; padding: var(--space-1) 0; white-space: nowrap; }
+.topbar-inner .brand { flex: none; }
 .nav-link:hover, .nav-link[aria-current="page"] { color: var(--text); }
 
 /* ── Floating nav pill (marketing pages) ──────────────── */
@@ -230,3 +233,22 @@ a.panel-link:hover { border-color: var(--border-strong); background: var(--surfa
 .js .reveal { opacity: 0; transform: translateY(14px); transition: opacity var(--dur-slow) var(--ease-out), transform var(--dur-slow) var(--ease-out); transition-delay: calc(var(--i, 0) * 70ms); }
 .js .reveal.in { opacity: 1; transform: none; }
 @media (prefers-reduced-motion: reduce) { .js .reveal { opacity: 1; transform: none; transition: none; } }
+
+/* ── Touch: 44px hit areas without changing the look ──── */
+@media (pointer: coarse) {
+    .btn-icon, .btn-icon.btn-sm { min-width: 44px; min-height: 44px; }
+    .nav-profile { padding: 6px; margin-left: 0; }
+    .nav-link, .site-foot a, .footer-links a { display: inline-flex; align-items: center; min-height: 44px; }
+    #nb-modal-close { min-width: 44px; min-height: 44px; }
+}
+/* The floating bell sits bottom-right; leave room so it never covers footer text */
+@media (max-width: 600px) {
+    .site-foot, .site-footer { padding-bottom: calc(var(--space-5) + 56px); }
+}
+
+/* Brand: never squeezed by neighbours (a flex-shrunk <img> with a fixed height looks squashed);
+   phones get the square mark through <picture> */
+.brand, .brand picture { display: flex; flex: none; }
+.brand img { flex: none; max-width: none; height: 28px; width: auto; }
+/* the mark has padding inside its canvas, so it needs more height than the wordmark; !important beats the per-page header rules */
+@media (max-width: 480px) { .brand picture img { height: 34px !important; } }
