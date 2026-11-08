@@ -88,6 +88,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('refreshEmails').addEventListener('click',       loadEmailHistory);
     document.getElementById('refreshTickets').addEventListener('click',  loadAdminTickets);
     document.getElementById('refreshFeedback').addEventListener('click', loadFeedback);
+    document.getElementById('refreshAudit').addEventListener('click', loadAudit);
+    document.getElementById('auditFilter').addEventListener('change', loadAudit);
     document.getElementById('ticketStatusFilter').addEventListener('change', loadAdminTickets);
     document.getElementById('addSocialBtn').addEventListener('click',   addSocialLink);
     document.getElementById('refreshSocials').addEventListener('click', loadSocials);
@@ -157,6 +159,7 @@ function switchTab(tab) {
     if (tab === 'socials')        loadSocials();
     if (tab === 'support')        loadAdminTickets();
     if (tab === 'feedback')       loadFeedback();
+    if (tab === 'audit')          loadAudit();
     if (tab === 'logs')           { if (!logsState.loaded) loadLogsTab(); }
 }
 
@@ -1377,6 +1380,31 @@ function isActive(conf) {
 function debounce(fn, ms) {
     let t;
     return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+
+// ── Audit log ─────────────────────────────────────────────────────────────
+async function loadAudit() {
+    const tbody = document.getElementById('auditBody');
+    const filter = document.getElementById('auditFilter').value;
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text2);padding:24px;">Loading...</td></tr>';
+    try {
+        const res  = await apiFetch('/api/admin/audit?limit=200' + (filter ? '&action=' + encodeURIComponent(filter) : ''));
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        if (!data.entries.length) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text2);padding:24px;">No entries yet</td></tr>';
+            return;
+        }
+        tbody.innerHTML = data.entries.map(e => `<tr>
+            <td>${timeAgo(e.created_at)}</td>
+            <td>${e.actor_id ? escHtml(e.actor_name || 'deleted user') + ' <span class="mono">#' + e.actor_id + '</span>' : '—'}</td>
+            <td class="mono">${escHtml(e.action)}</td>
+            <td class="mono">${e.target_id ? escHtml((e.target_type || '') + ' ' + e.target_id) : '—'}</td>
+            <td class="mono" style="max-width:320px;word-break:break-word;">${e.details ? escHtml(e.details) : ''}</td>
+        </tr>`).join('');
+    } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--danger);padding:24px;">${escHtml(err.message)}</td></tr>`;
+    }
 }
 
 // ── Admin Feedback (anonymous) ────────────────────────────────────────────

@@ -61,6 +61,10 @@
                 <span class="nav-icon">◇</span>
                 <span>Feedback</span>
             </button>
+            <button class="nav-item" data-tab="audit">
+                <span class="nav-icon">◈</span>
+                <span>Audit log</span>
+            </button>
             <button class="nav-item" data-tab="logs">
                 <span class="nav-icon">⬡</span>
                 <span>Error Logs</span>
@@ -790,6 +794,37 @@
                         </thead>
                         <tbody id="feedbackBody">
                             <tr><td colspan="7" style="text-align:center;color:var(--text2);padding:24px;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── AUDIT LOG ── -->
+        <section class="tab-panel" id="tab-audit">
+            <header class="panel-header">
+                <div>
+                    <h1>Audit log</h1>
+                    <p class="panel-sub">Admin actions, room moderation and sign-ins. No IP addresses are stored; entries are deleted after 90 days.</p>
+                </div>
+                <div class="header-controls">
+                    <select id="auditFilter" class="btn-refresh">
+                        <option value="">All actions</option>
+                        <option value="admin.">Admin panel</option>
+                        <option value="room.">Room moderation</option>
+                        <option value="auth.">Sign-ins and passwords</option>
+                    </select>
+                    <button class="btn-refresh" id="refreshAudit">↻</button>
+                </div>
+            </header>
+            <div class="panel-card">
+                <div style="overflow-x:auto;max-width:100%;">
+                    <table class="data-table full">
+                        <thead>
+                            <tr><th>When</th><th>Who</th><th>Action</th><th>Target</th><th>Details</th></tr>
+                        </thead>
+                        <tbody id="auditBody">
+                            <tr><td colspan="5" style="text-align:center;color:var(--text2);padding:24px;">Loading...</td></tr>
                         </tbody>
                     </table>
                 </div>
