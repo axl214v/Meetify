@@ -18,6 +18,8 @@ Meetify is an independent project maintained by a single developer. This policy 
 
 We do **not** collect IP address logs, behavioral analytics, or advertising data.
 
+For security we keep an audit log of privileged actions: administrator actions, host and co-host moderation in a room (kick, mute, chat ban, co-host changes), sign-ins and password changes. Each entry holds only the account ID, the action, its target and the time. It contains no IP address, device data or message content, and entries are deleted after 90 days.
+
 ---
 
 ## How we use your data

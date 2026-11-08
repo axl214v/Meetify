@@ -11,7 +11,14 @@ containers as `APP_VERSION` by `make up`.
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+- **Audit log** (admin → Audit log). Records administrator actions, room moderation
+  (kick, mute, chat ban, co-host changes), sign-ins and password changes: who, what, on what, when.
+  No IP addresses, device data or message content are stored; entries are deleted after 90 days.
+
+### Security
+- Every real-time (Socket.IO) event is now rate-limited per connection, with tighter limits for
+  moderation and signaling; a connection that keeps flooding is disconnected.
 
 ## [2.0.0-beta] — 2026-10-18
 
