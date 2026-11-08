@@ -15,31 +15,31 @@
   <circle cx="86" cy="168" r="3.5" fill="#7db0ff"/>
   <text x="100" y="173" font-family="'Geist', system-ui, sans-serif" font-size="13" font-weight="600" letter-spacing="2.5" fill="#7db0ff">NEW RELEASE</text>
 
-  <text x="58" y="378" font-family="'Geist', system-ui, sans-serif" font-size="214" font-weight="700" letter-spacing="-8" fill="#eef2fa">2.0.0</text>
+  <text x="58" y="378" font-family="'Geist', system-ui, sans-serif" font-size="214" font-weight="700" letter-spacing="-8" fill="#eef2fa">2.1.0</text>
   <rect x="68" y="404" width="96" height="5" rx="2.5" fill="#2f7cf6"/>
   <text x="182" y="414" font-family="'Geist', system-ui, sans-serif" font-size="30" font-weight="500" letter-spacing="10" fill="#7db0ff">BETA</text>
 
-  <text x="64" y="486" font-family="'Geist', system-ui, sans-serif" font-size="25" font-weight="400" fill="#9ba8c0">Redesigned from the ground up.</text>
-  <text x="64" y="522" font-family="'Geist', system-ui, sans-serif" font-size="25" font-weight="600" fill="#eef2fa">Easier to share. Safer to use.</text>
+  <text x="64" y="486" font-family="'Geist', system-ui, sans-serif" font-size="25" font-weight="400" fill="#9ba8c0">Share your screen, keep your camera.</text>
+  <text x="64" y="522" font-family="'Geist', system-ui, sans-serif" font-size="25" font-weight="600" fill="#eef2fa">Made for every screen. Easy to audit.</text>
   <g filter="url(#shadow)">
   <rect x="772" y="88" width="436" height="132" rx="22" fill="#0b0f17" stroke="rgba(148,170,215,0.24)" stroke-width="1.2"/>
   <rect x="802" y="122" width="64" height="64" rx="16" fill="rgba(47,124,246,0.15)"/>
   <g transform="translate(802,122)" fill="none" stroke="#7db0ff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="17" y="18" width="30" height="28" rx="4"/><path d="M17 27h30M27 27v19"/></g>
-  <text x="890" y="146" font-family="'Geist', system-ui, sans-serif" font-size="23" font-weight="600" fill="#eef2fa">New design</text>
-  <text x="890" y="172" font-family="'Geist', system-ui, sans-serif" font-size="15" font-weight="400" fill="#9ba8c0">Every page rebuilt, dark and light</text>
-  <text x="890" y="194" font-family="'Geist', system-ui, sans-serif" font-size="15" font-weight="400" fill="#9ba8c0">Calmer, faster, easier to read</text>
+  <text x="890" y="146" font-family="'Geist', system-ui, sans-serif" font-size="23" font-weight="600" fill="#eef2fa">Screen + camera</text>
+  <text x="890" y="172" font-family="'Geist', system-ui, sans-serif" font-size="15" font-weight="400" fill="#9ba8c0">Present without hiding your face</text>
+  <text x="890" y="194" font-family="'Geist', system-ui, sans-serif" font-size="15" font-weight="400" fill="#9ba8c0">Late joiners see the share too</text>
   <rect x="772" y="240" width="436" height="132" rx="22" fill="#0b0f17" stroke="rgba(148,170,215,0.24)" stroke-width="1.2"/>
   <rect x="802" y="274" width="64" height="64" rx="16" fill="rgba(47,124,246,0.15)"/>
-  <g transform="translate(802,274)" fill="none" stroke="#7db0ff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M28 36a6 6 0 0 0 8.5 0l5-5a6 6 0 0 0-8.5-8.5l-1.5 1.5"/><path d="M36 28a6 6 0 0 0-8.5 0l-5 5a6 6 0 0 0 8.5 8.5l1.5-1.5"/></g>
-  <text x="890" y="298" font-family="'Geist', system-ui, sans-serif" font-size="23" font-weight="600" fill="#eef2fa">Invite links</text>
-  <text x="890" y="324" font-family="'Geist', system-ui, sans-serif" font-size="15" font-weight="400" fill="#9ba8c0">Copy a link to any room</text>
-  <text x="890" y="346" font-family="'Geist', system-ui, sans-serif" font-size="15" font-weight="400" fill="#9ba8c0">Sign in and land right in the call</text>
+  <g transform="translate(802,274)" fill="none" stroke="#7db0ff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="16" y="18" width="14" height="12" rx="3"/><rect x="34" y="18" width="14" height="12" rx="3"/><rect x="16" y="34" width="14" height="12" rx="3"/><rect x="34" y="34" width="14" height="12" rx="3"/></g>
+  <text x="890" y="298" font-family="'Geist', system-ui, sans-serif" font-size="23" font-weight="600" fill="#eef2fa">Fits any screen</text>
+  <text x="890" y="324" font-family="'Geist', system-ui, sans-serif" font-size="15" font-weight="400" fill="#9ba8c0">Tiles fill the window, any size</text>
+  <text x="890" y="346" font-family="'Geist', system-ui, sans-serif" font-size="15" font-weight="400" fill="#9ba8c0">Rebuilt for phones and landscape</text>
   <rect x="772" y="392" width="436" height="132" rx="22" fill="#0b0f17" stroke="rgba(148,170,215,0.24)" stroke-width="1.2"/>
   <rect x="802" y="426" width="64" height="64" rx="16" fill="rgba(47,124,246,0.15)"/>
-  <g transform="translate(802,426)" fill="none" stroke="#7db0ff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M32 14l15 5.5v10.5c0 9-6.3 15.5-15 19-8.7-3.5-15-10-15-19V19.5z"/><path d="M25 32l5 5 9-10"/></g>
-  <text x="890" y="450" font-family="'Geist', system-ui, sans-serif" font-size="23" font-weight="600" fill="#eef2fa">Verifiably secure</text>
-  <text x="890" y="476" font-family="'Geist', system-ui, sans-serif" font-size="15" font-weight="400" fill="#9ba8c0">Check a call's encryption with a code</text>
-  <text x="890" y="498" font-family="'Geist', system-ui, sans-serif" font-size="15" font-weight="400" fill="#9ba8c0">Stricter room access and moderation</text>
+  <g transform="translate(802,426)" fill="none" stroke="#7db0ff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="18" y="16" width="28" height="32" rx="4"/><path d="M25 26h14M25 32h14M25 38h8"/></g>
+  <text x="890" y="450" font-family="'Geist', system-ui, sans-serif" font-size="23" font-weight="600" fill="#eef2fa">Audit log</text>
+  <text x="890" y="476" font-family="'Geist', system-ui, sans-serif" font-size="15" font-weight="400" fill="#9ba8c0">Admin and moderation actions</text>
+  <text x="890" y="498" font-family="'Geist', system-ui, sans-serif" font-size="15" font-weight="400" fill="#9ba8c0">No IPs stored, kept for 90 days</text>
   </g>
   <rect x="64" y="572" width="1144" height="1" fill="rgba(148,170,215,0.12)"/>
   <text x="64" y="607" font-family="'Geist', system-ui, sans-serif" font-size="16" font-weight="400" fill="#74829c" letter-spacing="1.5">Secure  ·  Private  ·  Open for audit</text>

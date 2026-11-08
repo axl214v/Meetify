@@ -11,14 +11,35 @@ containers as `APP_VERSION` by `make up`.
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [2.1.0-beta] — 2026-11-09
+
 ### Added
+- **Screen share next to your camera.** Sharing no longer replaces the webcam: the screen is
+  a separate tile, spotlighted for viewers, while cameras stay in a strip. People who join
+  during a share see it right away, and a camera that is off shows an avatar instead of a black frame.
+- **Room layout that fills the window.** The tile grid adapts to the number of participants
+  on desktop, phones and landscape, with a side strip for cameras on wide screens.
 - **Audit log** (admin → Audit log). Records administrator actions, room moderation
   (kick, mute, chat ban, co-host changes), sign-ins and password changes: who, what, on what, when.
   No IP addresses, device data or message content are stored; entries are deleted after 90 days.
 
+### Fixed
+- Group calls: video tiles now appear (the client no longer calls a method that does not exist,
+  and subscribes to new streams before asking for the existing ones).
+- Direct calls: everybody saw only themselves; each connection is now created once and early
+  network candidates are queued.
+- Phones: mobile layout of the top bar, search box and action buttons, the small logo,
+  touch-sized controls and the cookie banner.
+
 ### Security
 - Every real-time (Socket.IO) event is now rate-limited per connection, with tighter limits for
   moderation and signaling; a connection that keeps flooding is disconnected.
+- Dependencies updated: no known vulnerabilities in production packages at release time except
+  one moderate (`minimatch` via the backup archiver).
+- Calls use only our own STUN/TURN servers when they are configured; malformed server
+  addresses are filtered out so they can no longer break a call.
 
 ## [2.0.0-beta] — 2026-10-18
 
