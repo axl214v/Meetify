@@ -85,7 +85,8 @@ class ErrorLogger {
       ...error,
       timestamp: new Date().toISOString(),
       sessionId: this.sessionId,
-      url: window.location.href,
+      // invite codes (/r/<code>, also inside ?next=) are secrets for unlisted rooms: never send them to the log
+      url: window.location.href.replace(/(\/|%2F)r(\/|%2F)[a-zA-Z0-9-]+/gi, '$1r$2<code>'),
       userAgent: navigator.userAgent,
       viewport: {
         width: window.innerWidth,
