@@ -18,6 +18,9 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Copy application files
 COPY . /usr/share/nginx/html
 
+# Do not serve build files from the web root
+RUN rm -f /usr/share/nginx/html/nginx.conf /usr/share/nginx/html/Dockerfile
+
 # Set permissions
 RUN chmod -R 755 /usr/share/nginx/html
 

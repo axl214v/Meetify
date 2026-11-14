@@ -41,3 +41,9 @@ assets/logo_small.png
 # Build config not needed inside container
 Dockerfile
 nginx.prod.conf
+# Stray package manifests are not part of the site
+package.json
+package-lock.json
+**/package.json
+**/package-lock.json
+**/node_modules
