@@ -33,13 +33,19 @@
         <div class="page-head">
             <div>
                 <h1>Join a room</h1>
-                <p>Enter the room ID from the host.</p>
+                <p id="joinSubtitle">Enter the room ID from the host.</p>
             </div>
         </div>
 
         <div class="panel form-panel">
             <form id="joinConferenceForm" class="form-stack" novalidate onsubmit="return false">
-                <div class="field">
+                <div class="field" id="guestNameField" style="display: none;">
+                    <label for="guestName">Your name</label>
+                    <input class="input" type="text" id="guestName" name="guestName" maxlength="40" autocomplete="nickname" placeholder="How others will see you">
+                    <span class="hint">You join as a guest: no account needed. Others see "(guest)" next to your name.</span>
+                </div>
+
+                <div class="field" id="roomIdField">
                     <label for="conferenceId">Room ID</label>
                     <input class="input mono" type="text" id="conferenceId" name="conferenceId" placeholder="12345" required autocomplete="off">
                 </div>
@@ -60,7 +66,9 @@
                 <div class="form-actions">
                     <button type="button" class="btn btn-primary btn-lg" id="checkBtn" onclick="checkConference()">Find room</button>
                     <button type="button" class="btn btn-primary btn-lg" id="joinBtn" style="display: none;">Join room</button>
-                    <a class="btn btn-lg" href="/Conf/pages/conf.html">Cancel</a>
+                    <button type="button" class="btn btn-primary btn-lg" id="guestJoinBtn" style="display: none;">Join as guest</button>
+                    <a class="btn btn-lg" id="guestSignInLink" href="/auth/Auth.html" style="display: none;">Sign in</a>
+                    <a class="btn btn-lg" id="cancelLink" href="/Conf/pages/conf.html">Cancel</a>
                 </div>
             </form>
 

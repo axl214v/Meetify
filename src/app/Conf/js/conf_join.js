@@ -2,14 +2,25 @@
 const API_BASE = window.location.origin;
 
 let currentConference = null;
+let inviteCode = null;   // set when the page was opened by a short link /r/<code>
+
+// Short link: /r/abc-defg-hij
+function codeFromPath() {
+    const m = window.location.pathname.match(/^\/r\/([a-zA-Z0-9-]{1,32})$/);
+    return m ? m[1] : null;
+}
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     // Check if conference ID is in URL params
     const urlParams = new URLSearchParams(window.location.search);
     const conferenceId = urlParams.get('id');
-    
-    if (conferenceId) {
+    const pathCode = codeFromPath();
+
+    if (pathCode) {
+        inviteCode = pathCode;
+        checkByCode(pathCode);
+    } else if (conferenceId) {
         document.getElementById('conferenceId').value = conferenceId;
         checkConference();
     }
@@ -17,8 +28,141 @@ document.addEventListener('DOMContentLoaded', () => {
     loadRecentConferences();
 });
 
+// Open a room from its invite code (short link)
+async function checkByCode(code) {
+    const conferenceIdInput = document.getElementById('conferenceId');
+    const joinBtn = document.getElementById('joinBtn');
+    const passwordField = document.getElementById('passwordField');
+    try {
+        const response = await fetch(`${API_BASE}/api/conferences/by-code/${encodeURIComponent(code)}`, {
+            method: 'GET',
+            credentials: 'include'
+        });
+
+        if (response.status === 401) {
+            // Signed out: if the host allows guests, offer to join with a name
+            if (!(await offerGuestJoin(code))) {
+                window.location.href = `/auth/Auth.html?next=${encodeURIComponent(window.location.pathname)}`;
+            }
+            return;
+        }
+        if (response.status === 404) {
+            inviteCode = null;
+            showError('This invite link is not valid. Ask the host for a new one, or enter the room ID.');
+            return;
+        }
+        if (response.status === 429) {
+            showError('Too many wrong invite links. Try again in 15 minutes.');
+            return;
+        }
+        if (!response.ok) throw new Error('Failed to fetch conference details');
+
+        const data = await response.json();
+        currentConference = data.conference;
+        conferenceIdInput.value = currentConference.id;
+        conferenceIdInput.classList.add('success');
+        displayConferencePreview(currentConference);
+        if (currentConference.hasPassword) passwordField.style.display = 'flex';
+        joinBtn.style.display = 'inline-flex';
+        document.getElementById('checkBtn').style.display = 'none';   // nothing left to look up
+    } catch (error) {
+        console.error('Check invite error:', error);
+        showError('Network error. Please try again.');
+    }
+}
+
+// ── Guest join (no account) ─────────────────────────────────────────────────
+let guestRoom = null;
+
+// Returns true when the guest form is shown, false when the visitor should sign in instead.
+async function offerGuestJoin(code) {
+    try {
+        const response = await fetch(`${API_BASE}/api/guest/room/${encodeURIComponent(code)}`);
+        if (response.status === 429) { showError('Too many wrong invite links. Try again in 15 minutes.'); return true; }
+        if (!response.ok) return false;
+        const data = await response.json();
+        if (!data.allowGuests) return false;
+
+        guestRoom = data.conference;
+        displayConferencePreview({
+            name: guestRoom.name,
+            host_username: guestRoom.hostName,
+            participantCount: guestRoom.participantCount,
+            max_participants: guestRoom.max_participants,
+            start_time: guestRoom.start_time,
+            end_time: guestRoom.end_time
+        });
+        document.getElementById('roomIdField').style.display = 'none';
+        document.getElementById('checkBtn').style.display = 'none';
+        document.getElementById('guestNameField').style.display = 'flex';
+        if (guestRoom.hasPassword) document.getElementById('passwordField').style.display = 'flex';
+        document.getElementById('guestJoinBtn').style.display = 'inline-flex';
+        const signIn = document.getElementById('guestSignInLink');
+        signIn.href = `/auth/Auth.html?next=${encodeURIComponent(window.location.pathname)}`;
+        signIn.style.display = 'inline-flex';
+        // A signed-out visitor has no list, profile or support to go to
+        document.querySelector('.topbar-nav')?.style.setProperty('display', 'none');
+        document.querySelector('.recent')?.style.setProperty('display', 'none');
+        document.getElementById('cancelLink').href = '/';
+        document.getElementById('joinSubtitle').textContent = 'You were invited to this room.';
+        document.getElementById('guestName').focus();
+        return true;
+    } catch (error) {
+        console.error('Guest preview error:', error);
+        return false;
+    }
+}
+
+document.getElementById('guestJoinBtn')?.addEventListener('click', async function () {
+    const btn = this;
+    const name = document.getElementById('guestName').value.trim();
+    const passwordInput = document.getElementById('password');
+    if (!name) {
+        showError('Enter a name so others know who you are.');
+        document.getElementById('guestName').classList.add('error');
+        return;
+    }
+    btn.disabled = true;
+    const label = btn.textContent;
+    btn.textContent = 'Joining...';
+    try {
+        const response = await fetch(`${API_BASE}/api/guest/join`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: inviteCode, name, password: passwordInput?.value || undefined })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (response.ok) {
+            try {
+                sessionStorage.setItem('meetify-guest', JSON.stringify({
+                    token: data.token, conferenceId: data.conferenceId, userId: data.guest.userId, name: data.guest.name
+                }));
+            } catch {
+                showError('Your browser blocks session storage, so a guest cannot join. Allow it or sign in.');
+                return;
+            }
+            window.location.href = `/Conf/pages/conf_room.html?id=${data.conferenceId}`;
+            return;
+        }
+        if (data.requiresPassword || response.status === 403 && /password/i.test(data.message || '')) {
+            passwordInput?.classList.add('error');
+        }
+        showError(data.message || 'Could not join this room.');
+    } catch (error) {
+        console.error('Guest join error:', error);
+        showError('Network error. Please try again.');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = label;
+    }
+});
+
+document.getElementById('guestName')?.addEventListener('input', function () { this.classList.remove('error'); });
+
 // Check conference details
 async function checkConference() {
+    inviteCode = null;   // typed a room ID by hand: the link code no longer applies
+    document.getElementById('checkBtn').style.display = '';
     const conferenceIdInput = document.getElementById('conferenceId');
     const checkBtn = document.getElementById('checkBtn');
     const joinBtn = document.getElementById('joinBtn');
@@ -206,7 +350,7 @@ document.getElementById('joinBtn')?.addEventListener('click', async function(e) 
                 'Content-Type': 'application/json'
             },
             credentials: 'include',
-            body: JSON.stringify({ password: password || undefined })
+            body: JSON.stringify({ password: password || undefined, code: inviteCode || undefined })
         });
         
         const data = await response.json();
@@ -224,7 +368,7 @@ document.getElementById('joinBtn')?.addEventListener('click', async function(e) 
             
             // Redirect to conference room after delay
             setTimeout(() => {
-                window.location.href = `conf_room.html?id=${currentConference.id}`;
+                window.location.href = `/Conf/pages/conf_room.html?id=${currentConference.id}`;
             }, 1500);
             
         } else if (response.status === 403) {
@@ -258,6 +402,8 @@ document.getElementById('joinBtn')?.addEventListener('click', async function(e) 
 
 // Auto-clear error on input change
 document.getElementById('conferenceId')?.addEventListener('input', function() {
+    inviteCode = null;
+    document.getElementById('checkBtn').style.display = '';
     this.classList.remove('error');
     document.getElementById('errorMessage').style.display = 'none';
 });

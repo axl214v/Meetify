@@ -15,6 +15,7 @@ Meetify is an independent project maintained by a single developer. This policy 
 | Username | Display name inside the app |
 | Avatar image | Optional, only if you upload one |
 | Feedback | The text you send on the feedback page. It is anonymous and not linked to your account; an email is kept only if you add one to get a reply |
+| Guest name | Only if a host allows guests and you join without an account: the name you type. It lives in a temporary token in your browser tab (12 hours at most) and in the memory of the room while you are in it. It is not saved in our database |
 
 We do **not** collect IP address logs, behavioral analytics, or advertising data.
 

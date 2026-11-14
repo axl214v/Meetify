@@ -10,6 +10,7 @@ let currentPage = 1;
 let conferences = [];
 let totalConferences = 0;
 const ITEMS_PER_PAGE = 12;
+let currentUserName = '';
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -33,6 +34,7 @@ async function checkAuth() {
 
         const data = await response.json();
         if (data.user) {
+            currentUserName = data.user.username || '';
             document.getElementById('userName').textContent = data.user.username || data.user.email;
         }
     } catch (error) {
@@ -62,6 +64,8 @@ function setupEventListeners() {
             loadConferences();
         }, 500);
     });
+
+    document.getElementById('instantBtn')?.addEventListener('click', startInstantRoom);
 
     document.getElementById('prevPage')?.addEventListener('click', () => {
         if (currentPage > 1) { currentPage--; loadConferences(); }
@@ -212,7 +216,8 @@ function updatePagination(maxPage) {
 
 // Invite link points at the join page; it never carries the room password.
 async function copyInviteLink(conferenceId, btn) {
-    const link = `${window.location.origin}/Conf/pages/conf_join.html?id=${conferenceId}`;
+    const conf = conferences.find(c => c.id === conferenceId) || { id: conferenceId };
+    const link = buildInviteLink(conf);
     try {
         await navigator.clipboard.writeText(link);
         const label = btn.textContent;
@@ -221,6 +226,35 @@ async function copyInviteLink(conferenceId, btn) {
     } catch {
         window.prompt('Copy the invite link:', link);
     }
+}
+
+// One click: create an unlisted P2P room with defaults and open it.
+// "Create room" stays the way to set a name, password, schedule or Group mode.
+async function startInstantRoom() {
+    const btn = document.getElementById('instantBtn');
+    btn.disabled = true;
+    const label = btn.textContent;
+    btn.textContent = 'Starting...';
+    try {
+        const name = currentUserName ? `${currentUserName}'s room` : 'Quick call';
+        const response = await fetch(`${API_BASE}/api/conferences`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ name, isPublic: false, mode: 'p2p' })
+        });
+        const data = await response.json();
+        if (response.status === 201) {
+            window.location.href = `/Conf/pages/conf_room.html?id=${data.conference.id}`;
+            return;
+        }
+        showNotification(data.error || (data.errors && data.errors.join(' · ')) || data.message || 'Could not start a call', 'error');
+    } catch (error) {
+        console.error('Instant room error:', error);
+        showNotification('Network error. Please try again.', 'error');
+    }
+    btn.disabled = false;
+    btn.textContent = label;
 }
 
 // Join conference
@@ -305,6 +339,7 @@ async function editConference(conferenceId) {
         document.getElementById('editDescription').value = conf.description || '';
         document.getElementById('editMaxParticipants').value = conf.max_participants || '';
         document.getElementById('editIsPublic').checked = !!conf.is_public;
+        document.getElementById('editAllowGuests').checked = !!conf.allow_guests;
         document.getElementById('editStartTime').value = toDatetimeLocal(conf.start_time);
         document.getElementById('editEndTime').value = toDatetimeLocal(conf.end_time);
         document.getElementById('editChangePassword').checked = false;
@@ -351,6 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ? parseInt(document.getElementById('editMaxParticipants').value)
                 : null,
             isPublic: document.getElementById('editIsPublic').checked,
+            allowGuests: document.getElementById('editAllowGuests').checked,
             startTime: document.getElementById('editStartTime').value || null,
             endTime: document.getElementById('editEndTime').value || null,
         };

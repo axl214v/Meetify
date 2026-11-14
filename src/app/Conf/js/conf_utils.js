@@ -211,6 +211,19 @@ function getInitials(name) {
 }
 
 /**
+ * Invite link for a room: the short /r/abc-defg-hij link when the room has a code,
+ * otherwise the join-by-number link. Never contains the room password.
+ * @param {{id: number|string, invite_code?: string, inviteCode?: string}} conf
+ */
+function buildInviteLink(conf) {
+    const code = conf && (conf.invite_code || conf.inviteCode);
+    if (typeof code === 'string' && code.length === 10) {
+        return `${window.location.origin}/r/${code.slice(0, 3)}-${code.slice(3, 7)}-${code.slice(7)}`;
+    }
+    return `${window.location.origin}/Conf/pages/conf_join.html?id=${encodeURIComponent(conf.id)}`;
+}
+
+/**
  * Copy text to clipboard
  * @param {string} text - Text to copy
  * @returns {Promise<boolean>} True if successful
@@ -438,6 +451,7 @@ if (typeof module !== 'undefined' && module.exports) {
         stringToColor,
         getInitials,
         copyToClipboard,
+        buildInviteLink,
         showNotification,
         debounce,
         checkMediaPermissions,

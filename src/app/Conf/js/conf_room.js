@@ -22,6 +22,27 @@ async function flushPendingCandidates(userId) {
     }
 }
 let conferenceId = null;
+let inviteCode = null;   // short-link code, known to the host and participants
+
+// Guest (no account): the token from the join page lives in sessionStorage, never in a cookie
+const GUEST_KEY = 'meetify-guest';
+let guestSession = null;     // { token, conferenceId, userId, name } when this tab joined as a guest
+let guestConference = null;  // room details from /api/guest/session
+function readGuestSession() {
+    try {
+        const g = JSON.parse(sessionStorage.getItem(GUEST_KEY) || 'null');
+        return g && g.token && String(g.conferenceId) === String(conferenceId) ? g : null;
+    } catch { return null; }
+}
+function clearGuestSession() { try { sessionStorage.removeItem(GUEST_KEY); } catch {} }
+const guestHeaders = () => ({ Authorization: `Bearer ${guestSession.token}` });
+// Where to go when the call is over: guests have no conference list
+const homeUrl = () => (guestSession ? '/' : 'conf.html');
+// Offer collisions: both sides must pick the same loser. Numeric ids compare as numbers, guest ids as text.
+function idPrecedes(a, b) {
+    const na = Number(a), nb = Number(b);
+    return Number.isNaN(na) || Number.isNaN(nb) ? String(a) < String(b) : na < nb;
+}
 let currentUser = null;
 let chat = null;
 let isAudioEnabled = true;
@@ -113,10 +134,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
         const meRes = await fetch(`${API_BASE}/api/auth/me`, { credentials: 'include' });
-        if (!meRes.ok) { window.location.href = '/auth/Auth.html'; return; }
-
-        const meData = await meRes.json();
-        currentUser = meData.user;
+        if (meRes.ok) {
+            currentUser = (await meRes.json()).user;
+        } else {
+            // Not signed in: a guest token for this room is the only other way in
+            guestSession = readGuestSession();
+            if (!guestSession) { window.location.href = '/auth/Auth.html'; return; }
+            const gRes = await fetch(`${API_BASE}/api/guest/session`, { headers: guestHeaders() });
+            if (!gRes.ok) {
+                const err = await gRes.json().catch(() => ({}));
+                clearGuestSession();
+                showNotification(err.message || 'Your guest session has expired.', 'error');
+                setTimeout(() => { window.location.href = '/'; }, 1500);
+                return;
+            }
+            const gData = await gRes.json();
+            guestConference = gData.conference;
+            // the server adds the same "(guest)" mark to the name everyone else sees
+            currentUser = { ...gData.user, username: `${gData.user.username} (guest)` };
+        }
 
         chat = new Chat('chatMessages', 'chatInput', 'sendBtn');
         chat.setCurrentUser({
@@ -145,6 +181,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function loadConferenceDetails() {
+    if (guestSession) {
+        const c = guestConference;
+        isHost         = false;
+        hostId         = c.host_id || null;
+        conferenceMode = c.mode || 'p2p';
+        inviteCode     = c.invite_code || null;
+        document.getElementById('modeBadge').textContent = conferenceMode === 'sfu' ? 'Group' : 'P2P';
+        document.getElementById('roomId').textContent = `#${c.id}`;
+        document.getElementById('conferenceName').textContent = c.name;
+        await loadParticipants();
+        return;
+    }
     try {
         const response = await fetch(`${API_BASE}/api/conferences/${conferenceId}`, {
             credentials: 'include'
@@ -170,6 +218,7 @@ async function loadConferenceDetails() {
         isHost         = data.conference.isHost || false;
         hostId         = data.conference.host_id || null;
         conferenceMode = data.conference.mode || 'p2p';
+        inviteCode     = data.conference.invite_code || null;
         document.getElementById('modeBadge').textContent = conferenceMode === 'sfu' ? 'Group' : 'P2P';
         document.getElementById('roomId').textContent = `#${data.conference.id}`;
 
@@ -193,8 +242,10 @@ function updateRemoteMediaState(userId, audio, video) {
     remoteMediaStates[userId] = { audio, video };
 
     document.getElementById(`video-${userId}`)?.classList.toggle('cam-off', !video);
-    const micStatus = document.querySelector(`#video-${userId} .mic-status`);
-    const videoStatus = document.querySelector(`#video-${userId} .video-status`);
+    // getElementById, not a "#video-<id>" selector: guest ids contain a colon
+    const tile = document.getElementById(`video-${userId}`);
+    const micStatus = tile?.querySelector('.mic-status');
+    const videoStatus = tile?.querySelector('.video-status');
     if (micStatus) micStatus.innerHTML = audio ? Icons.mic : Icons.micOff;
     if (videoStatus) videoStatus.innerHTML = video ? Icons.cam : Icons.camOff;
 }
@@ -249,11 +300,16 @@ function updateMediaControlsUI() {
  * - handle participants, offers/answers, ICE candidates, and messages
  */
 async function initSocket() {
-    const tokenRes = await fetch(`${API_BASE}/api/auth/token`, {
-        credentials: 'include'
-    });
-    const tokenData = await tokenRes.json();
-    const token = tokenData.token || null;
+    let token = null;
+    if (guestSession) {
+        token = guestSession.token;
+    } else {
+        const tokenRes = await fetch(`${API_BASE}/api/auth/token`, {
+            credentials: 'include'
+        });
+        const tokenData = await tokenRes.json();
+        token = tokenData.token || null;
+    }
 
     socket = io(SOCKET_URL, {
         transports: ['websocket', 'polling'],
@@ -307,6 +363,7 @@ async function initSocket() {
         // The newcomer sends the offer; the peer connection is created once, when it arrives.
         // (Creating it here too made the offer handler close it and open a second one with a new TURN relay.)
         console.log('User connected:', userId, userName);
+        loadParticipants();   // guests are not in the database: the list comes from the live room
     });
 
     // Peer left the conference, clean up local RTCPeerConnection and UI
@@ -325,6 +382,7 @@ async function initSocket() {
         removeScreenTile(userId);
         applyPinLayout();
         updateParticipantCount();
+        loadParticipants();
     });
 
     socket.on('user-screen-share-start', ({ userId, userName }) => {
@@ -351,7 +409,7 @@ async function initSocket() {
             // A screen track was added or removed. On a collision the peer with the higher id is
             // polite: it drops its own offer and answers, the other one ignores the offer.
             const collision = existing._makingOffer || existing.signalingState !== 'stable';
-            if (collision && Number(currentUser.id) < Number(userId)) return;
+            if (collision && idPrecedes(currentUser.id, userId)) return;
         } else {
             await createPeerConnection(userId, false, userName);
         }
@@ -786,7 +844,7 @@ function toggleStrip() {
 
 // Invite link points at the join page; it never carries the room password.
 async function copyInviteLink() {
-    const link = `${window.location.origin}/Conf/pages/conf_join.html?id=${encodeURIComponent(conferenceId)}`;
+    const link = buildInviteLink({ id: conferenceId, invite_code: inviteCode });
     try {
         await navigator.clipboard.writeText(link);
         showNotification('Invite link copied', 'success');
@@ -976,9 +1034,9 @@ function closeSidebar(type) {
 
 async function loadParticipants() {
     try {
-        const response = await fetch(`${API_BASE}/api/conferences/${conferenceId}/participants`, {
-            credentials: 'include'
-        });
+        const response = guestSession
+            ? await fetch(`${API_BASE}/api/guest/participants`, { headers: guestHeaders() })
+            : await fetch(`${API_BASE}/api/conferences/${conferenceId}/participants`, { credentials: 'include' });
 
         if (!response.ok) throw new Error('Failed to load participants');
 
@@ -1008,7 +1066,7 @@ function renderParticipants(participants) {
         const isChatBanned = chatBanned.has(uid);
         const isSelf = uid === currentUser?.id;
         const canActOn = isModerator() && !isSelf && !isParticipantHost && (isHost || !isCoHost);
-        const canManageCoHost = isHost && !isSelf && !isParticipantHost;
+        const canManageCoHost = isHost && !isSelf && !isParticipantHost && !p.guest;
 
         const badges = [
             isParticipantHost ? `<span class="pbadge" title="Host">${Icons.crown}</span>` : '',
@@ -1022,14 +1080,14 @@ function renderParticipants(participants) {
 
         const actionMenu = canActOn ? `
             <div class="mod-menu-wrap">
-                <button class="mod-menu-btn" onclick="toggleModMenu(this, ${uid})" title="Moderation options" aria-label="Moderation options">${Icons.more}</button>
+                <button class="mod-menu-btn" onclick="toggleModMenu(this, '${uid}')" title="Moderation options" aria-label="Moderation options">${Icons.more}</button>
                 <div class="mod-menu" id="mod-menu-${uid}">
-                    <button onclick="hostForceMute(${uid}, 'audio')">Mute mic</button>
-                    <button onclick="hostForceMute(${uid}, 'video')">Turn off camera</button>
-                    <button onclick="hostForceMute(${uid}, 'screen')">Stop screen share</button>
-                    <button onclick="hostChatBan(${uid}, ${!isChatBanned})">${isChatBanned ? 'Unban chat' : 'Ban from chat'}</button>
-                    ${canManageCoHost ? `<button onclick="${isCoHost ? 'hostDemoteCoHost' : 'hostPromoteCoHost'}(${uid})">${isCoHost ? 'Remove co-host' : 'Make co-host'}</button>` : ''}
-                    <button class="danger" onclick="hostKick(${uid}, '${escapeHtml(name).replace(/'/g, "\\'")}')">Remove from room</button>
+                    <button onclick="hostForceMute('${uid}', 'audio')">Mute mic</button>
+                    <button onclick="hostForceMute('${uid}', 'video')">Turn off camera</button>
+                    <button onclick="hostForceMute('${uid}', 'screen')">Stop screen share</button>
+                    <button onclick="hostChatBan('${uid}', ${!isChatBanned})">${isChatBanned ? 'Unban chat' : 'Ban from chat'}</button>
+                    ${canManageCoHost ? `<button onclick="${isCoHost ? 'hostDemoteCoHost' : 'hostPromoteCoHost'}('${uid}')">${isCoHost ? 'Remove co-host' : 'Make co-host'}</button>` : ''}
+                    <button class="danger" onclick="hostKick('${uid}', '${escapeHtml(name).replace(/'/g, "\\'")}')">Remove from room</button>
                 </div>
             </div>
         ` : '';
@@ -1120,7 +1178,7 @@ function cleanupAndRedirect(reason) {
     stopQualityMonitor();
     if (socket) socket.disconnect();
     alert(reason);
-    window.location.href = 'conf.html';
+    window.location.href = homeUrl();
 }
 
 // ============================================================
@@ -1163,9 +1221,11 @@ function hostForceMute(targetUserId, type) {
 function hostChatBan(targetUserId, banned) {
     closeAllModMenus();
     socket?.emit('host:chat-ban', { conferenceId, targetUserId, banned });
-    // Optimistic update — confirmed via user-chat-banned broadcast
-    if (banned) chatBanned.add(targetUserId);
-    else chatBanned.delete(targetUserId);
+    // Optimistic update — confirmed via user-chat-banned broadcast.
+    // The menu passes the id as text; user ids are numbers, guest ids ("g:...") stay text.
+    const id = String(targetUserId).startsWith('g:') ? targetUserId : Number(targetUserId);
+    if (banned) chatBanned.add(id);
+    else chatBanned.delete(id);
     loadParticipants();
 }
 
@@ -1204,16 +1264,20 @@ async function leaveConference() {
         socket.disconnect();
     }
 
-    await fetch(`${API_BASE}/api/conferences/${conferenceId}/leave`, {
-        method: 'POST',
-        credentials: 'include'
-    }).catch(() => {});
+    if (guestSession) {
+        clearGuestSession();   // nothing to tell the REST side: guests are not members
+    } else {
+        await fetch(`${API_BASE}/api/conferences/${conferenceId}/leave`, {
+            method: 'POST',
+            credentials: 'include'
+        }).catch(() => {});
+    }
 
-    window.location.href = 'conf.html';
+    window.location.href = homeUrl();
 }
 
 window.addEventListener('beforeunload', () => {
-    if (joinedConference && conferenceId) {
+    if (joinedConference && conferenceId && !guestSession) {
         navigator.sendBeacon(`${API_BASE}/api/conferences/${conferenceId}/leave`);
     }
     if (socket) socket.disconnect();

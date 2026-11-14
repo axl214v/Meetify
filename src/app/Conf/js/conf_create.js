@@ -146,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
-                body: JSON.stringify({ name, description: description || undefined, maxParticipants, isPublic, password, startTime, endTime, mode })
+                body: JSON.stringify({ name, description: description || undefined, maxParticipants, isPublic, password, startTime, endTime, mode, allowGuests: document.getElementById('allowGuests')?.checked === true })
             });
 
             const data = await response.json();

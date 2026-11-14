@@ -34,7 +34,10 @@
             <div>
                 <h1>Conferences</h1>
             </div>
-            <a class="btn btn-primary" href="/Conf/pages/conf_create.html">Create room</a>
+            <div class="page-actions">
+                <a class="btn" href="/Conf/pages/conf_create.html">Create room</a>
+                <button class="btn btn-primary" id="instantBtn" type="button">Start a call now</button>
+            </div>
         </div>
 
         <div class="toolbar">
@@ -84,6 +87,7 @@
                         <div class="field"><label for="editStartTime">Start time</label><input class="input" type="datetime-local" id="editStartTime"></div>
                         <div class="field"><label for="editEndTime">End time</label><input class="input" type="datetime-local" id="editEndTime"></div>
                     </div>
+                    <label class="check"><input type="checkbox" id="editAllowGuests"> Let guests join with just a name (no account)</label>
                     <label class="check"><input type="checkbox" id="editChangePassword" onchange="togglePasswordField()"> Change password</label>
                     <div class="field" id="editPasswordGroup" style="display:none;">
                         <label for="editPassword">New password</label>

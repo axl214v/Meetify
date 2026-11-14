@@ -11,7 +11,26 @@ containers as `APP_VERSION` by `make up`.
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+- **Short invite links.** Every room has a random code; the link looks like `/r/abc-defg-hij`
+  and works for unlisted rooms too. "Copy link" in the room and in the list now copies it.
+  Old `conf_join.html?id=N` links keep working.
+- **Guest join.** A host can let guests into a room (checkbox on the create and edit forms, off by
+  default). A guest opens the invite link, types a name and is in the call, with no account and no
+  email. Guests are shown as "(guest)" everywhere, cannot moderate or become co-hosts, count towards
+  the room limit, and can be muted or removed by the host. Nothing about a guest is saved in the database.
+- **Start a call now.** One click on the conference list creates an unlisted peer-to-peer room
+  and opens it. "Create room" stays for names, passwords, schedules and Group mode.
+
+### Security
+- Unlisted rooms are now really invite-only: joining needs the invite code (or the room
+  password, as before). Before, the room page was hidden but a guessed room number could join.
+- The room list no longer shows other people's unlisted rooms when asked for `isPublic=false`.
+- The room details response no longer contains the bcrypt hash of the room password.
+- Invite codes are kept out of the web server and backend logs.
+
+### Fixed
+- Joining a room through a link no longer depends on the current page address.
 
 ## [2.1.0-beta] — 2026-11-09
 

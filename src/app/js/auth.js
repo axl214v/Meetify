@@ -24,10 +24,11 @@ function clearMsg() {
 // Redirect if already logged in
 // ============================================
 
-// Where to go after sign-in: only same-origin join links, anything else falls back to the list.
+// Where to go after sign-in: only same-origin join links (by number or short /r/<code>), anything else falls back to the list.
 function getNextUrl() {
     const next = new URLSearchParams(window.location.search).get('next') || '';
-    return /^\/Conf\/pages\/conf_join\.html\?id=\d+$/.test(next) ? next : '/Conf/pages/conf.html';
+    const ok = /^\/Conf\/pages\/conf_join\.html\?id=\d+$/.test(next) || /^\/r\/[a-zA-Z0-9-]{1,32}$/.test(next);
+    return ok ? next : '/Conf/pages/conf.html';
 }
 
 async function checkAuthentication() {
