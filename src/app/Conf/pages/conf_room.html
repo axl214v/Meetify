@@ -1289,6 +1289,81 @@
             .lobby-card { grid-template-columns: minmax(0, 1fr); gap: 16px; }
         }
 
+
+        /* ============================================ */
+        /* Hands, reactions, shortcuts                  */
+        /* ============================================ */
+        .hand-badge {
+            display: inline-flex; align-items: center; justify-content: center;
+            background: var(--warning); color: #1a1405; border-radius: var(--radius-sm, 6px);
+            padding: 2px 4px; margin-left: 6px;
+        }
+        .hand-badge[hidden] { display: none; }
+        .hand-badge svg { display: block; }
+        .control-btn.react.active { background: var(--accent-subtle, rgba(47,124,246,0.15)); border-color: var(--accent); color: var(--accent-text, #7db0ff); }
+
+        .ctrl-dropdown.has-grid { padding: 6px; min-width: 214px; gap: 6px; }
+        .react-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+        .react-btn {
+            display: flex; align-items: center; justify-content: center; height: 44px; border-radius: 8px;
+            background: rgba(255,255,255,0.05); border: 1px solid transparent; color: #fff; cursor: pointer;
+            transition: background 0.12s;
+        }
+        .react-btn:hover { background: rgba(255,255,255,0.12); }
+        .react-btn:focus-visible, .ctrl-dropdown-item:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+        .react-btn svg { display: block; }
+
+        .reaction-float {
+            position: absolute; left: 50%; bottom: 14%; transform: translateX(-50%); z-index: 6; pointer-events: none;
+            width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            background: rgba(5, 8, 13, 0.72); color: #fff; box-shadow: 0 4px 18px rgba(0,0,0,0.45);
+            animation: reaction-rise 3s ease-out forwards;
+        }
+        .reaction-float svg { display: block; }
+        .reaction-float[data-kind="heart"] { color: #ff6b81; }
+        .reaction-float[data-kind="thumbs-up"] { color: #7db0ff; }
+        .reaction-float[data-kind="clap"], .reaction-float[data-kind="laugh"], .reaction-float[data-kind="surprise"] { color: #ffd166; }
+        @keyframes reaction-rise {
+            0% { opacity: 0; transform: translate(-50%, 10px) scale(0.7); }
+            10% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+            80% { opacity: 1; transform: translate(-50%, -34px) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -48px) scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .reaction-float { animation: reaction-still 3s linear forwards; }
+            @keyframes reaction-still { 0%, 90% { opacity: 1; transform: translateX(-50%); } 100% { opacity: 0; transform: translateX(-50%); } }
+        }
+
+        .participant-item.hand-up { background: rgba(220,171,72,0.10); }
+
+        .shortcuts-backdrop {
+            position: fixed; inset: 0; z-index: 950; display: flex; align-items: center; justify-content: center;
+            background: rgba(5, 8, 13, 0.6); padding: 16px;
+        }
+        .shortcuts-backdrop[hidden] { display: none; }
+        .shortcuts-card {
+            width: 100%; max-width: 380px; background: var(--surface-2); color: var(--text);
+            border: 1px solid var(--border-strong); border-radius: 16px; padding: 18px 20px 14px;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+        }
+        .shortcuts-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+        .shortcuts-head h2 { font-size: 1.05rem; font-weight: 600; margin: 0; }
+        .shortcuts-list { margin: 0; display: flex; flex-direction: column; gap: 8px; }
+        .shortcuts-list > div { display: flex; align-items: center; gap: 12px; }
+        .shortcuts-list dt { min-width: 64px; }
+        .shortcuts-list dd { margin: 0; color: var(--text-2); font-size: 0.9rem; }
+        .shortcuts-list kbd {
+            display: inline-block; min-width: 26px; text-align: center; padding: 2px 8px; border-radius: 6px;
+            background: var(--surface-3); border: 1px solid var(--border-strong); color: var(--text);
+            font-family: var(--font-mono); font-size: 0.85rem;
+        }
+        .shortcuts-note { margin: 12px 0 0; color: var(--text-3); font-size: 0.8rem; }
+
+        @media (max-width: 640px) {
+            .ctrl-dropdown.has-grid { position: fixed; left: 12px; right: 12px; bottom: 84px; transform: none; min-width: 0; }
+            .ctrl-dropdown.has-grid::after { display: none; }
+        }
+
         /* Reconnecting: banner on top, overlay on a tile, bars on your own tile */
         .net-banner {
             position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 900;
@@ -1421,6 +1496,7 @@
                     <div class="overlay-left">
                         <div class="overlay-avatar-initials" id="localOverlayAvatar">?</div>
                         <span class="participant-name">You</span>
+                        <span class="hand-badge" id="localHandBadge" hidden aria-label="Your hand is raised"></span>
                     </div>
                     <div class="overlay-right">
                         <div class="net-bars" id="localNetBars" data-level="3" hidden aria-label="Your connection"><i></i><i></i><i></i><i></i></div>
@@ -1446,9 +1522,9 @@
     <!-- Controls -->
     <div class="controls-bar">
         <div class="ctrl-group">
-            <button class="control-btn mic" id="toggleMic" title="Toggle microphone" aria-label="Toggle microphone" data-icon="mic"></button>
+            <button class="control-btn mic" id="toggleMic" title="Microphone (M). Hold Space while muted to talk" aria-label="Toggle microphone" aria-keyshortcuts="M" data-icon="mic"></button>
             <div class="ctrl-with-menu">
-                <button class="control-btn video" id="toggleVideo" title="Toggle camera" aria-label="Toggle camera" data-icon="cam"></button>
+                <button class="control-btn video" id="toggleVideo" title="Camera (V)" aria-label="Toggle camera" aria-keyshortcuts="V" data-icon="cam"></button>
                 <button class="ctrl-sub-btn" id="videoMenuBtn" title="Camera options" aria-label="Camera options">&#8964;</button>
                 <div class="ctrl-dropdown has-devices" id="videoMenu" role="menu">
                     <div class="dev-block" id="devBlock">
@@ -1471,15 +1547,25 @@
                     </button>
                 </div>
             </div>
-            <button class="control-btn screen" id="toggleScreen" title="Share screen" aria-label="Share screen" data-icon="screen"></button>
+            <button class="control-btn screen" id="toggleScreen" title="Share screen (S)" aria-label="Share screen" aria-keyshortcuts="S" data-icon="screen"></button>
+            <div class="ctrl-with-menu">
+                <button class="control-btn react" id="reactBtn" title="Reactions and raise hand (R)" aria-label="Reactions and raise hand" aria-haspopup="menu" aria-expanded="false" aria-keyshortcuts="R"></button>
+                <div class="ctrl-dropdown has-grid" id="reactMenu" role="menu">
+                    <button class="ctrl-dropdown-item" id="handBtn" role="menuitem" aria-keyshortcuts="H"><span class="flip-icon" id="handBtnIcon"></span><span id="handBtnText">Raise hand (H)</span></button>
+                    <div class="react-grid" id="reactGrid"></div>
+                </div>
+            </div>
         </div>
 
         <div class="ctrl-sep"></div>
 
         <div class="ctrl-group">
             <button class="control-btn invite" id="inviteBtn" title="Copy invite link" aria-label="Copy invite link" data-icon="link"></button>
-            <button class="control-btn participants" id="toggleParticipants" title="Participants" aria-label="Participants" data-icon="users"></button>
-            <button class="control-btn chat" id="toggleChat" title="Chat" aria-label="Chat">
+            <button class="control-btn participants" id="toggleParticipants" title="Participants (P)" aria-label="Participants" aria-keyshortcuts="P">
+                <span data-icon="users"></span>
+                <span class="notification-badge" id="handCount" style="display:none;" title="Raised hands">0</span>
+            </button>
+            <button class="control-btn chat" id="toggleChat" title="Chat (C)" aria-label="Chat" aria-keyshortcuts="C">
                 <span data-icon="chat"></span>
                 <span class="notification-badge" id="chatBadge" style="display:none;">0</span>
             </button>
@@ -1490,6 +1576,29 @@
         <button class="control-btn leave" id="leaveBtn" aria-label="Leave room">
             <span data-icon="leave"></span><span>Leave</span>
         </button>
+    </div>
+
+    <!-- Keyboard shortcuts -->
+    <div class="shortcuts-backdrop" id="shortcutsPanel" hidden>
+        <div class="shortcuts-card" role="dialog" aria-modal="true" aria-labelledby="shortcutsTitle">
+            <div class="shortcuts-head">
+                <h2 id="shortcutsTitle">Keyboard shortcuts</h2>
+                <button type="button" class="sec-close" id="shortcutsClose" aria-label="Close"></button>
+            </div>
+            <dl class="shortcuts-list">
+                <div><dt><kbd>M</kbd></dt><dd>Microphone on / off</dd></div>
+                <div><dt><kbd>Space</kbd></dt><dd>Hold while muted to talk</dd></div>
+                <div><dt><kbd>V</kbd></dt><dd>Camera on / off</dd></div>
+                <div><dt><kbd>S</kbd></dt><dd>Share screen</dd></div>
+                <div><dt><kbd>C</kbd></dt><dd>Chat</dd></div>
+                <div><dt><kbd>P</kbd></dt><dd>Participants</dd></div>
+                <div><dt><kbd>H</kbd></dt><dd>Raise or lower your hand</dd></div>
+                <div><dt><kbd>R</kbd></dt><dd>Reactions</dd></div>
+                <div><dt><kbd>?</kbd></dt><dd>This list</dd></div>
+                <div><dt><kbd>Esc</kbd></dt><dd>Close menus and this list</dd></div>
+            </dl>
+            <p class="shortcuts-note">Keys are ignored while you type in the chat.</p>
+        </div>
     </div>
 
     <!-- Connection security -->
@@ -1547,6 +1656,7 @@
     }
 </script>
 <script src="/Conf/js/icons.js"></script>
+<script src="/Conf/js/conf_speaking.js"></script>
 <script src="/Conf/js/conf_devices.js"></script>
 <script src="/Conf/js/conf_room.js"></script>
 <script src="/Conf/js/conf_security.js"></script>

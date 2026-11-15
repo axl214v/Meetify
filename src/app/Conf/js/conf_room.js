@@ -58,6 +58,10 @@ let resyncQueued = null;      // a newer answer that arrived meanwhile
 const resilience = { offline: false, serverDown: false, sfuDown: false, stuck: false, stuckTimer: null, listening: false };
 const resilienceTimers = new Set();   // retry timers (SFU rebuild, peer re-create): all cleared when leaving
 const recreateTries = {};             // userId -> how many times we re-created a lost peer (99 = they left)
+const raisedHands = new Set();   // String(userId) of everybody whose hand is up (told by the server, never stored)
+let lastParticipants = [];     // last list shown in the participants panel (re-rendered when hands change)
+let pttActive = false;         // Space is held and the microphone is on only because of it
+const REACTION_LABELS = { 'thumbs-up': 'Thumbs up', clap: 'Clap', heart: 'Heart', laugh: 'Laugh', surprise: 'Surprise', question: 'Question' };
 let redirecting = false;      // the page is being sent elsewhere (no access): do not open the lobby
 let mediaReady = false;       // the lobby stream has been applied once (a socket reconnect must not reset mute)
 let lobbyChoice = { audio: true, video: true };   // microphone / camera switches chosen in the lobby
@@ -280,6 +284,7 @@ async function initLocalMedia({ audio = true, video = true } = {}) {
 
     document.getElementById('localVideo').srcObject = localStream;
     updateMediaControlsUI();
+    Speaking.watch('local', localStream, document.getElementById('localVideoContainer'));
     console.log('Local media initialized', { audio: isAudioEnabled, video: isVideoEnabled });
 }
 
@@ -655,6 +660,19 @@ async function initSocket() {
         }
     });
 
+    // Raised hands and reactions (nothing is stored; the server just relays them to the room)
+    socket.on('user-hand', ({ userId, raised }) => {
+        const key = String(userId);
+        const had = raisedHands.has(key);
+        if (raised) raisedHands.add(key); else raisedHands.delete(key);
+        if (raised && !had && !isMe(userId)) {
+            const name = document.getElementById(`video-${userId}`)?.querySelector('.participant-name')?.textContent || 'Someone';
+            showNotification(`${name} raised a hand`, 'info', 3000);
+        }
+        refreshHands();
+    });
+    socket.on('user-reaction', ({ userId, reaction }) => showReaction(userId, reaction));
+
     // Keep remote media mute/camera status in sync across participants
     socket.on('user-media-state', ({ userId, audio, video }) => {
         updateRemoteMediaState(userId, audio, video);
@@ -750,6 +768,11 @@ async function applyRoomParticipants({ participants, roomState, iceServers }) {
 
     if (roomState?.coHosts) coHosts = new Set(roomState.coHosts);
     if (roomState?.chatBanned) chatBanned = new Set(roomState.chatBanned);
+    if (roomState?.raisedHands) {
+        raisedHands.clear();
+        roomState.raisedHands.forEach(id => raisedHands.add(String(id)));
+        refreshHands();
+    }
 
     // Only the first time: after a reconnect the person's current mute state stays
     if (!mediaReady) {
@@ -1103,6 +1126,12 @@ function addRemoteVideo(userId, stream, userName = 'Unknown') {
     nameEl.textContent = userName;
     overlayLeft.appendChild(avatarEl);
     overlayLeft.appendChild(nameEl);
+    const handEl = document.createElement('span');
+    handEl.className = 'hand-badge';
+    handEl.hidden = true;
+    handEl.setAttribute('aria-label', 'Hand raised');
+    handEl.innerHTML = Icons.handSmall;
+    overlayLeft.appendChild(handEl);
 
     const overlayRight = document.createElement('div');
     overlayRight.className = 'overlay-right';
@@ -1148,6 +1177,8 @@ function addRemoteVideo(userId, stream, userName = 'Unknown') {
 
     if (pinnedTiles.has(String(userId))) applyPinLayout();
     updateParticipantCount();
+    refreshHands();
+    Speaking.watch(String(userId), stream, videoContainer);
 }
 
 function togglePin(userId) {
@@ -1245,12 +1276,15 @@ function setupEventListeners() {
     });
 
     setupDevicesMenu();
+    setupReactions();
+    setupShortcuts();
 
     const videoMenuBtn = document.getElementById('videoMenuBtn');
     const videoMenu    = document.getElementById('videoMenu');
 
     videoMenuBtn.addEventListener('click', (e) => {
         e.stopPropagation();
+        closeReactMenu();
         videoMenu.classList.toggle('open');
     });
 
@@ -1397,6 +1431,7 @@ function toggleSidebar(type) {
         participantsSidebar.classList.remove('open');
         chatSidebar.classList.toggle('open');
     }
+    refreshHands();
 }
 
 function closeSidebar(type) {
@@ -1416,7 +1451,8 @@ async function loadParticipants() {
         if (!response.ok) throw new Error('Failed to load participants');
 
         const data = await response.json();
-        renderParticipants(data.participants || []);
+        lastParticipants = data.participants || [];
+        renderParticipants(lastParticipants);
         updateParticipantCount();
 
     } catch (error) {
@@ -1432,8 +1468,13 @@ function renderParticipants(participants) {
         return;
     }
 
+    // raised hands first (the order of everybody else stays)
+    const handUp = (p) => raisedHands.has(String(p.user_id || p.userId));
+    participants = participants.slice().sort((a, b) => Number(handUp(b)) - Number(handUp(a)));
+
     participantsList.innerHTML = participants.map(p => {
         const uid = p.user_id || p.userId;
+        const isHandUp = raisedHands.has(String(uid));
         const name = p.username || p.userName || 'Unknown';
         const initials = getInitials(name);
         const isParticipantHost = !!(p.is_host || p.isHost);
@@ -1446,7 +1487,8 @@ function renderParticipants(participants) {
         const badges = [
             isParticipantHost ? `<span class="pbadge" title="Host">${Icons.crown}</span>` : '',
             isCoHost && !isParticipantHost ? `<span class="pbadge" title="Co-host">${Icons.shield}</span>` : '',
-            isChatBanned ? '<span class="pbadge pbadge-text" title="Muted in chat">chat off</span>' : ''
+            isChatBanned ? '<span class="pbadge pbadge-text" title="Muted in chat">chat off</span>' : '',
+            isHandUp ? `<span class="pbadge" title="Hand raised">${Icons.handSmall}</span>` : ''
         ].filter(Boolean).join('');
 
         const avatarHtml = p.avatar_url
@@ -1457,6 +1499,7 @@ function renderParticipants(participants) {
             <div class="mod-menu-wrap">
                 <button class="mod-menu-btn" onclick="toggleModMenu(this, '${uid}')" title="Moderation options" aria-label="Moderation options">${Icons.more}</button>
                 <div class="mod-menu" id="mod-menu-${uid}">
+                    ${isHandUp ? `<button data-lower-hand="${escapeHtml(String(uid))}">Lower hand</button>` : ''}
                     <button onclick="hostForceMute('${uid}', 'audio')">Mute mic</button>
                     <button onclick="hostForceMute('${uid}', 'video')">Turn off camera</button>
                     <button onclick="hostForceMute('${uid}', 'screen')">Stop screen share</button>
@@ -1468,7 +1511,7 @@ function renderParticipants(participants) {
         ` : '';
 
         return `
-            <div class="participant-item">
+            <div class="participant-item${isHandUp ? ' hand-up' : ''}">
                 <div class="participant-avatar">${avatarHtml}</div>
                 <div class="participant-info">
                     <strong>${escapeHtml(name)} ${badges}</strong>
@@ -1741,6 +1784,192 @@ window.addEventListener('beforeunload', () => {
 });
 
 // ============================================================
+// Raised hands, reactions, keyboard shortcuts
+// ============================================================
+
+const isMe = (userId) => String(userId) === String(currentUser?.id);
+
+/** Show the hand badges on the tiles, the button state and the count on the participants button. */
+function refreshHands() {
+    document.querySelectorAll('.video-container .hand-badge').forEach(badge => {
+        const tile = badge.closest('.video-container');
+        const uid = tile.id === 'localVideoContainer' ? String(currentUser?.id) : tile.dataset.userId;
+        badge.hidden = !raisedHands.has(String(uid));
+    });
+    const mine = raisedHands.has(String(currentUser?.id));
+    const text = document.getElementById('handBtnText');
+    if (text) text.textContent = mine ? 'Lower hand (H)' : 'Raise hand (H)';
+    document.getElementById('reactBtn')?.classList.toggle('active', mine);
+
+    const count = document.getElementById('handCount');
+    if (count) {
+        const panelOpen = document.getElementById('participantsSidebar')?.classList.contains('open');
+        count.textContent = String(raisedHands.size);
+        count.style.display = raisedHands.size > 0 && !panelOpen ? 'flex' : 'none';
+    }
+    if (lastParticipants.length) renderParticipants(lastParticipants);
+}
+
+function toggleHand() {
+    if (!socket) return;
+    socket.emit(raisedHands.has(String(currentUser?.id)) ? 'hand-lower' : 'hand-raise');
+}
+
+/** A reaction floats over the sender's tile for 3 seconds (at most 3 at once per tile). */
+function showReaction(userId, reaction) {
+    if (!REACTION_LABELS[reaction]) return;
+    const tile = isMe(userId) ? document.getElementById('localVideoContainer') : document.getElementById(`video-${userId}`);
+    if (!tile) return;
+    const floats = tile.querySelectorAll('.reaction-float');
+    if (floats.length >= 3) floats[0].remove();
+    const el = document.createElement('div');
+    el.className = 'reaction-float';
+    el.dataset.kind = reaction;
+    el.setAttribute('role', 'img');
+    el.setAttribute('aria-label', REACTION_LABELS[reaction]);
+    el.innerHTML = Icons.reaction(reaction, 26);
+    tile.appendChild(el);
+    setTimeout(() => el.remove(), 3000);
+}
+
+function closeReactMenu() {
+    const menu = document.getElementById('reactMenu');
+    if (!menu || !menu.classList.contains('open')) return;
+    menu.classList.remove('open');
+    document.getElementById('reactBtn')?.setAttribute('aria-expanded', 'false');
+}
+
+function toggleReactMenu(forceOpen) {
+    const menu = document.getElementById('reactMenu');
+    const open = forceOpen === undefined ? !menu.classList.contains('open') : forceOpen;
+    document.getElementById('videoMenu')?.classList.remove('open');
+    menu.classList.toggle('open', open);
+    document.getElementById('reactBtn').setAttribute('aria-expanded', String(open));
+    if (open) document.getElementById('handBtn').focus();
+}
+
+function setupReactions() {
+    const $ = (id) => document.getElementById(id);
+    $('reactBtn').innerHTML = Icons.reaction('laugh', 20);
+    $('handBtnIcon').innerHTML = Icons.hand;
+    $('localHandBadge').innerHTML = Icons.handSmall;
+
+    const grid = $('reactGrid');
+    for (const kind of Object.keys(REACTION_LABELS)) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'react-btn';
+        b.setAttribute('role', 'menuitem');
+        b.setAttribute('aria-label', REACTION_LABELS[kind]);
+        b.title = REACTION_LABELS[kind];
+        b.innerHTML = Icons.reaction(kind, 22);
+        b.addEventListener('click', (e) => {
+            e.stopPropagation();
+            socket?.emit('reaction', { reaction: kind });
+            closeReactMenu();
+        });
+        grid.appendChild(b);
+    }
+    $('handBtn').addEventListener('click', (e) => { e.stopPropagation(); toggleHand(); closeReactMenu(); });
+    $('reactBtn').addEventListener('click', (e) => { e.stopPropagation(); toggleReactMenu(); });
+    $('reactMenu').addEventListener('click', (e) => e.stopPropagation());
+    document.addEventListener('click', closeReactMenu);
+
+    // a moderator lowers somebody's hand from the participants list (no inline handler)
+    $('participantsList').addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-lower-hand]');
+        if (!btn) return;
+        closeAllModMenus();
+        socket?.emit('hand-lower', { targetUserId: btn.dataset.lowerHand });
+    });
+}
+
+// ---- Keyboard shortcuts ----------------------------------------------------
+
+let shortcutsReturnFocus = null;
+
+function openShortcuts() {
+    shortcutsReturnFocus = document.activeElement;
+    closeReactMenu();
+    document.getElementById('videoMenu')?.classList.remove('open');
+    document.getElementById('shortcutsPanel').hidden = false;
+    document.getElementById('shortcutsClose').focus();
+}
+
+function closeShortcuts() {
+    const panel = document.getElementById('shortcutsPanel');
+    if (panel.hidden) return;
+    panel.hidden = true;
+    if (shortcutsReturnFocus && document.contains(shortcutsReturnFocus)) shortcutsReturnFocus.focus();
+    shortcutsReturnFocus = null;
+}
+
+function releasePushToTalk() {
+    if (!pttActive) return;
+    pttActive = false;
+    setMicEnabled(false);
+}
+
+function setupShortcuts() {
+    const closeBtn = document.getElementById('shortcutsClose');
+    closeBtn.innerHTML = Icons.close;
+    closeBtn.addEventListener('click', closeShortcuts);
+    document.getElementById('shortcutsPanel').addEventListener('click', (e) => {
+        if (e.target.id === 'shortcutsPanel') closeShortcuts();
+    });
+
+    const typing = (el) => !!el && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable);
+    const dialogOpen = () => !!document.querySelector('.mf-backdrop') ||
+        document.getElementById('secPanel')?.classList.contains('open');
+
+    document.addEventListener('keydown', (e) => {
+        if (leaving || document.body.classList.contains('in-lobby')) return;
+        if (e.key === 'Escape') {
+            closeShortcuts();
+            closeReactMenu();
+            document.getElementById('videoMenu')?.classList.remove('open');
+            return;
+        }
+        if (e.ctrlKey || e.metaKey || e.altKey || e.repeat || typing(e.target) || dialogOpen()) return;
+
+        const panelOpen = !document.getElementById('shortcutsPanel').hidden;
+        const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+
+        if (panelOpen) {                       // while the list is open only "?" (close) works
+            if (key === '?') { e.preventDefault(); closeShortcuts(); }
+            return;
+        }
+        if (key === ' ' || key === 'Spacebar') {
+            // push-to-talk; a focused button or link keeps its own Space behaviour
+            if (/^(BUTTON|A|SUMMARY)$/.test(e.target.tagName) || e.target.getAttribute?.('role') === 'button') return;
+            if (!isAudioEnabled && localStream?.getAudioTracks().length) {
+                e.preventDefault();
+                pttActive = true;
+                setMicEnabled(true);
+            }
+            return;
+        }
+        const run = {
+            m: () => toggleMicrophone(),
+            v: () => toggleCamera(),
+            s: () => toggleScreenShare(),
+            c: () => document.getElementById('toggleChat').click(),
+            p: () => document.getElementById('toggleParticipants').click(),
+            h: () => toggleHand(),
+            r: () => toggleReactMenu(),
+            '?': () => openShortcuts()
+        }[key];
+        if (run) { e.preventDefault(); run(); }
+    });
+
+    document.addEventListener('keyup', (e) => {
+        if ((e.key === ' ' || e.key === 'Spacebar') && pttActive) { e.preventDefault(); releasePushToTalk(); }
+    });
+    window.addEventListener('blur', releasePushToTalk);
+    document.addEventListener('visibilitychange', () => { if (document.hidden) releasePushToTalk(); });
+}
+
+// ============================================================
 // Network banner and browser online/offline events
 // ============================================================
 
@@ -1798,6 +2027,7 @@ function teardownResilience() {
     resilience.listening = false;
     resilienceTimers.forEach(clearTimeout);
     resilienceTimers.clear();
+    Speaking.stopAll();
     clearTimeout(resilience.stuckTimer);
     resilience.stuckTimer = null;
     Object.values(peers).forEach(clearPeerTimers);

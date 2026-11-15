@@ -7,7 +7,21 @@
     const CAM = '<rect x="3" y="6" width="13" height="12" rx="3"/><path d="M16 10.5l5-3v9l-5-3"/>';
     const SLASH = '<path d="M4 4l16 16"/>';
 
+    // Raise hand and reactions (content, not interface chrome): drawn in the same stroke style, no emoji
+    const REACTION_BODIES = {
+        'thumbs-up': '<path d="M7 11v9H4.5a1.5 1.5 0 0 1-1.5-1.5v-6A1.5 1.5 0 0 1 4.5 11H7z"/><path d="M7 11l3.6-7a2 2 0 0 1 2.4 2v3.5h5a2 2 0 0 1 2 2.3l-1 6.2a2 2 0 0 1-2 1.7H7"/>',
+        'clap': '<path d="M5 12.5l-1.2-1.2a1.6 1.6 0 0 1 2.3-2.3l3 3"/><path d="M9.1 12l3.7-3.7a1.6 1.6 0 0 1 2.3 2.3L12 13.7"/><path d="M15 10.6l1.9 1.9a5.2 5.2 0 0 1-7.4 7.4l-4.2-4.2"/><path d="M5.5 4.5l.8 1.6M9 3v2M2.5 8h2"/>',
+        'heart': '<path d="M12 20.5S4 15.6 4 9.6A4.4 4.4 0 0 1 12 7a4.4 4.4 0 0 1 8 2.6c0 6-8 10.9-8 10.9z"/>',
+        'laugh': '<circle cx="12" cy="12" r="9"/><path d="M8.5 9.5h.01M15.5 9.5h.01"/><path d="M7.5 13.5h9a4.5 4.5 0 0 1-9 0z"/>',
+        'surprise': '<circle cx="12" cy="12" r="9"/><path d="M8.5 9.5h.01M15.5 9.5h.01"/><circle cx="12" cy="15.5" r="2"/>',
+        'question': '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.6a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1.1.9-1.1 1.7M12 17h.01"/>'
+    };
+    const HAND = '<path d="M8.5 13V6.5a1.5 1.5 0 0 1 3 0V11"/><path d="M11.5 11V4.5a1.5 1.5 0 0 1 3 0V11"/><path d="M14.5 11V6a1.5 1.5 0 0 1 3 0v7"/><path d="M8.5 13l-1.4-2.1a1.5 1.5 0 0 0-2.5 1.6l2.9 5.2C8.7 19.8 10.4 21 12.6 21h.9a5 5 0 0 0 5-5v-3"/>';
+
     window.Icons = {
+        hand:      svg(HAND),
+        handSmall: svg(HAND, 14),
+        reaction:  (name, size = 18) => svg(REACTION_BODIES[name] || '', size),
         mic:       svg(MIC),
         micOff:    svg(MIC + SLASH),
         cam:       svg(CAM),
