@@ -159,6 +159,6 @@ All pages are migrated (2026-10-17). Stylesheets: `tokens.css` + `components.css
 Known compromises, to review on screen:
 - **Room** keeps its inline styles (mapped onto tokens) and is dark-only: participant video is the colour, so the chrome does not follow the theme toggle. Controls are neutral; muted/off is `--danger`, screen sharing is `--accent`.
 - **Admin** is a restyle of the existing markup, not a rebuild: same layout and tabs, flat tokens, no emoji/gradients.
-- Dead components (`Conf/components/controls.js`, `video-grid.js`, `participants.js`) are not loaded by any page and still contain emoji. Delete or rebuild before reuse.
+- The old room components (`controls.js`, `video-grid.js`, `participants.js`) were not loaded by any page and were deleted in 2.2; only `Conf/components/chat.js` is live. Their keyboard-shortcut code is in git history if needed.
 - The conference-list dialogs (`showConfirm`, password prompt, toasts) live in `Conf/js/conf_utils.js` and inject their own small stylesheet with token fallbacks.
 - Legal copy was restyled, not rewritten. Re-read it against the code before release (it still says "Swiss-hosted" and "no IP logs").
