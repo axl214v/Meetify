@@ -96,6 +96,20 @@ runs when you use it. Live uptime status: **[health.meetify.cc](https://health.m
 ([meetify-monitor](https://github.com/axl214v/meetify-monitor), an independent watchdog
 running on separate infrastructure).
 
+## Check what you are served
+
+Every release publishes `src/app/verify/manifest.json`: the SHA-256 of each frontend file the site serves, with the version and the commit. You can compare the live site with it in two ways:
+
+- open **[meetify.cc/verify/](https://meetify.cc/verify/)**: the page downloads the files and hashes them in your browser;
+- or, without trusting that page, run the script from a checkout of this repository (Node 18 or newer, no dependencies):
+
+```bash
+git clone https://github.com/axl214v/meetify && cd meetify
+node tools/verify-live.js https://meetify.cc
+```
+
+It prints every file that differs or is missing and exits 1 if there is any. The manifest hash is also written in the notes of each GitHub release. This shows that the files served right now are the published ones; it does not show what the closed server does. Maintainers: `node tools/make-manifest.js` after a version bump (it reads tracked files, so commit first), `--check` to see whether the manifest is current.
+
 ## Technology Stack
 
 | Layer | Technology |

@@ -1,0 +1,29 @@
+/* /verify/ — result card. Tokens only. Rules: /DESIGN.md */
+.verify-card { margin-top: var(--space-6); padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-3); align-items: flex-start; }
+.verify-headline { font-size: var(--text-lg); font-weight: 600; letter-spacing: -0.02em; line-height: var(--leading-tight); overflow-wrap: anywhere; }
+.verify-card[data-state="ok"] .verify-headline { color: var(--success); }
+.verify-card[data-state="bad"] .verify-headline { color: var(--danger); }
+.verify-card[data-state="error"] .verify-headline { color: var(--warning); }
+.verify-detail { color: var(--text-2); font-size: var(--text-sm); line-height: var(--leading-loose); overflow-wrap: anywhere; width: 100%; }
+.verify-detail:empty { display: none; }
+.verify-detail code { color: var(--text); }
+.verify-bar { width: 100%; height: 6px; border-radius: 3px; background: var(--surface-3); overflow: hidden; }
+.verify-bar > div { height: 100%; width: 0%; background: var(--accent); transition: width 120ms linear; }
+.verify-problems { list-style: none; padding: 0; width: 100%; display: flex; flex-direction: column; gap: var(--space-2); }
+.verify-problems li { background: var(--danger-subtle); border-radius: var(--radius-inner); padding: var(--space-3) var(--space-4); font-size: var(--text-sm); color: var(--text-2); overflow-wrap: anywhere; }
+.verify-problems li strong { color: var(--text); font-family: var(--font-mono); font-weight: 500; }
+.verify-all { width: 100%; }
+.verify-all summary { cursor: pointer; color: var(--text-2); font-size: var(--text-sm); padding: var(--space-2) 0; }
+.verify-all summary:hover { color: var(--text); }
+.verify-all summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--radius-sm); }
+.verify-table-wrap { max-height: 360px; overflow: auto; border: 1px solid var(--border); border-radius: var(--radius-inner); }
+.verify-table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+.verify-table th { text-align: left; font-weight: 500; color: var(--text-2); padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border-strong); position: sticky; top: 0; background: var(--surface); }
+.verify-table td { padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border); color: var(--text-2); }
+.verify-table td:first-child { font-family: var(--font-mono); color: var(--text); overflow-wrap: anywhere; }
+.verify-table tr:last-child td { border-bottom: 0; }
+.verify-table .r-ok { color: var(--success); }
+.verify-table .r-bad { color: var(--danger); }
+.verify-note { color: var(--text-3); font-size: var(--text-sm); }
+.verify-code { margin-top: var(--space-3); padding: var(--space-4); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-inner); overflow-x: auto; font-size: var(--text-sm); line-height: 1.7; }
+@media (max-width: 480px) { .verify-card { padding: var(--space-4); } .verify-headline { font-size: var(--text-md); } }

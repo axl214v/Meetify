@@ -18,8 +18,9 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Copy application files
 COPY . /usr/share/nginx/html
 
-# Do not serve build files from the web root
-RUN rm -f /usr/share/nginx/html/nginx.conf /usr/share/nginx/html/Dockerfile
+# Do not serve build files from the web root. 50x.html is the default page of the nginx base image (ours is err/50x.html);
+# with it gone, the web root holds exactly the files listed in verify/manifest.json (plus the manifest itself)
+RUN rm -f /usr/share/nginx/html/nginx.conf /usr/share/nginx/html/Dockerfile /usr/share/nginx/html/.dockerignore /usr/share/nginx/html/50x.html
 
 # Set permissions
 RUN chmod -R 755 /usr/share/nginx/html

@@ -1,0 +1,464 @@
+{
+  "schema": 1,
+  "version": "2.1.0-beta",
+  "commit": "549c4777a85f470b4314db789a8f7a7d4d67a5b3",
+  "committedAt": "2026-11-16T01:06:21+03:00",
+  "files": [
+    {
+      "path": ".well-known/security.txt",
+      "sha256": "959b0f1e40a096784d3b132d916e9ab785566906b390b46baf6809c26afdf499",
+      "size": 218,
+      "access": "public"
+    },
+    {
+      "path": "Conf/components/chat.js",
+      "sha256": "624ba73728ccc13e3fd4fb6f2c0b61aac698e9afbc1e899178895a83a3b96961",
+      "size": 7642,
+      "access": "public"
+    },
+    {
+      "path": "Conf/js/conf.js",
+      "sha256": "9a1a0357d5d4cecc476e4f98e2eff55764dec16ad45f89c47a1aa94d0fc249ef",
+      "size": 17993,
+      "access": "public"
+    },
+    {
+      "path": "Conf/js/conf_create.js",
+      "sha256": "f265689baa19fd1dd1eb84781f64e8058b42b93e0ab8230da67b58dad6a1c41e",
+      "size": 8233,
+      "access": "public"
+    },
+    {
+      "path": "Conf/js/conf_devices.js",
+      "sha256": "9cb876b718666d50b67636541229294ba601fbba046bd3fc7fe35f2090064549",
+      "size": 8882,
+      "access": "public"
+    },
+    {
+      "path": "Conf/js/conf_join.js",
+      "sha256": "92fce74bb5cba70a163b957fce9e70130958cb7f661a25279ee0b0ea111a2589",
+      "size": 19757,
+      "access": "public"
+    },
+    {
+      "path": "Conf/js/conf_room.js",
+      "sha256": "394bf5d12e70c6142969572a9153a34c1c8eacf70f712c0da8f001f7b3118ea3",
+      "size": 88696,
+      "access": "public"
+    },
+    {
+      "path": "Conf/js/conf_security.js",
+      "sha256": "b054d1f2bb7331ae3f15db7673e2e91cfbc3c2ee563db8749e4c6726ff383585",
+      "size": 7983,
+      "access": "public"
+    },
+    {
+      "path": "Conf/js/conf_utils.js",
+      "sha256": "451fcf921c1f3daf96a309f1f6bd43936ddc40bf524625a74b43eb45ff79f8d5",
+      "size": 15846,
+      "access": "public"
+    },
+    {
+      "path": "Conf/js/icons.js",
+      "sha256": "589a1b91a1d50237c3adfde9017554cd79ef44a0de33bb86fef7cc8c93edc737",
+      "size": 2476,
+      "access": "public"
+    },
+    {
+      "path": "Conf/pages/conf.html",
+      "sha256": "743e5f7023b7d0cf8546e768fc601274fcfdfd2909a47d0d25fa95550585e3f1",
+      "size": 7166,
+      "access": "public"
+    },
+    {
+      "path": "Conf/pages/conf_create.html",
+      "sha256": "19aaf9d6bb22d12ec5f10f8600fd21a7a46bdae361280a49d04c765bd37f6926",
+      "size": 6895,
+      "access": "public"
+    },
+    {
+      "path": "Conf/pages/conf_join.html",
+      "sha256": "bfbedbd06aa92bdc29ea0bb579822bbd532afa973f3e2bb7f34d636044051edc",
+      "size": 5825,
+      "access": "public"
+    },
+    {
+      "path": "Conf/pages/conf_room.html",
+      "sha256": "eab62dfee6aac57bc56cf6ad05aa57bda1d2bb08e1431e6fc8bea1aa6f515158",
+      "size": 63136,
+      "access": "public"
+    },
+    {
+      "path": "admin/admin-logs.js",
+      "sha256": "721182cfdd21336d6a2c027fa3bde271a82273915122bfbcc17993e675a348f8",
+      "size": 8221,
+      "access": "admin"
+    },
+    {
+      "path": "admin/admin.html",
+      "sha256": "d7f6edbedc8fdc70641ccafce251084550b84afa96f00dfef0481973fe756503",
+      "size": 51875,
+      "access": "admin"
+    },
+    {
+      "path": "admin/admin.js",
+      "sha256": "663bc752b83b6e0a6a469a54a22c1924129f78aa80a19190de33c1836647bfb3",
+      "size": 66555,
+      "access": "admin"
+    },
+    {
+      "path": "assets/fonts/fonts.css",
+      "sha256": "1c1b3b6e7a953c4a949d20b764a71d6c773d2c13a39567a21720ea77d52fbe6a",
+      "size": 2659,
+      "access": "public"
+    },
+    {
+      "path": "assets/fonts/geist-cyrillic.woff2",
+      "sha256": "33d7ab460dff4e1fc586738d5d50e3e04bcb48e9bef7b94154cc7e07aeed6b66",
+      "size": 14692,
+      "access": "public"
+    },
+    {
+      "path": "assets/fonts/geist-latin.woff2",
+      "sha256": "0cbbe6286a00f356e98980783cc950a9b693751e04aedfb97d9526ff6dc2b316",
+      "size": 28400,
+      "access": "public"
+    },
+    {
+      "path": "assets/fonts/jetbrains-mono-cyrillic-ext.woff2",
+      "sha256": "62213be8a78b42f1e29d1452d91e2f8b3e745572a9dd98d3941e39fa00b37d76",
+      "size": 1640,
+      "access": "public"
+    },
+    {
+      "path": "assets/fonts/jetbrains-mono-cyrillic.woff2",
+      "sha256": "0a557721b1f8b36d3f3f84442689a71ca4a744300abcb46a1953f51bfc663b66",
+      "size": 6836,
+      "access": "public"
+    },
+    {
+      "path": "assets/fonts/jetbrains-mono-greek.woff2",
+      "sha256": "e17cfd15fb96909d64095015f958207063a0c07191da3512df7d560a781aebdf",
+      "size": 8872,
+      "access": "public"
+    },
+    {
+      "path": "assets/fonts/jetbrains-mono-latin-ext.woff2",
+      "sha256": "db5ff4db83e580426280e9337a58dc57d3a83784a1b03ad80914651594441d52",
+      "size": 11624,
+      "access": "public"
+    },
+    {
+      "path": "assets/fonts/jetbrains-mono-latin.woff2",
+      "sha256": "83c005d49d8a6a50474c73a5a36ac0468076e9c4a29da7bdb14995d80560a5be",
+      "size": 31432,
+      "access": "public"
+    },
+    {
+      "path": "assets/fonts/jetbrains-mono-vietnamese.woff2",
+      "sha256": "c89b9cc0bc6262bd4f8d8494b6961601f3aefa829d08c2e3635f4d501d3a47c2",
+      "size": 5888,
+      "access": "public"
+    },
+    {
+      "path": "assets/logo-mark.png",
+      "sha256": "269db1f7511e8099826a787738aedf03439a08484b73a2ffa03c5780874af549",
+      "size": 25787,
+      "access": "public"
+    },
+    {
+      "path": "assets/logo.png",
+      "sha256": "727544427c69ea36bc5c5e8fce20241b3e8e629059ccb493748da1017d820b5d",
+      "size": 95379,
+      "access": "public"
+    },
+    {
+      "path": "assets/og-image.png",
+      "sha256": "0800fac8fddec5664eaef4575e56e382a8ca3ff6cc6923492e2b066497c14923",
+      "size": 74886,
+      "access": "public"
+    },
+    {
+      "path": "auth/Auth.html",
+      "sha256": "831e0bf57e23e87c4c4f45d112aa85b5cd18c8df90a913f8267b4a018cc8180c",
+      "size": 4389,
+      "access": "public"
+    },
+    {
+      "path": "auth/Reg.html",
+      "sha256": "064a9ab13c4eb25101d367817a3a9987cc4e5d27a2bfc3fe97212d6f56b47079",
+      "size": 5171,
+      "access": "public"
+    },
+    {
+      "path": "auth/resetpass-confirm.html",
+      "sha256": "1c3ffb06046c7857b66fe299c0976737ef2f0fe602960b12e961e9229273eef3",
+      "size": 4398,
+      "access": "public"
+    },
+    {
+      "path": "auth/resetpass.html",
+      "sha256": "325883903c58a5e6171c4ebfcbe30fb39a95698f4ba0c179d891abbd76cfe8d8",
+      "size": 3813,
+      "access": "public"
+    },
+    {
+      "path": "auth/verify-email.html",
+      "sha256": "c652594908b5b20fcb24dd179601254dd339b2a66590878ed20681ccff2eb418",
+      "size": 4852,
+      "access": "public"
+    },
+    {
+      "path": "donate/donate.html",
+      "sha256": "79824e01568fc2203d6b0630ec5a5218aae3f376861ed90319a020c85267c090",
+      "size": 5358,
+      "access": "public"
+    },
+    {
+      "path": "donate/donate.js",
+      "sha256": "a1fce44caf6d108354fe5727c097f98bec385a621077c8deb222decdc7beafac",
+      "size": 5274,
+      "access": "public"
+    },
+    {
+      "path": "email/unsubscribe.html",
+      "sha256": "50897c8fb80480168cee9d709dacd0fb26a52b240d9dc697f7e9e7e4eb2d94d9",
+      "size": 4445,
+      "access": "public"
+    },
+    {
+      "path": "email/unsubscribe.js",
+      "sha256": "4524392513b32f3502e6b1d1058249c0a3c2595e0830943292e5bd2934b40ad6",
+      "size": 1573,
+      "access": "public"
+    },
+    {
+      "path": "err/404.html",
+      "sha256": "ac623a50289f0df841ad2d9a2f639e81e5ad255421a5e9390a001d0b1f896c4f",
+      "size": 2212,
+      "access": "public"
+    },
+    {
+      "path": "err/50x.html",
+      "sha256": "68a52cd4ccc14bc57fbc2d03da3143f7840d7cd8c26758643de8a3aab38925eb",
+      "size": 2227,
+      "access": "public"
+    },
+    {
+      "path": "err/err.html",
+      "sha256": "a2ffbd9cb5beb7780ffb816284ea3f1a2894eafc694d04552d5f6a4db03edb22",
+      "size": 2260,
+      "access": "public"
+    },
+    {
+      "path": "err/error-logger.js",
+      "sha256": "cf7b7ab737d893744ac2db1c6fa72befaf0d9b5cfe12ac4563f6b8b5f05c410e",
+      "size": 7573,
+      "access": "public"
+    },
+    {
+      "path": "feedback/feedback.html",
+      "sha256": "d99a8f74ed7dc8e5e8af7c5436d9f0ec4be111459b4bce3cc461ff2626c32498",
+      "size": 5468,
+      "access": "public"
+    },
+    {
+      "path": "feedback/feedback.js",
+      "sha256": "1b40b10947ae4c6916d9716237aa94486f29e8faa26f558b4b616db4543847b8",
+      "size": 2196,
+      "access": "public"
+    },
+    {
+      "path": "index.html",
+      "sha256": "efc0e1c36d4ecd30cda6a8865bd5ca22efa177aca0d30c124230a6eda036afa1",
+      "size": 20024,
+      "access": "public"
+    },
+    {
+      "path": "js/auth.js",
+      "sha256": "b2598e7364829b18c01ce5c5f9c259dcd0fee0a9f20799a4b1934521ad9f840d",
+      "size": 4628,
+      "access": "public"
+    },
+    {
+      "path": "js/cookie-banner.js",
+      "sha256": "c1255bfb5537f438ffd7411cbcaecc349bcad26a808ae6fcb239d2e09c477d92",
+      "size": 2740,
+      "access": "public"
+    },
+    {
+      "path": "js/index.js",
+      "sha256": "94de4ad1f890d4af813ee2e1b6b1c03b682ca48bcd2c2b77f61f79c6b42e57e1",
+      "size": 3469,
+      "access": "public"
+    },
+    {
+      "path": "js/notifications.js",
+      "sha256": "76c4a0f9ca4b726850182f48b62e920bfd94014fc2239c936c0c620b66045048",
+      "size": 25603,
+      "access": "public"
+    },
+    {
+      "path": "js/qrcode.js",
+      "sha256": "79ec86f82856005b1c887905cfccfcfbec3821ca61c7fd5a952faa5f778f791c",
+      "size": 56694,
+      "access": "public"
+    },
+    {
+      "path": "js/reg.js",
+      "sha256": "97cb3d579709b4c3055e4a34a68e67602e26a66a04fb2fbdd7ad819bf7d44c02",
+      "size": 7203,
+      "access": "public"
+    },
+    {
+      "path": "js/resetpass-confirm.js",
+      "sha256": "2c555b44fe387a14fd71354d1bfc83cdd9214cd0e5d94eba9abff38ba6385ba2",
+      "size": 4794,
+      "access": "public"
+    },
+    {
+      "path": "js/resetpass.js",
+      "sha256": "4fcd82db9c0b16c423b95a54b9014787be2d33b3ec418b6473c853ee9d760ef3",
+      "size": 2414,
+      "access": "public"
+    },
+    {
+      "path": "js/theme.js",
+      "sha256": "0db3033b46e2c9e90e923c77beeeb2599a1ef1b5f18a0a599813fff19cef223c",
+      "size": 1951,
+      "access": "public"
+    },
+    {
+      "path": "js/vendor/mediasoup-client.min.js",
+      "sha256": "66bd6757b0a0be30e22edc8a91393998281fe664755cb86b88ea16b75a26010e",
+      "size": 235605,
+      "access": "public"
+    },
+    {
+      "path": "js/verify-email.js",
+      "sha256": "10e908e75fd45e1660d8427b32bdf7da54dbe4034701998e4904b9f4e76371c5",
+      "size": 2634,
+      "access": "public"
+    },
+    {
+      "path": "legal/privacy.html",
+      "sha256": "d7a2d2242a556bc3508ef4703cfd0d8103694788fcd087b36e30316a28d8b669",
+      "size": 11597,
+      "access": "public"
+    },
+    {
+      "path": "legal/terms.html",
+      "sha256": "4e831d79cbfed78e1c6a5011cc2aca8a1cd0101b7b642c07065e6b0ae315b5ab",
+      "size": 7150,
+      "access": "public"
+    },
+    {
+      "path": "profile/profile.html",
+      "sha256": "3b5cbed341476d86a9c594e70fd456426515ea9343ee782eb21b6e5ec347487d",
+      "size": 9155,
+      "access": "public"
+    },
+    {
+      "path": "profile/profile.js",
+      "sha256": "d8e93c5e03c8b730d807ce1fac84fee08167bcc3e86b31eb1b7640131a5d91a2",
+      "size": 15999,
+      "access": "public"
+    },
+    {
+      "path": "robots.txt",
+      "sha256": "305deddd80304369b9e0dd9ab24bcd20306681f0abbc518b5e3bf2790fe5e3eb",
+      "size": 244,
+      "access": "public"
+    },
+    {
+      "path": "sitemap.xml",
+      "sha256": "c6337c7b51ce05c872d292130e2d1cb61dd44d11d80a21d3e9d02ec538998aa9",
+      "size": 586,
+      "access": "public"
+    },
+    {
+      "path": "styles/admin.css",
+      "sha256": "c318cdd9507a82a0f4ec59393633c47a4aab01c6eed3bbd2dd416cbf73ee7a70",
+      "size": 20779,
+      "access": "public"
+    },
+    {
+      "path": "styles/app.css",
+      "sha256": "3b86f3f6552e623bb05bfb9ec1ac1af15ee188a625a8ccdbeb577025bc675df5",
+      "size": 11975,
+      "access": "public"
+    },
+    {
+      "path": "styles/auth.css",
+      "sha256": "aecf487ec523fa21f6b5e9f139dff5dd7b2c53040340089bb1edc4cfafe75be8",
+      "size": 3535,
+      "access": "public"
+    },
+    {
+      "path": "styles/components.css",
+      "sha256": "e919af1dbbaf5f4c29a7e0d64a8be7979a5f1663d31c831dd06522e2fe1bdc81",
+      "size": 15802,
+      "access": "public"
+    },
+    {
+      "path": "styles/index.css",
+      "sha256": "79734f90ed25bbebcf0e2a864f876bf53b1030eb23a783d4ac1eff06aa65f4e3",
+      "size": 11092,
+      "access": "public"
+    },
+    {
+      "path": "styles/public.css",
+      "sha256": "a8009eb0c0abda231c3c71b4d0954a9911fd67f97b5325e1fdbafe5b00e71a53",
+      "size": 6676,
+      "access": "public"
+    },
+    {
+      "path": "styles/tokens.css",
+      "sha256": "3e7e457a72a24ecd50592df0c0c377c2ed6226880ba105f67184c8cacd0c0a4b",
+      "size": 5238,
+      "access": "public"
+    },
+    {
+      "path": "styles/verify.css",
+      "sha256": "0b327ada92d116850d571b0fdeb00eeae925c2083430b20f4d9c3c8647eb6ef6",
+      "size": 3018,
+      "access": "public"
+    },
+    {
+      "path": "support/support.html",
+      "sha256": "024d9ba8a36d36e5b7ea96f5fd4c9c34835a2fc1cd25d58bb0738fc0cff50000",
+      "size": 4976,
+      "access": "public"
+    },
+    {
+      "path": "support/support.js",
+      "sha256": "b54becb40d7ef83e5df8715eae0ab7cfc9f143bd7014cf9a41c3ed85f2f71ea5",
+      "size": 5277,
+      "access": "public"
+    },
+    {
+      "path": "support/ticket.html",
+      "sha256": "1a35d085f7eb514c375f9374c3059dc60b780d1a777fd980555ade04ff2e289f",
+      "size": 2833,
+      "access": "public"
+    },
+    {
+      "path": "support/ticket.js",
+      "sha256": "d6e6e2fee7f645110d9cf8f3d0754fa9d98bd5fdae964db93ac948e9a982aa52",
+      "size": 6918,
+      "access": "public"
+    },
+    {
+      "path": "verify/index.html",
+      "sha256": "0046209efd847ab8c90a60dae8432c8276f672bc5bfd9f60fc609573b67c4e95",
+      "size": 6009,
+      "access": "public"
+    },
+    {
+      "path": "verify/verify.js",
+      "sha256": "4f23a5e35936d08f33b9b0c11dfd814ed41bc49fedb82c9091c4a73fcefeb486",
+      "size": 7377,
+      "access": "public"
+    }
+  ]
+}
