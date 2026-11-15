@@ -1289,6 +1289,35 @@
             .lobby-card { grid-template-columns: minmax(0, 1fr); gap: 16px; }
         }
 
+        /* Reconnecting: banner on top, overlay on a tile, bars on your own tile */
+        .net-banner {
+            position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 900;
+            display: flex; align-items: center; gap: 12px; max-width: calc(100vw - 24px);
+            background: var(--surface-2); color: var(--text); border: 1px solid var(--warn); border-radius: 10px;
+            padding: 8px 14px; font-size: 0.85rem; box-shadow: 0 6px 24px rgba(0,0,0,0.45);
+        }
+        .net-banner[hidden] { display: none; }
+        .net-banner button {
+            background: var(--accent); color: var(--on-accent, #fff); border: 0; border-radius: 8px;
+            padding: 5px 12px; font-family: var(--font); font-size: 0.8rem; font-weight: 600; cursor: pointer;
+        }
+        .net-banner button[hidden] { display: none; }
+        .video-container.reconnecting::after {
+            content: 'Reconnecting…'; position: absolute; inset: 0; z-index: 5;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(5, 8, 13, 0.62); color: #fff; font-size: 0.9rem; font-weight: 500;
+            pointer-events: none;
+        }
+        .net-bars { display: inline-flex; align-items: flex-end; gap: 2px; height: 14px; padding: 0 2px; }
+        .net-bars[hidden] { display: none; }
+        .net-bars i { width: 3px; border-radius: 1px; background: rgba(255,255,255,0.28); }
+        .net-bars i:nth-child(1) { height: 4px; } .net-bars i:nth-child(2) { height: 7px; }
+        .net-bars i:nth-child(3) { height: 10px; } .net-bars i:nth-child(4) { height: 14px; }
+        .net-bars[data-level="1"] i:nth-child(-n+1) { background: var(--danger); }
+        .net-bars[data-level="2"] i:nth-child(-n+2) { background: var(--warn); }
+        .net-bars[data-level="3"] i:nth-child(-n+3) { background: var(--success); }
+        .net-bars[data-level="4"] i:nth-child(-n+4) { background: var(--success); }
+
         /* Devices block inside the camera menu */
         .dev-block { padding: 6px 8px 8px; display: flex; flex-direction: column; gap: 6px; width: 250px; max-width: 100%; }
         .dev-block label { font-size: 0.72rem; color: rgba(255,255,255,0.6); }
@@ -1306,6 +1335,11 @@
     </style>
 </head>
 <body class="in-lobby">
+
+<div class="net-banner" id="netBanner" role="status" aria-live="polite" hidden>
+    <span id="netBannerText"></span>
+    <button type="button" id="netBannerReload" hidden>Reload</button>
+</div>
 
 <!-- Lobby: check camera, microphone and speakers before connecting -->
 <div id="lobby">
@@ -1389,6 +1423,7 @@
                         <span class="participant-name">You</span>
                     </div>
                     <div class="overlay-right">
+                        <div class="net-bars" id="localNetBars" data-level="3" hidden aria-label="Your connection"><i></i><i></i><i></i><i></i></div>
                         <div class="status-pill" id="localMicStatus" data-icon="mic"></div>
                         <div class="status-pill" id="localVideoStatus" data-icon="cam"></div>
                         <button class="pin-btn" id="localPinBtn" title="Pin (spotlight)" aria-label="Pin" data-icon="pin"></button>

@@ -52,6 +52,12 @@ let roomTimer = null;
 let startTime = null;
 let unreadMessages = 0;
 let joinedConference = false;
+let leaving = false;          // the person is leaving: nothing may reconnect, rebuild or retry any more
+let resyncing = false;        // a room-participants answer is being applied
+let resyncQueued = null;      // a newer answer that arrived meanwhile
+const resilience = { offline: false, serverDown: false, sfuDown: false, stuck: false, stuckTimer: null, listening: false };
+const resilienceTimers = new Set();   // retry timers (SFU rebuild, peer re-create): all cleared when leaving
+const recreateTries = {};             // userId -> how many times we re-created a lost peer (99 = they left)
 let redirecting = false;      // the page is being sent elsewhere (no access): do not open the lobby
 let mediaReady = false;       // the lobby stream has been applied once (a socket reconnect must not reset mute)
 let lobbyChoice = { audio: true, video: true };   // microphone / camera switches chosen in the lobby
@@ -496,13 +502,25 @@ async function initSocket() {
         token = tokenData.token || null;
     }
 
+    // The token is asked for again on every (re)connect: a user token can run out during a long call
     socket = io(SOCKET_URL, {
         transports: ['websocket', 'polling'],
-        auth: { token }
+        auth: async (cb) => {
+            if (guestSession) return cb({ token: guestSession.token });
+            try {
+                const r = await fetch(`${API_BASE}/api/auth/token`, { credentials: 'include' });
+                const d = await r.json();
+                if (d.token) token = d.token;
+            } catch { /* keep the last one */ }
+            cb({ token });
+        }
     });
+    startNetworkWatch();
 
     socket.on('connect', () => {
         console.log('Connected to signaling server');
+        resilience.serverDown = false;
+        updateNetBanner();
         joinedConference = true;
         socket.emit('join-conference', {
             conferenceId,
@@ -511,46 +529,28 @@ async function initSocket() {
         });
     });
 
-    // Existing participants — new user is initiator
-    socket.on('room-participants', async ({ participants, roomState, iceServers }) => {
-        if (iceServers && iceServers.length > 0) rtcConfig = { iceServers };
-        console.log('room-participants received:', JSON.stringify(participants), 'roomState:', roomState);
-
-        if (roomState?.coHosts) coHosts = new Set(roomState.coHosts);
-        if (roomState?.chatBanned) chatBanned = new Set(roomState.chatBanned);
-
-        let joinAudio = lobbyChoice.audio;
-        let joinVideo = lobbyChoice.video;
-
-        if (participants.length > 5 && joinAudio) {
-            joinAudio = false;
-            showNotification('Large room detected — microphone muted on join', 'info');
-        }
-
-        // Only the first time: after a reconnect the person's current mute state stays
-        if (!mediaReady) {
-            await initLocalMedia({ audio: joinAudio, video: joinVideo });
-            mediaReady = true;
-        }
-        // Tell the others the real start state (the server assumes "on" until told)
-        socket.emit('media-state-change', { conferenceId, audio: isAudioEnabled, video: isVideoEnabled });
-
-        if (conferenceMode === 'sfu') {
-            await initSfu();
-        } else {
-            for (const p of participants) {
-                if (p.userId !== currentUser.id) {
-                    await createPeerConnection(p.userId, true, p.userName);
-                    if (p.mediaState) {
-                        updateRemoteMediaState(p.userId, p.mediaState.audio, p.mediaState.video);
-                    }
-                }
+    // Existing participants. The first answer starts the call; after a reconnect the same answer
+    // is a resync (see applyRoomParticipants). Answers are applied one at a time, newest last.
+    socket.on('room-participants', async (payload) => {
+        if (leaving) return;
+        if (resyncing) { resyncQueued = payload; return; }
+        resyncing = true;
+        try {
+            let next = payload;
+            while (next && !leaving) {
+                resyncQueued = null;
+                await applyRoomParticipants(next);
+                next = resyncQueued;
             }
+        } catch (e) {
+            console.error('room-participants failed:', e);
+        } finally {
+            resyncing = false;
         }
-        startQualityMonitor();
     });
     // New user joined — existing user is NOT initiator, waits for offer
     socket.on('user-connected', ({ userId, userName }) => {
+        delete recreateTries[userId];
         // The newcomer sends the offer; the peer connection is created once, when it arrives.
         // (Creating it here too made the offer handler close it and open a second one with a new TURN relay.)
         console.log('User connected:', userId, userName);
@@ -560,7 +560,9 @@ async function initSocket() {
     // Peer left the conference, clean up local RTCPeerConnection and UI
     socket.on('user-disconnected', ({ userId }) => {
         console.log('User disconnected:', userId);
+        recreateTries[userId] = 99;   // they left: a failed connection must not be re-created
         if (peers[userId]) {
+            clearPeerTimers(peers[userId]);
             peers[userId].close();
             delete peers[userId];
         }
@@ -595,7 +597,14 @@ async function initSocket() {
     socket.on('offer', ({ userId, offer, userName }) => enqueueSignal(userId, async () => {
         console.log('Received offer from:', userId);
         const existing = peers[userId];
-        const isRenegotiation = existing && (existing.remoteDescription || existing.signalingState === 'have-local-offer');
+        let isRenegotiation = existing && (existing.remoteDescription || existing.signalingState === 'have-local-offer');
+        if (isRenegotiation && existing.remoteDescription) {
+            // An offer with another DTLS fingerprint comes from a connection the other side has rebuilt
+            // (after a long outage): it is a new connection, not a renegotiation of this one.
+            const before = sdpFingerprint(existing.remoteDescription.sdp);
+            const now = sdpFingerprint(offer?.sdp);
+            if (before && now && before !== now) isRenegotiation = false;
+        }
         if (isRenegotiation) {
             // A screen track was added or removed. On a collision the peer with the higher id is
             // polite: it drops its own offer and answers, the other one ignores the offer.
@@ -652,8 +661,19 @@ async function initSocket() {
     });
 
     // Handle signaling socket disconnect (network, server down etc.)
-    socket.on('disconnect', () => {
-        console.log('Disconnected from signaling server');
+    socket.on('disconnect', (reason) => {
+        console.log('Disconnected from signaling server:', reason);
+        // Media between browsers keeps flowing; Socket.IO reconnects and the room answer resyncs us
+        if (leaving || reason === 'io client disconnect') return;
+        resilience.serverDown = true;
+        updateNetBanner();
+    });
+
+    socket.on('connect_error', (err) => {
+        console.warn('Signaling connect error:', err?.message);
+        if (leaving) return;
+        resilience.serverDown = true;
+        updateNetBanner();
     });
 
     socket.on('error', (err) => {
@@ -720,6 +740,65 @@ async function initSocket() {
 }
 
 /**
+ * The room's answer to our join. The first one starts the call. After a reconnect (network blip,
+ * backend restart) it is a resync: connections that are still healthy are kept, only missing ones are
+ * created, and the Group session is rebuilt only when it is really dead.
+ */
+async function applyRoomParticipants({ participants, roomState, iceServers }) {
+    if (iceServers && iceServers.length > 0) rtcConfig = { iceServers };
+    console.log('room-participants received:', JSON.stringify(participants), 'roomState:', roomState);
+
+    if (roomState?.coHosts) coHosts = new Set(roomState.coHosts);
+    if (roomState?.chatBanned) chatBanned = new Set(roomState.chatBanned);
+
+    // Only the first time: after a reconnect the person's current mute state stays
+    if (!mediaReady) {
+        let joinAudio = lobbyChoice.audio;
+        const joinVideo = lobbyChoice.video;
+        if (participants.length > 5 && joinAudio) {
+            joinAudio = false;
+            showNotification('Large room detected — microphone muted on join', 'info');
+        }
+        await initLocalMedia({ audio: joinAudio, video: joinVideo });
+        mediaReady = true;
+    }
+    // Tell the others the real state (the server forgot it if we were dropped, and assumes "on" for a newcomer)
+    socket.emit('media-state-change', { conferenceId, audio: isAudioEnabled, video: isVideoEnabled });
+
+    if (conferenceMode === 'sfu') {
+        if (!sfuRebuilding) {
+            if (!sfuSendTransport) {
+                try { await initSfu(); }
+                catch (e) { console.error('[SFU] first start failed:', e); cleanupSfu(); rebuildSfu(); }
+            } else if (!sfuHealthy()) {
+                rebuildSfu();
+            }
+        }
+    } else {
+        for (const p of participants) {
+            if (p.userId === currentUser.id) continue;
+            const pc = peers[p.userId];
+            const alive = pc && pc.signalingState !== 'closed' && pc.connectionState !== 'failed' && pc.connectionState !== 'closed';
+            if (!alive) {
+                await createPeerConnection(p.userId, true, p.userName);
+            } else if (pc._isInitiator && pc.signalingState === 'have-local-offer' && pc.localDescription) {
+                // our offer may have been lost while we were away: send it again
+                socket.emit('offer', { to: p.userId, offer: pc.localDescription });
+            }
+            if (p.mediaState) {
+                updateRemoteMediaState(p.userId, p.mediaState.audio, p.mediaState.video);
+            }
+        }
+        // restarts that could not be sent while the signaling connection was down
+        for (const id of Object.keys(peers)) {
+            if (peers[id]._restartPending) restartPeerIce(id);
+        }
+    }
+    loadParticipants();
+    startQualityMonitor();
+}
+
+/**
  * Create a new RTCPeerConnection for a remote participant.
  * @param {string} userId Peer user ID
  * @param {boolean} isInitiator True when this client starts the offer
@@ -727,6 +806,7 @@ async function initSocket() {
  */
 async function createPeerConnection(userId, isInitiator, userName = 'Unknown') {
     if (peers[userId]) {
+        clearPeerTimers(peers[userId]);
         peers[userId].close();
     }
     delete camStreams[userId];
@@ -734,6 +814,9 @@ async function createPeerConnection(userId, isInitiator, userName = 'Unknown') {
 
     const peerConnection = new RTCPeerConnection(rtcConfig);
     peers[userId] = peerConnection;
+    peerConnection._isInitiator = isInitiator;   // only this side sends an ICE-restart offer
+    peerConnection._userName = userName;
+    peerConnection._restarts = 0;
     // Object.keys(peers) turns ids into strings, the server looks sockets up by the original id type
     peerConnection._userId = userId;
 
@@ -784,21 +867,7 @@ async function createPeerConnection(userId, isInitiator, userName = 'Unknown') {
 
     peerConnection.onconnectionstatechange = () => {
         console.log(`Connection state with ${userId}:`, peerConnection.connectionState);
-        if (peerConnection.connectionState === 'disconnected' ||
-            peerConnection.connectionState === 'failed') {
-            if (peers[userId]) {
-                peers[userId].close();
-                delete peers[userId];
-            }
-            delete camStreams[userId];
-            delete screenSenders[userId];
-            const videoContainer = document.getElementById(`video-${userId}`);
-            if (videoContainer) videoContainer.remove();
-            pinnedTiles.delete(String(userId));
-            removeScreenTile(userId);
-            applyPinLayout();
-            updateParticipantCount();
-        }
+        onPeerState(userId, peerConnection, peerConnection.connectionState);
     };
 
     if (isInitiator) {
@@ -808,6 +877,111 @@ async function createPeerConnection(userId, isInitiator, userName = 'Unknown') {
     }
 
     return peerConnection;
+}
+
+// ============================================================
+// Peer connection states: a blip heals, a dead connection is restarted, then removed and re-created
+// ============================================================
+const PEER_GRACE_MS = 8000;      // 'disconnected' often heals by itself
+const PEER_RESTART_MS = 12000;   // after an ICE restart: give it this long, then remove the peer
+
+const sdpFingerprint = (sdp) => (/a=fingerprint:\S+ (\S+)/.exec(sdp || '') || [])[1] || null;
+
+function later(fn, ms) {
+    const t = setTimeout(() => { resilienceTimers.delete(t); fn(); }, ms);
+    resilienceTimers.add(t);
+    return t;
+}
+
+function clearPeerTimers(pc) {
+    if (!pc) return;
+    clearTimeout(pc._graceTimer);
+    clearTimeout(pc._restartTimer);
+    pc._graceTimer = pc._restartTimer = null;
+}
+
+function setTileReconnecting(userId, on) {
+    document.getElementById(`video-${userId}`)?.classList.toggle('reconnecting', on);
+}
+
+/** Called for every connectionState change of a peer (and by tests with a made-up state). */
+function onPeerState(userId, pc, state) {
+    if (leaving || peers[userId] !== pc) return;
+
+    if (state === 'connected') {
+        clearPeerTimers(pc);
+        pc._restarts = 0;
+        pc._restartPending = false;
+        delete recreateTries[userId];
+        setTileReconnecting(userId, false);
+        return;
+    }
+    if (state === 'disconnected') {
+        // keep the tile, show "Reconnecting…", wait: it often comes back
+        setTileReconnecting(userId, true);
+        if (!pc._graceTimer && !pc._restartTimer) {
+            pc._graceTimer = setTimeout(() => {
+                pc._graceTimer = null;
+                if (peers[userId] === pc && pc.connectionState !== 'connected') recoverPeer(userId, pc);
+            }, PEER_GRACE_MS);
+        }
+        return;
+    }
+    if (state === 'failed') {
+        clearTimeout(pc._graceTimer);
+        pc._graceTimer = null;
+        recoverPeer(userId, pc);
+    }
+}
+
+/** First trouble: ICE restart. Second trouble: remove the peer (and try a fresh connection later). */
+function recoverPeer(userId, pc) {
+    if (pc._restarts >= 1) { removePeer(userId, pc); return; }
+    pc._restarts++;
+    setTileReconnecting(userId, true);
+    restartPeerIce(userId);
+    clearTimeout(pc._restartTimer);
+    pc._restartTimer = setTimeout(() => {
+        pc._restartTimer = null;
+        if (peers[userId] === pc && pc.connectionState !== 'connected') removePeer(userId, pc);
+    }, PEER_RESTART_MS);
+}
+
+/** Only the side that made the first offer sends the restart offer; the other answers it. */
+function restartPeerIce(userId) {
+    const pc = peers[userId];
+    if (!pc || !pc._isInitiator) return;
+    if (!socket?.connected) { pc._restartPending = true; return; }   // offers cannot get through now
+    pc._restartPending = false;
+    try { pc.restartIce(); } catch (e) { console.warn('restartIce failed:', e); }
+    renegotiate(userId);
+}
+
+function removePeer(userId, pc) {
+    clearPeerTimers(pc);
+    if (peers[userId] === pc) delete peers[userId];
+    try { pc.close(); } catch { /* already closed */ }
+    delete camStreams[userId];
+    delete screenSenders[userId];
+    document.getElementById(`video-${userId}`)?.remove();
+    pinnedTiles.delete(String(userId));
+    removeScreenTile(userId);
+    applyPinLayout();
+    updateParticipantCount();
+    scheduleRecreate(userId, pc._userName);
+}
+
+/** The person is still in the room (nobody told us they left): try a fresh connection, a couple of times. */
+function scheduleRecreate(userId, userName) {
+    if (leaving || (recreateTries[userId] || 0) >= 2) return;
+    recreateTries[userId] = (recreateTries[userId] || 0) + 1;
+    // both sides lost each other: the lower id goes first, the other waits (no offer collision)
+    const delay = idPrecedes(currentUser.id, userId) ? 1500 : 4500;
+    later(async () => {
+        if (leaving || peers[userId] || !socket?.connected || (recreateTries[userId] || 0) >= 99) return;
+        try { await createPeerConnection(userId, true, userName); }
+        catch (e) { console.warn('re-create failed:', e); }
+    }, delay);
 }
 
 // Signaling for one peer runs one step at a time: an answer must be applied before the next offer
@@ -1360,6 +1534,85 @@ function startRoomTimer() {
     }, 1000);
 }
 
+let sfuRebuilding = false;
+
+function sfuHealthy() {
+    const bad = (t) => !t || t.connectionState === 'failed' || t.connectionState === 'closed';
+    return !!sfuSocket?.connected && !bad(sfuSendTransport) && !bad(sfuRecvTransport);
+}
+
+function watchSfuTransport(transport) {
+    transport.on('connectionstatechange', (state) => {
+        if (leaving || (transport !== sfuSendTransport && transport !== sfuRecvTransport)) return;
+        if (state === 'failed') {
+            rebuildSfu();
+        } else if (state === 'disconnected') {
+            // often heals by itself; if it does not, start over
+            later(() => {
+                if (transport.connectionState === 'disconnected' &&
+                    (transport === sfuSendTransport || transport === sfuRecvTransport)) rebuildSfu();
+            }, 10000);
+        }
+    });
+}
+
+/** The Group session is dead (SFU restarted, transport failed, network gone): drop it and start a new one. */
+async function rebuildSfu() {
+    if (leaving || sfuRebuilding || conferenceMode !== 'sfu') return;
+    sfuRebuilding = true;
+    resilience.sfuDown = true;
+    updateNetBanner();
+    try {
+        // Everything of the dead session goes; consume() brings the tiles back
+        cleanupSfu();
+        for (const k of Object.keys(sfuProducers)) delete sfuProducers[k];
+        for (const k of Object.keys(sfuConsumers)) delete sfuConsumers[k];
+        for (const k of Object.keys(sfuProdInfo)) delete sfuProdInfo[k];
+        sfuConsuming.clear();
+        for (const id of Object.keys(remoteStreams)) {
+            document.getElementById(`video-${id}`)?.remove();
+            pinnedTiles.delete(String(id));
+            delete remoteStreams[id];
+        }
+        document.querySelectorAll('.screen-tile').forEach(t => {
+            if (t.id !== 'screen-local') { pinnedTiles.delete(t.id); t.remove(); }
+        });
+        applyPinLayout();
+        updateParticipantCount();
+
+        const waits = [0, 2000, 5000, 10000, 20000];
+        let ok = false;
+        for (const wait of waits) {
+            if (leaving) return;
+            if (wait) await new Promise(resolve => later(resolve, wait));
+            // sfu:get-server-config goes through the signaling socket; when it is back its answer starts us again
+            if (!socket?.connected) break;
+            try {
+                await initSfu();
+                ok = sfuHealthy();
+            } catch (e) {
+                console.warn('[SFU] rebuild attempt failed:', e);
+            }
+            if (ok) break;
+            cleanupSfu();
+        }
+        if (ok) {
+            resilience.sfuDown = false;
+            // a screen we were sharing goes out again
+            const track = screenStream?.getVideoTracks()[0];
+            if (isScreenSharing && track && track.readyState === 'live') {
+                socket.emit('screen-share-start', { conferenceId });
+                sfuProducers.screen = await sfuSendTransport.produce({ track, appData: { share: true } });
+            }
+        } else if (socket?.connected) {
+            resilience.stuck = true;   // all attempts used: the banner offers a reload
+        }
+    } finally {
+        sfuRebuilding = false;
+        updateNetBanner();
+    }
+}
+
 function cleanupSfu() {
     Object.values(sfuProducers).forEach(p => { try { p?.close(); } catch {} });
     Object.values(sfuConsumers).forEach(c => { try { c?.close(); } catch {} });
@@ -1370,6 +1623,7 @@ function cleanupSfu() {
 }
 
 function cleanupAndRedirect(reason) {
+    teardownResilience();
     if (roomTimer) clearInterval(roomTimer);
     if (localStream) localStream.getTracks().forEach(t => t.stop());
     if (screenStream) screenStream.getTracks().forEach(t => t.stop());
@@ -1451,6 +1705,7 @@ async function leaveConference() {
     const confirmed = await showConfirm('Leave this conference?', 'Leave', 'danger');
     if (!confirmed) return;
 
+    teardownResilience();
     if (roomTimer) clearInterval(roomTimer);
     if (localStream) localStream.getTracks().forEach(track => track.stop());
     if (screenStream) screenStream.getTracks().forEach(track => track.stop());
@@ -1478,11 +1733,77 @@ async function leaveConference() {
 }
 
 window.addEventListener('beforeunload', () => {
+    leaving = true;   // closing the page: no reconnect attempts while it goes away
     if (joinedConference && conferenceId && !guestSession) {
         navigator.sendBeacon(`${API_BASE}/api/conferences/${conferenceId}/leave`);
     }
     if (socket) socket.disconnect();
 });
+
+// ============================================================
+// Network banner and browser online/offline events
+// ============================================================
+
+function updateNetBanner() {
+    const el = document.getElementById('netBanner');
+    if (!el) return;
+    let text = '';
+    if (resilience.offline) text = 'You are offline. The call comes back when the network does.';
+    else if (resilience.serverDown) text = 'Connection to the server lost. Reconnecting…';
+    else if (resilience.sfuDown) text = 'Reconnecting to the group call…';
+
+    if (text && !resilience.stuckTimer && !resilience.stuck) {
+        // still down after a minute: offer a reload
+        resilience.stuckTimer = setTimeout(() => { resilience.stuck = true; updateNetBanner(); }, 60000);
+    }
+    if (!text) {
+        clearTimeout(resilience.stuckTimer);
+        resilience.stuckTimer = null;
+        resilience.stuck = false;
+    }
+    document.getElementById('netBannerText').textContent = text;
+    document.getElementById('netBannerReload').hidden = !(text && resilience.stuck);
+    el.hidden = !text;
+}
+
+function onBrowserOffline() {
+    resilience.offline = true;
+    updateNetBanner();
+}
+
+function onBrowserOnline() {
+    resilience.offline = false;
+    updateNetBanner();
+    if (leaving) return;
+    // The signaling connection may be dead without the browser knowing: close it so it reconnects
+    // now instead of after the ping timeout (the server keeps our place during its grace period)
+    if (socket?.connected) { try { socket.io.engine.close(); } catch { /* already closing */ } }
+    if (conferenceMode === 'sfu' && sfuSendTransport && !sfuHealthy()) rebuildSfu();
+}
+
+function startNetworkWatch() {
+    if (resilience.listening) return;
+    resilience.listening = true;
+    window.addEventListener('offline', onBrowserOffline);
+    window.addEventListener('online', onBrowserOnline);
+    document.getElementById('netBannerReload')?.addEventListener('click', () => window.location.reload());
+    if (!navigator.onLine) onBrowserOffline();
+}
+
+/** Stop every retry, timer and listener: the person is leaving (or was removed). */
+function teardownResilience() {
+    leaving = true;
+    window.removeEventListener('offline', onBrowserOffline);
+    window.removeEventListener('online', onBrowserOnline);
+    resilience.listening = false;
+    resilienceTimers.forEach(clearTimeout);
+    resilienceTimers.clear();
+    clearTimeout(resilience.stuckTimer);
+    resilience.stuckTimer = null;
+    Object.values(peers).forEach(clearPeerTimers);
+    const banner = document.getElementById('netBanner');
+    if (banner) banner.hidden = true;
+}
 
 // ============================================================
 // SFU (mediasoup) — Group call implementation
@@ -1526,7 +1847,14 @@ async function initSfu() {
     sfuSocket = window.io(sfuUrl, {
         auth:       { token: sfuToken },
         transports: ['websocket'],
-        path:       '/sfu/'
+        path:       '/sfu/',
+        // a dropped SFU connection lost its server-side session: rebuildSfu() starts a new one with a fresh token
+        reconnection: false
+    });
+    const thisSfuSocket = sfuSocket;
+    sfuSocket.on('disconnect', (reason) => {
+        if (leaving || sfuSocket !== thisSfuSocket || reason === 'io client disconnect') return;
+        rebuildSfu();
     });
     await new Promise((resolve, reject) => {
         sfuSocket.once('connect', resolve);
@@ -1546,6 +1874,7 @@ async function initSfu() {
 
     sfuServerFingerprints = sendParams.dtlsParameters?.fingerprints || null;
     sfuSendTransport = sfuDevice.createSendTransport(sendParams);
+    watchSfuTransport(sfuSendTransport);
     sfuSendTransport.on('connect', ({ dtlsParameters }, cb, eb) => {
         sfuSocketAck('sfu:connect-transport', { transportId: sfuSendTransport.id, dtlsParameters })
             .then(() => cb()).catch(eb);
@@ -1569,6 +1898,7 @@ async function initSfu() {
     if (recvParams.error) throw new Error(recvParams.error);
 
     sfuRecvTransport = sfuDevice.createRecvTransport(recvParams);
+    watchSfuTransport(sfuRecvTransport);
     sfuRecvTransport.on('connect', ({ dtlsParameters }, cb, eb) => {
         sfuSocketAck('sfu:connect-transport', { transportId: sfuRecvTransport.id, dtlsParameters })
             .then(() => cb()).catch(eb);
@@ -1783,11 +2113,23 @@ function _showQualityNotification(prev, next) {
     }
 }
 
+const NET_LEVEL = { poor: 1, degraded: 2, good: 3, excellent: 4 };
+const NET_TEXT = { poor: 'Your connection: poor', degraded: 'Your connection: slow', good: 'Your connection: good', excellent: 'Your connection: excellent' };
+/** Four bars on your own tile: when something looks bad, you can see whether it is your network. */
+function setNetBars(tier) {
+    const el = document.getElementById('localNetBars');
+    if (!el) return;
+    el.hidden = false;
+    el.dataset.level = String(NET_LEVEL[tier] || 3);
+    el.title = NET_TEXT[tier] || NET_TEXT.good;
+}
+
 async function _qualityTick() {
     const net = await _pollNetworkStats();
     if (!net) return;
 
     const targetTier = _classifyTier(net);
+    setNetBars(targetTier);
 
     if (targetTier === _streakTier) {
         _streakCount++;
