@@ -52,6 +52,9 @@ let roomTimer = null;
 let startTime = null;
 let unreadMessages = 0;
 let joinedConference = false;
+let redirecting = false;      // the page is being sent elsewhere (no access): do not open the lobby
+let mediaReady = false;       // the lobby stream has been applied once (a socket reconnect must not reset mute)
+let lobbyChoice = { audio: true, video: true };   // microphone / camera switches chosen in the lobby
 const remoteMediaStates = {};
 const roomScreenShareState = new Set();
 
@@ -168,6 +171,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         await loadConferenceDetails();
+        if (redirecting) return;
+        // Lobby: pick devices and see yourself; nothing connects until "Join now"
+        await runLobby();
         // Socket first — чтобы получить roomState до инициализации медиа
         await initSocket();
         setupEventListeners();
@@ -206,6 +212,7 @@ async function loadConferenceDetails() {
                     : 'Access denied.',
                 'error'
             );
+            redirecting = true;
             setTimeout(() => window.location.href = err.requiresPassword
                 ? `conf_join.html?id=${encodeURIComponent(conferenceId)}` : 'conf.html', 1200);
             return;
@@ -225,6 +232,7 @@ async function loadConferenceDetails() {
         // Прямой заход по URL без участия — редирект
         if (!data.conference.isParticipant && !data.conference.isHost) {
             showNotification('Join this conference first.', 'info');
+            redirecting = true;
             setTimeout(() => window.location.href = `conf_join.html?id=${encodeURIComponent(conferenceId)}`, 800);
             return;
         }
@@ -251,33 +259,210 @@ function updateRemoteMediaState(userId, audio, video) {
 }
 
 /**
- * Request camera/microphone access and attach stream to local preview.
- * We request ideal HD constraints and common audio enhancements.
- * @param {{ audio: boolean, video: boolean }} options
+ * Apply the stream chosen in the lobby to the room. No new permission prompt: the lobby already
+ * holds the stream. Without any device the room still works for listening and chat (empty stream).
+ * @param {{ audio: boolean, video: boolean }} options  wanted start state (mic / camera on)
  */
 async function initLocalMedia({ audio = true, video = true } = {}) {
-    try {
-        localStream = await navigator.mediaDevices.getUserMedia({
-            video: video
-                ? { width: { ideal: 1280 }, height: { ideal: 720 } }
-                : false,
-            audio: audio
-                ? { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
-                : false
+    if (!localStream) localStream = new MediaStream();
+
+    // Sync state flags with the tracks that really exist
+    isAudioEnabled = audio && localStream.getAudioTracks().length > 0;
+    isVideoEnabled = video && localStream.getVideoTracks().length > 0;
+    localStream.getAudioTracks().forEach(t => { t.enabled = isAudioEnabled; });
+    localStream.getVideoTracks().forEach(t => { t.enabled = isVideoEnabled; });
+
+    document.getElementById('localVideo').srcObject = localStream;
+    updateMediaControlsUI();
+    console.log('Local media initialized', { audio: isAudioEnabled, video: isVideoEnabled });
+}
+
+// ============================================================
+// Lobby: check devices before joining
+// ============================================================
+
+/** Resolves when the person presses "Join now". Leaves the lobby stream in `localStream`. */
+function runLobby() {
+    const $ = (id) => document.getElementById(id);
+    const saved = Devices.loadChoice();
+    let micOn = !saved.micOff;
+    let camOn = !saved.camOff;
+    let stream = null;
+    let meter = { stop() {}, resume() {} };
+    let run = 0;   // a newer start() makes an older one drop its stream
+
+    $('lobbyTitle').textContent = $('conferenceName').textContent || 'Ready to join?';
+    $('lobbyBack').href = homeUrl();
+    if (Devices.speakerSupported) $('lobbySpeakerField').hidden = false;
+
+    const stopStream = () => { stream?.getTracks().forEach(t => t.stop()); stream = null; };
+    const leavePage = () => { meter.stop(); stopStream(); };
+    window.addEventListener('pagehide', leavePage);
+
+    const reflect = () => {
+        const hasMic = !!stream && stream.getAudioTracks().length > 0;
+        const hasCam = !!stream && stream.getVideoTracks().length > 0;
+        stream?.getAudioTracks().forEach(t => { t.enabled = micOn; });
+        stream?.getVideoTracks().forEach(t => { t.enabled = camOn; });
+        const micBtn = $('lobbyMicBtn'), camBtn = $('lobbyCamBtn');
+        micBtn.classList.toggle('off', !micOn || !hasMic);
+        camBtn.classList.toggle('off', !camOn || !hasCam);
+        micBtn.innerHTML = micOn && hasMic ? Icons.mic : Icons.micOff;
+        camBtn.innerHTML = camOn && hasCam ? Icons.cam : Icons.camOff;
+        micBtn.disabled = !hasMic;
+        camBtn.disabled = !hasCam;
+        $('lobbyPreview').classList.toggle('cam-off', !camOn || !hasCam);
+        $('lobbyNoCam').textContent = hasCam ? 'Camera is off' : 'No camera';
+    };
+
+    const fillLists = async () => {
+        const list = await Devices.listDevices();
+        const choice = Devices.loadChoice();
+        Devices.fillSelect($('lobbyMic'), list.mics, Devices.trackDeviceId(stream, 'audio') || choice.micId);
+        Devices.fillSelect($('lobbyCam'), list.cams, Devices.trackDeviceId(stream, 'video') || choice.camId);
+        if (Devices.speakerSupported) Devices.fillSelect($('lobbySpeaker'), list.speakers, choice.speakerId);
+    };
+
+    const start = async ({ camId, micId }) => {
+        const mine = ++run;
+        meter.stop();
+        stopStream();
+        const { stream: s, error } = await Devices.getStream({ camId: camId || null, micId: micId || null });
+        if (mine !== run) { s?.getTracks().forEach(t => t.stop()); return; }
+        stream = s;
+        $('lobbyError').textContent = Devices.errorText(error);
+        $('lobbyVideo').srcObject = stream;
+        meter = Devices.createLevelMeter(stream, $('lobbyMeter'));
+        reflect();
+        await fillLists();
+        reflect();
+    };
+
+    // browsers start the level meter suspended until the page was clicked
+    $('lobby').addEventListener('click', () => meter.resume());
+    $('lobbyMicBtn').addEventListener('click', () => { micOn = !micOn; reflect(); });
+    $('lobbyCamBtn').addEventListener('click', () => { camOn = !camOn; reflect(); });
+    const restartWithSelection = () => start({ camId: $('lobbyCam').value, micId: $('lobbyMic').value });
+    $('lobbyMic').addEventListener('change', restartWithSelection);
+    $('lobbyCam').addEventListener('change', restartWithSelection);
+    $('lobbySpeaker').addEventListener('change', () => Devices.saveChoice({ speakerId: $('lobbySpeaker').value }));
+    // a headset plugged in while the lobby is open
+    Devices.onChange(() => { if (document.body.classList.contains('in-lobby')) fillLists(); });
+
+    return new Promise((resolve) => {
+        $('lobbyJoin').addEventListener('click', () => {
+            $('lobbyJoin').disabled = true;
+            meter.stop();
+            window.removeEventListener('pagehide', leavePage);
+            Devices.saveChoice({
+                camId: $('lobbyCam').value || null,
+                micId: $('lobbyMic').value || null,
+                speakerId: Devices.speakerSupported ? ($('lobbySpeaker').value || null) : null,
+                micOff: !micOn,
+                camOff: !camOn
+            });
+            lobbyChoice = { audio: micOn, video: camOn };
+            localStream = stream || new MediaStream();
+            stream = null;   // the room owns the tracks now
+            $('lobbyVideo').srcObject = null;
+            document.body.classList.remove('in-lobby');
+            resolve();
         });
 
-        // Sync state flags with actual track states
-        isAudioEnabled = audio && localStream.getAudioTracks().length > 0;
-        isVideoEnabled = video && localStream.getVideoTracks().length > 0;
+        // The first preview; the Join button is usable once the devices have been asked
+        start({ camId: saved.camId, micId: saved.micId }).finally(() => { $('lobbyJoin').disabled = false; });
+    });
+}
 
-        document.getElementById('localVideo').srcObject = localStream;
-        updateMediaControlsUI();
-        console.log('Local media initialized', { audio: isAudioEnabled, video: isVideoEnabled });
+// ============================================================
+// Devices menu in the room (switch while the call is running)
+// ============================================================
 
-    } catch (error) {
-        console.error('Error accessing media devices:', error);
-        throw error;
+async function refreshDeviceMenu() {
+    const $ = (id) => document.getElementById(id);
+    const list = await Devices.listDevices();
+    const choice = Devices.loadChoice();
+    Devices.fillSelect($('devMic'), list.mics, Devices.trackDeviceId(localStream, 'audio') || choice.micId);
+    Devices.fillSelect($('devCam'), list.cams, Devices.trackDeviceId(localStream, 'video') || choice.camId);
+    if (Devices.speakerSupported) {
+        $('devSpeakerLabel').hidden = false;
+        $('devSpeaker').hidden = false;
+        Devices.fillSelect($('devSpeaker'), list.speakers, choice.speakerId);
     }
+}
+
+/** The sender of a peer connection that carries our camera / microphone (never the screen share). */
+function mediaSender(pc, kind, userId) {
+    const t = pc.getTransceivers().find(tr =>
+        tr.currentDirection !== 'stopped' && tr.receiver?.track?.kind === kind && tr.sender !== screenSenders[userId]);
+    return t ? t.sender : null;
+}
+
+/** Switch the microphone or camera to another device without renegotiation. */
+async function switchDevice(kind, deviceId) {
+    if (!deviceId || !localStream) return;
+    let track;
+    try {
+        track = await Devices.getTrack(kind, deviceId);
+    } catch (err) {
+        showNotification(Devices.errorText(err) || 'Could not switch the device.', 'error');
+        refreshDeviceMenu();
+        return;
+    }
+
+    const old = (kind === 'audio' ? localStream.getAudioTracks() : localStream.getVideoTracks())[0];
+    const wasEnabled = kind === 'audio' ? isAudioEnabled : isVideoEnabled;
+    track.enabled = old ? wasEnabled : true;
+    if (old) { localStream.removeTrack(old); old.stop(); }
+    localStream.addTrack(track);
+
+    if (conferenceMode === 'sfu') {
+        const key = kind === 'audio' ? 'audio' : 'video';
+        try {
+            if (sfuProducers[key]) await sfuProducers[key].replaceTrack({ track });
+            else if (sfuSendTransport) sfuProducers[key] = await sfuSendTransport.produce({ track });
+        } catch (err) { console.warn('[Devices] SFU replaceTrack failed:', err); }
+    } else {
+        for (const [userId, pc] of Object.entries(peers)) {
+            try { await mediaSender(pc, kind, userId)?.replaceTrack(track); }
+            catch (err) { console.warn('[Devices] replaceTrack failed for', userId, err); }
+        }
+    }
+
+    document.getElementById('localVideo').srcObject = localStream;
+    // first device of its kind: it starts switched on
+    if (!old) { if (kind === 'audio') setMicEnabled(true); else setCameraEnabled(true); }
+    updateMediaControlsUI();
+    Devices.saveChoice(kind === 'audio' ? { micId: deviceId } : { camId: deviceId });
+}
+
+let speakerWarned = false;
+async function applySpeaker(id) {
+    if (!Devices.speakerSupported || !id) return;
+    const videos = document.querySelectorAll('#videoGrid video, #filmstrip video');
+    let failed = false;
+    for (const v of videos) {
+        if (v.id === 'localVideo') continue;
+        if (!(await Devices.setSpeaker(v, id))) failed = true;
+    }
+    if (failed && !speakerWarned) {
+        speakerWarned = true;
+        showNotification('Could not switch the speakers. The system default is used.', 'error');
+    }
+}
+
+function setupDevicesMenu() {
+    const $ = (id) => document.getElementById(id);
+    // clicks inside the block must not close the menu
+    $('devBlock').addEventListener('click', (e) => e.stopPropagation());
+    $('devMic').addEventListener('change', () => switchDevice('audio', $('devMic').value));
+    $('devCam').addEventListener('change', () => switchDevice('video', $('devCam').value));
+    $('devSpeaker').addEventListener('change', () => {
+        Devices.saveChoice({ speakerId: $('devSpeaker').value });
+        applySpeaker($('devSpeaker').value);
+    });
+    Devices.onChange(refreshDeviceMenu);
+    refreshDeviceMenu().then(() => applySpeaker(Devices.loadChoice().speakerId));
 }
 
 function updateMediaControlsUI() {
@@ -334,15 +519,21 @@ async function initSocket() {
         if (roomState?.coHosts) coHosts = new Set(roomState.coHosts);
         if (roomState?.chatBanned) chatBanned = new Set(roomState.chatBanned);
 
-        let joinAudio = true;
-        let joinVideo = true;
+        let joinAudio = lobbyChoice.audio;
+        let joinVideo = lobbyChoice.video;
 
-        if (participants.length > 5) {
+        if (participants.length > 5 && joinAudio) {
             joinAudio = false;
             showNotification('Large room detected — microphone muted on join', 'info');
         }
 
-        await initLocalMedia({ audio: joinAudio, video: joinVideo });
+        // Only the first time: after a reconnect the person's current mute state stays
+        if (!mediaReady) {
+            await initLocalMedia({ audio: joinAudio, video: joinVideo });
+            mediaReady = true;
+        }
+        // Tell the others the real start state (the server assumes "on" until told)
+        socket.emit('media-state-change', { conferenceId, audio: isAudioEnabled, video: isVideoEnabled });
 
         if (conferenceMode === 'sfu') {
             await initSfu();
@@ -549,6 +740,13 @@ async function createPeerConnection(userId, isInitiator, userName = 'Unknown') {
     localStream.getTracks().forEach(track => {
         peerConnection.addTrack(track, localStream);
     });
+    // No camera or microphone: keep an empty send slot, so the other side still gets a tile
+    // and a device chosen later can be put in with replaceTrack (no renegotiation)
+    for (const kind of ['audio', 'video']) {
+        if (!localStream.getTracks().some(t => t.kind === kind)) {
+            peerConnection.addTransceiver(kind, { direction: 'sendrecv', streams: [localStream] });
+        }
+    }
     // We join while presenting (we send the offer): the screen goes out next to the camera
     if (isInitiator && isScreenSharing && screenStream) {
         screenSenders[userId] = peerConnection.addTrack(screenStream.getVideoTracks()[0], screenStream);
@@ -708,6 +906,7 @@ function addRemoteVideo(userId, stream, userName = 'Unknown') {
     video.autoplay = true;
     video.playsinline = true;
     video.srcObject = stream;
+    Devices.setSpeaker(video, Devices.loadChoice().speakerId);
 
     const placeholder = document.createElement('div');
     placeholder.className = 'video-placeholder';
@@ -870,6 +1069,8 @@ function setupEventListeners() {
         e.stopPropagation();
         togglePin('local');
     });
+
+    setupDevicesMenu();
 
     const videoMenuBtn = document.getElementById('videoMenuBtn');
     const videoMenu    = document.getElementById('videoMenu');

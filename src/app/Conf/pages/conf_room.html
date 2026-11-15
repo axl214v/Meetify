@@ -1225,9 +1225,129 @@
             .filmstrip { height: 72px; }
             .filmstrip .video-container { width: 112px; min-width: 112px; }
         }
+
+        /* ============================================ */
+        /* Lobby (device check before joining)          */
+        /* ============================================ */
+        #lobby { display: none; }
+        body.in-lobby #lobby {
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh; min-height: 100dvh;
+            padding: 24px 16px; gap: 20px; background: var(--room-bg); color: var(--room-text);
+        }
+        body.in-lobby .room-container { display: none; }
+        .lobby-logo img { height: 26px; width: auto; display: block; }
+        .lobby-card {
+            width: 100%; max-width: 880px; display: grid; gap: 24px;
+            grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: start;
+        }
+        .lobby-preview {
+            position: relative; aspect-ratio: 16 / 9; width: 100%; overflow: hidden;
+            background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: 16px;
+        }
+        .lobby-preview video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: block; }
+        .lobby-preview.cam-off video { visibility: hidden; }
+        .lobby-nocam {
+            position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+            color: var(--text-2); font-size: 0.9rem; padding: 16px; text-align: center;
+        }
+        .lobby-preview.cam-off .lobby-nocam { display: flex; }
+        .lobby-toggles {
+            position: absolute; left: 0; right: 0; bottom: 12px; display: flex; justify-content: center; gap: 12px;
+        }
+        .lobby-toggle {
+            width: 44px; height: 44px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+            background: rgba(11, 15, 23, 0.72); color: var(--text); border: 1px solid var(--border-strong); cursor: pointer;
+        }
+        .lobby-toggle:hover { background: var(--surface-3); }
+        .lobby-toggle.off { background: var(--danger); border-color: transparent; color: #fff; }
+        .lobby-toggle:focus-visible, .lobby-select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+        .lobby-side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+        .lobby-title { font-size: 1.35rem; font-weight: 600; margin: 0; overflow-wrap: anywhere; }
+        .lobby-sub { color: var(--text-2); font-size: 0.9rem; margin: 0; }
+        .lobby-field { display: flex; flex-direction: column; gap: 6px; }
+        .lobby-field label { font-size: 0.82rem; font-weight: 500; }
+        .lobby-select {
+            width: 100%; height: 40px; padding: 0 10px; border-radius: 10px; font-family: var(--font);
+            background: var(--surface-2); color: var(--text); border: 1px solid var(--border-strong);
+        }
+        .lobby-select:disabled { opacity: 0.55; }
+        .lobby-meter { height: 6px; border-radius: 3px; background: var(--surface-3); overflow: hidden; }
+        .lobby-meter > div { height: 100%; width: 0%; background: var(--success); transition: width 80ms linear; }
+        .lobby-error { color: var(--warn); font-size: 0.85rem; margin: 0; }
+        .lobby-error:empty { display: none; }
+        .lobby-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .lobby-join {
+            height: 46px; padding: 0 28px; border-radius: 14px; border: 0; cursor: pointer;
+            background: var(--accent); color: var(--on-accent, #fff); font-family: var(--font); font-size: 1rem; font-weight: 600;
+        }
+        .lobby-join:hover { background: var(--accent-hover); }
+        .lobby-join:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
+        .lobby-back { color: var(--text-2); font-size: 0.9rem; text-decoration: none; padding: 10px 6px; }
+        .lobby-back:hover { color: var(--text); }
+        @media (max-width: 720px) {
+            .lobby-card { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+        }
+
+        /* Devices block inside the camera menu */
+        .dev-block { padding: 6px 8px 8px; display: flex; flex-direction: column; gap: 6px; width: 250px; max-width: 100%; }
+        .dev-block label { font-size: 0.72rem; color: rgba(255,255,255,0.6); }
+        .dev-block select {
+            width: 100%; height: 32px; border-radius: 7px; padding: 0 6px; font-family: var(--font); font-size: 0.8rem;
+            background: rgba(255,255,255,0.07); color: #fff; border: 1px solid rgba(255,255,255,0.14);
+        }
+        .dev-block select option { color: #111; }
+        .dev-sep { height: 1px; background: rgba(255,255,255,0.1); margin: 2px 4px; }
+        @media (max-width: 640px) {
+            .ctrl-dropdown.has-devices { position: fixed; left: 12px; right: 12px; bottom: 84px; transform: none; }
+            .ctrl-dropdown.has-devices::after { display: none; }
+            .dev-block { width: auto; }
+        }
     </style>
 </head>
-<body>
+<body class="in-lobby">
+
+<!-- Lobby: check camera, microphone and speakers before connecting -->
+<div id="lobby">
+    <span class="lobby-logo"><img src="/assets/logo.png" alt="Meetify"></span>
+    <div class="lobby-card">
+        <div>
+            <div class="lobby-preview cam-off" id="lobbyPreview">
+                <video id="lobbyVideo" autoplay muted playsinline></video>
+                <div class="lobby-nocam" id="lobbyNoCam">Camera is off</div>
+                <div class="lobby-toggles">
+                    <button type="button" class="lobby-toggle" id="lobbyMicBtn" title="Microphone" aria-label="Microphone" data-icon="mic"></button>
+                    <button type="button" class="lobby-toggle" id="lobbyCamBtn" title="Camera" aria-label="Camera" data-icon="cam"></button>
+                </div>
+            </div>
+        </div>
+        <div class="lobby-side">
+            <div>
+                <h1 class="lobby-title" id="lobbyTitle">Ready to join?</h1>
+                <p class="lobby-sub">Check your picture and sound. Nothing is sent until you join.</p>
+            </div>
+            <div class="lobby-field">
+                <label for="lobbyMic">Microphone</label>
+                <select class="lobby-select" id="lobbyMic"></select>
+                <div class="lobby-meter" aria-hidden="true"><div id="lobbyMeter"></div></div>
+            </div>
+            <div class="lobby-field">
+                <label for="lobbyCam">Camera</label>
+                <select class="lobby-select" id="lobbyCam"></select>
+            </div>
+            <div class="lobby-field" id="lobbySpeakerField" hidden>
+                <label for="lobbySpeaker">Speakers</label>
+                <select class="lobby-select" id="lobbySpeaker"></select>
+            </div>
+            <p class="lobby-error" id="lobbyError" role="alert"></p>
+            <div class="lobby-actions">
+                <button type="button" class="lobby-join" id="lobbyJoin" disabled>Join now</button>
+                <a class="lobby-back" id="lobbyBack" href="conf.html">Back</a>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="room-container">
 
     <!-- Header -->
@@ -1295,7 +1415,16 @@
             <div class="ctrl-with-menu">
                 <button class="control-btn video" id="toggleVideo" title="Toggle camera" aria-label="Toggle camera" data-icon="cam"></button>
                 <button class="ctrl-sub-btn" id="videoMenuBtn" title="Camera options" aria-label="Camera options">&#8964;</button>
-                <div class="ctrl-dropdown" id="videoMenu" role="menu">
+                <div class="ctrl-dropdown has-devices" id="videoMenu" role="menu">
+                    <div class="dev-block" id="devBlock">
+                        <label for="devMic">Microphone</label>
+                        <select id="devMic"></select>
+                        <label for="devCam">Camera</label>
+                        <select id="devCam"></select>
+                        <label for="devSpeaker" id="devSpeakerLabel" hidden>Speakers</label>
+                        <select id="devSpeaker" hidden></select>
+                    </div>
+                    <div class="dev-sep"></div>
                     <button class="ctrl-dropdown-item" id="flipHBtn" role="menuitem">
                         <span class="flip-icon">&#8596;</span>Mirror
                     </button>
@@ -1383,6 +1512,7 @@
     }
 </script>
 <script src="/Conf/js/icons.js"></script>
+<script src="/Conf/js/conf_devices.js"></script>
 <script src="/Conf/js/conf_room.js"></script>
 <script src="/Conf/js/conf_security.js"></script>
 <script src="/err/error-logger.js"></script>
