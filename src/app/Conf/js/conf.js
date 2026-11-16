@@ -340,6 +340,7 @@ async function editConference(conferenceId) {
         document.getElementById('editMaxParticipants').value = conf.max_participants || '';
         document.getElementById('editIsPublic').checked = !!conf.is_public;
         document.getElementById('editAllowGuests').checked = !!conf.allow_guests;
+        document.getElementById('editWaitingRoom').checked = !!conf.waiting_room;
         document.getElementById('editStartTime').value = toDatetimeLocal(conf.start_time);
         document.getElementById('editEndTime').value = toDatetimeLocal(conf.end_time);
         document.getElementById('editChangePassword').checked = false;
@@ -387,6 +388,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 : null,
             isPublic: document.getElementById('editIsPublic').checked,
             allowGuests: document.getElementById('editAllowGuests').checked,
+            waitingRoom: document.getElementById('editWaitingRoom').checked,
             startTime: document.getElementById('editStartTime').value || null,
             endTime: document.getElementById('editEndTime').value || null,
         };

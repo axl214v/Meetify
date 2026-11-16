@@ -116,6 +116,9 @@ const remoteStreams   = {};  // userId -> MediaStream
 let isHost = false;
 let hostId = null;
 let coHosts = new Set();
+let roomLocked = false, waitingRoomOn = false;   // told by the server (the setting itself is stored, the lock is not)
+let waitingPeople = [];                          // people at the door, only filled for the host and co-hosts
+const notifiedWaiting = new Set();               // one notice per person
 let chatBanned = new Set();
 const isModerator = () => isHost || coHosts.has(currentUser?.id);
 
@@ -238,6 +241,7 @@ async function loadConferenceDetails() {
         hostId         = data.conference.host_id || null;
         conferenceMode = data.conference.mode || 'p2p';
         inviteCode     = data.conference.invite_code || null;
+        waitingRoomOn  = !!data.conference.waiting_room;
         document.getElementById('modeBadge').textContent = conferenceMode === 'sfu' ? 'Group' : 'P2P';
         document.getElementById('roomId').textContent = `#${data.conference.id}`;
 
@@ -497,6 +501,14 @@ function updateMediaControlsUI() {
  * - join conference after connect
  * - handle participants, offers/answers, ICE candidates, and messages
  */
+function sendJoin() {
+    socket.emit('join-conference', {
+        conferenceId,
+        userId: currentUser.id,
+        userName: currentUser.username || currentUser.email
+    });
+}
+
 async function initSocket() {
     let token = null;
     if (guestSession) {
@@ -529,11 +541,7 @@ async function initSocket() {
         resilience.serverDown = false;
         updateNetBanner();
         joinedConference = true;
-        socket.emit('join-conference', {
-            conferenceId,
-            userId: currentUser.id,
-            userName: currentUser.username || currentUser.email
-        });
+        sendJoin();
     });
 
     // Existing participants. The first answer starts the call; after a reconnect the same answer
@@ -736,11 +744,27 @@ async function initSocket() {
     // Rejected on re-join after kick, or P2P room full
     socket.on('join-rejected', ({ reason } = {}) => {
         const msg = reason === 'full'
-            ? 'This Private call is full (max 8 participants).'
+            ? 'This room is full.'
+            : reason === 'locked'
+            ? 'This room is locked. Ask the host to unlock it.'
+            : reason === 'denied'
+            ? 'The host did not let you in.'
             : reason === 'forbidden'
                 ? 'Join this conference first (password or invite required).'
                 : 'You have been kicked from this conference.';
         cleanupAndRedirect(msg);
+    });
+
+    // Waiting room: the server holds us outside until a moderator admits us
+    socket.on('join-pending', ({ moderatorPresent } = {}) => showWaitRoom(moderatorPresent !== false));
+    socket.on('join-admitted', () => { hideWaitRoom(); sendJoin(); });
+    socket.on('waiting-list', ({ waiting } = {}) => setWaiting(waiting));
+    socket.on('waiting-update', ({ waiting } = {}) => setWaiting(waiting, true));
+    socket.on('room-lock', ({ locked } = {}) => setLocked(locked));
+    socket.on('room-settings', ({ waitingRoom } = {}) => {
+        waitingRoomOn = !!waitingRoom;
+        if (!waitingRoomOn) setWaiting([]);
+        updateModControls();
     });
 
     // Another participant was kicked — update UI
@@ -761,6 +785,7 @@ async function initSocket() {
     socket.on('user-role-change', ({ userId: changedId, isCoHost }) => {
         if (isCoHost) coHosts.add(changedId);
         else coHosts.delete(changedId);
+        if (String(changedId) === String(currentUser?.id)) { if (!isModerator()) setWaiting([]); updateModControls(); }
         loadParticipants();
     });
 
@@ -781,6 +806,8 @@ async function applyRoomParticipants({ participants, roomState, iceServers, resu
     if (iceServers && iceServers.length > 0) rtcConfig = { iceServers };
     console.log('room-participants received:', JSON.stringify(participants), 'roomState:', roomState);
 
+    hideWaitRoom();
+    if (roomState) { waitingRoomOn = !!roomState.waitingRoom; setLocked(roomState.locked); }
     if (roomState?.coHosts) coHosts = new Set(roomState.coHosts);
     if (roomState?.chatBanned) chatBanned = new Set(roomState.chatBanned);
     if (roomState?.raisedHands) {
@@ -1312,6 +1339,7 @@ function setupEventListeners() {
 
     setupDevicesMenu();
     setupReactions();
+    setupWaitingRoom();
     setupShortcuts();
 
     const videoMenuBtn = document.getElementById('videoMenuBtn');
@@ -1493,6 +1521,124 @@ async function loadParticipants() {
     } catch (error) {
         console.error('Load participants error:', error);
     }
+}
+
+// ---- Lock and waiting room -------------------------------------------------
+
+function showWaitRoom(moderatorPresent) {
+    const video = document.getElementById('waitVideo');
+    if (video && localStream && video.srcObject !== localStream) video.srcObject = localStream;
+    document.getElementById('waitText').textContent = moderatorPresent
+        ? 'You will join as soon as you are admitted. Nothing is sent until then.'
+        : 'Nobody who can let you in is here yet. You will join as soon as the host arrives.';
+    document.body.classList.add('waiting');
+}
+
+function hideWaitRoom() {
+    if (!document.body.classList.contains('waiting')) return;
+    document.body.classList.remove('waiting');
+    const video = document.getElementById('waitVideo');
+    if (video) video.srcObject = null;
+}
+
+function setLocked(locked) {
+    roomLocked = locked === true;
+    const mark = document.getElementById('lockMark');
+    if (mark) { mark.innerHTML = Icons.lock; mark.hidden = !roomLocked; }
+    updateModControls();
+}
+
+function setWaiting(list, notify) {
+    waitingPeople = isModerator() && Array.isArray(list) ? list : [];
+    const ids = new Set(waitingPeople.map(w => String(w.userId)));
+    for (const id of Array.from(notifiedWaiting)) if (!ids.has(id)) notifiedWaiting.delete(id);
+    for (const w of waitingPeople) {
+        if (notifiedWaiting.has(String(w.userId))) continue;
+        notifiedWaiting.add(String(w.userId));
+        if (notify) showNotification(`${w.userName} is waiting to join`, 'info');
+    }
+    renderWaiting();
+}
+
+function renderWaiting() {
+    const block = document.getElementById('waitingBlock');
+    if (!block) return;
+    block.hidden = waitingPeople.length === 0;
+    block.replaceChildren();
+    if (waitingPeople.length) {
+        const head = document.createElement('div');
+        head.className = 'waiting-head';
+        const title = document.createElement('span');
+        title.textContent = `Waiting (${waitingPeople.length})`;
+        head.appendChild(title);
+        if (waitingPeople.length > 1) head.appendChild(waitButton('Admit all', 'admit-all', '', true));
+        block.appendChild(head);
+        for (const w of waitingPeople) {
+            const row = document.createElement('div');
+            row.className = 'waiting-item';
+            const name = document.createElement('span');
+            name.className = 'wname';
+            name.textContent = w.userName;
+            row.append(name, waitButton('Admit', 'admit', w.userId, true), waitButton('Deny', 'deny', w.userId, false));
+            block.appendChild(row);
+        }
+    }
+    refreshHands();
+}
+
+function waitButton(label, action, uid, primary) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'wait-btn' + (primary ? ' primary' : '');
+    b.dataset.wait = action;
+    if (uid !== '') b.dataset.uid = String(uid);
+    b.textContent = label;
+    return b;
+}
+
+function updateModControls() {
+    const box = document.getElementById('modControls');
+    if (!box) return;
+    box.hidden = !isModerator();
+    const lock = document.getElementById('lockSwitch');
+    lock.setAttribute('aria-checked', String(roomLocked));
+    const ws = document.getElementById('waitingSwitch');
+    ws.hidden = !isHost;
+    ws.setAttribute('aria-checked', String(waitingRoomOn));
+}
+
+async function setWaitingRoomSetting(on) {
+    try {
+        const res = await fetch(`${API_BASE}/api/conferences/${conferenceId}`, {
+            method: 'PUT', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ waitingRoom: on })
+        });
+        if (!res.ok) throw new Error('failed');
+    } catch {
+        showNotification('Could not change the waiting room setting.', 'error');
+    }
+}
+
+function setupWaitingRoom() {
+    document.getElementById('lockSwitch').addEventListener('click', () => {
+        socket?.emit('host:lock', { locked: !roomLocked });
+    });
+    document.getElementById('waitingSwitch').addEventListener('click', () => setWaitingRoomSetting(!waitingRoomOn));
+    document.getElementById('waitingBlock').addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-wait]');
+        if (!btn) return;
+        if (btn.dataset.wait === 'admit-all') socket?.emit('host:admit', { all: true });
+        else if (btn.dataset.wait === 'admit') socket?.emit('host:admit', { userId: btn.dataset.uid });
+        else if (btn.dataset.wait === 'deny') socket?.emit('host:deny', { userId: btn.dataset.uid });
+    });
+    document.getElementById('waitLeave').addEventListener('click', () => {
+        leaving = true;
+        socket?.emit('leave-conference');
+        if (socket) socket.disconnect();
+        if (localStream) localStream.getTracks().forEach(t => t.stop());
+        window.location.href = homeUrl();
+    });
 }
 
 function renderParticipants(participants) {
@@ -1869,8 +2015,10 @@ function refreshHands() {
     const count = document.getElementById('handCount');
     if (count) {
         const panelOpen = document.getElementById('participantsSidebar')?.classList.contains('open');
-        count.textContent = String(raisedHands.size);
-        count.style.display = raisedHands.size > 0 && !panelOpen ? 'flex' : 'none';
+        const n = raisedHands.size + waitingPeople.length;
+        count.textContent = String(n);
+        count.title = waitingPeople.length ? 'Raised hands and people waiting' : 'Raised hands';
+        count.style.display = n > 0 && !panelOpen ? 'flex' : 'none';
     }
     if (lastParticipants.length) renderParticipants(lastParticipants);
 }
@@ -2002,7 +2150,7 @@ function setupShortcuts() {
         document.getElementById('secPanel')?.classList.contains('open');
 
     document.addEventListener('keydown', (e) => {
-        if (leaving || document.body.classList.contains('in-lobby')) return;
+        if (leaving || document.body.classList.contains('in-lobby') || document.body.classList.contains('waiting')) return;
         if (e.key === 'Escape') {
             closeShortcuts();
             closeReactMenu();

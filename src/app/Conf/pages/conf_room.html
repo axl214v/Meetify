@@ -1291,6 +1291,52 @@
 
 
         /* ============================================ */
+        /* Lock, waiting room                           */
+        /* ============================================ */
+        .lock-mark { display: inline-flex; align-items: center; color: var(--warning); margin-left: 8px; }
+        .lock-mark[hidden] { display: none; }
+        #waitRoom { display: none; }
+        body.waiting #waitRoom {
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh; min-height: 100dvh;
+            padding: 24px 16px; gap: 20px; background: var(--room-bg); color: var(--room-text);
+        }
+        body.waiting .room-container { display: none; }
+        .wait-card { width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 16px; align-items: stretch; }
+        .wait-card .lobby-preview { max-width: 520px; }
+        #waitLeave {
+            height: 40px; padding: 0 20px; border-radius: 12px; cursor: pointer; font-family: var(--font); font-size: 0.9rem;
+            background: transparent; color: var(--text); border: 1px solid var(--border-strong);
+        }
+        #waitLeave:hover { background: var(--surface-3); }
+        #waitLeave:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+        .mod-controls { padding: 0.75rem 0.75rem 0; display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
+        .mod-controls[hidden], .waiting-block[hidden] { display: none; }
+        .mod-switch {
+            display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%;
+            padding: 0.6rem 0.9rem; border-radius: 10px; cursor: pointer; font: inherit; font-size: 0.85rem;
+            background: var(--room-card); color: var(--room-text); border: 1px solid var(--room-border); text-align: left;
+        }
+        .mod-switch .track { position: relative; width: 34px; height: 20px; border-radius: 10px; background: var(--surface-3); flex-shrink: 0; transition: background 0.15s; }
+        .mod-switch .track::after { content: ''; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--text-2); transition: transform 0.15s, background 0.15s; }
+        .mod-switch[aria-checked="true"] .track { background: var(--accent); }
+        .mod-switch[aria-checked="true"] .track::after { transform: translateX(14px); background: #fff; }
+        .mod-switch:focus-visible, .wait-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+        .waiting-block { padding: 0.75rem 0.75rem 0; flex-shrink: 0; }
+        .waiting-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.82rem; font-weight: 600; }
+        .waiting-item {
+            display: flex; align-items: center; gap: 0.5rem; padding: 0.55rem 0.9rem; margin-bottom: 0.4rem;
+            background: var(--room-card); border: 1px solid var(--warning); border-radius: 10px;
+        }
+        .waiting-item .wname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.85rem; }
+        .wait-btn {
+            height: 30px; padding: 0 12px; border-radius: 8px; cursor: pointer; font: inherit; font-size: 0.8rem; font-weight: 600;
+            background: var(--room-card); color: var(--room-text); border: 1px solid var(--room-border);
+        }
+        .wait-btn.primary { background: var(--accent); color: var(--on-accent, #fff); border-color: transparent; }
+        .wait-btn:hover { filter: brightness(1.1); }
+
+        /* ============================================ */
         /* Hands, reactions, shortcuts                  */
         /* ============================================ */
         .hand-badge {
@@ -1457,6 +1503,17 @@
     </div>
 </div>
 
+<!-- Waiting room: the host has to let you in -->
+<div id="waitRoom" role="status" aria-live="polite">
+    <span class="lobby-logo"><img src="/assets/logo.png" alt="Meetify"></span>
+    <div class="wait-card">
+        <div class="lobby-preview" id="waitPreview"><video id="waitVideo" autoplay muted playsinline></video></div>
+        <h1 class="lobby-title">Waiting for the host to let you in</h1>
+        <p class="lobby-sub" id="waitText">You will join as soon as you are admitted. Nothing is sent until then.</p>
+        <div class="lobby-actions"><button type="button" id="waitLeave">Leave</button></div>
+    </div>
+</div>
+
 <div class="room-container">
 
     <!-- Header -->
@@ -1466,6 +1523,7 @@
             <div class="room-divider"></div>
             <span class="room-title" id="conferenceName">Loading...</span>
             <span class="room-id" id="roomId"></span>
+            <span class="lock-mark" id="lockMark" hidden title="This room is locked" aria-label="This room is locked"></span>
         </div>
         <div class="room-header-right">
             <button type="button" class="rbadge rbadge-accent" id="modeBadge" aria-haspopup="dialog" aria-controls="secPanel" title="Connection security">P2P</button>
@@ -1619,6 +1677,11 @@
             <h3>Participants</h3>
             <button class="close-sidebar" onclick="closeSidebar('participants')" aria-label="Close" data-icon="close"></button>
         </div>
+        <div class="mod-controls" id="modControls" hidden>
+            <button type="button" class="mod-switch" id="lockSwitch" role="switch" aria-checked="false"><span>Lock room (no new people)</span><span class="track"></span></button>
+            <button type="button" class="mod-switch" id="waitingSwitch" role="switch" aria-checked="false" hidden><span>Ask before letting people in</span><span class="track"></span></button>
+        </div>
+        <div class="waiting-block" id="waitingBlock" hidden></div>
         <div class="sidebar-content" id="participantsList">
             <!-- Loaded dynamically -->
         </div>

@@ -19,6 +19,7 @@
     const HAND = '<path d="M8.5 13V6.5a1.5 1.5 0 0 1 3 0V11"/><path d="M11.5 11V4.5a1.5 1.5 0 0 1 3 0V11"/><path d="M14.5 11V6a1.5 1.5 0 0 1 3 0v7"/><path d="M8.5 13l-1.4-2.1a1.5 1.5 0 0 0-2.5 1.6l2.9 5.2C8.7 19.8 10.4 21 12.6 21h.9a5 5 0 0 0 5-5v-3"/>';
 
     window.Icons = {
+        lock:      svg('<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>', 16),
         hand:      svg(HAND),
         handSmall: svg(HAND, 14),
         reaction:  (name, size = 18) => svg(REACTION_BODIES[name] || '', size),
