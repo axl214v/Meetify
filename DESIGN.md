@@ -136,6 +136,17 @@ If an animation starts to feel like decoration, cut it. The owner will say.
 - Animated mockups are `aria-hidden`; their meaning is repeated in text.
 - The glass header keeps text contrast >= 4.5:1 over any content that scrolls under it.
 
+## Languages (i18n)
+
+English and Russian. The English text itself is the key: pages and scripts keep their English, `src/app/i18n/ru.json` maps it to Russian, and `js/i18n.js` swaps it in (nothing is requested from any other site).
+- HTML: `data-i18n` on a text element, `data-i18n-html` when the text has `<strong>` or links, `data-i18n-attr="title,aria-label,placeholder"` for attributes. Never put an element you look up by id inside a `data-i18n-html` text (it is rebuilt): split the sentence in pieces instead.
+- JS: `t('Text {name}', { name })`, `tn(n, '1 person', '{n} people')` (the Russian entry for the "many" text is an array `[one, few, many]`). Never build a sentence by gluing translated words.
+- A missing entry shows the English text. After editing `ru.json`: `node tools/make-i18n.js`, `node tools/i18n-check.js` (lists gaps, unused entries, placeholder and tag mismatches, forbidden wording), and for the landing `node tools/make-ru.js` (writes `/ru/`). `tests/i18n.test.js` runs all of it.
+- Scope is the `SCOPE` list in `tools/i18n-check.js`. Pages not translated yet load `js/i18n-fallback.js` instead (English only). The admin panel stays English.
+- Server messages are not translated on the server: the page shows `t(message)`, so list the English messages a page can show in `i18n/dynamic.json`.
+- The same English text has one Russian text everywhere; if a word needs two meanings, change the English wording, not the key.
+- Wording rules in Russian too: «фронтенд открыт для аудита», never «открытый исходный код» for the product, never «свой сервер». Russian is longer: no fixed widths on buttons, check 360 px.
+
 ## Copy
 
 - Plain verbs, active voice, sentence case. Describe what a thing does.

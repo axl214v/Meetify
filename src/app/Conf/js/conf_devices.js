@@ -107,7 +107,7 @@
         if (list.length === 0) {
             const opt = document.createElement('option');
             opt.value = '';
-            opt.textContent = 'Not found';
+            opt.textContent = t('Not found');
             select.appendChild(opt);
         }
     }
@@ -123,17 +123,17 @@
         switch (err && err.name) {
             case 'NotAllowedError':
             case 'SecurityError':
-                return 'Camera and microphone are blocked. Click the lock or camera icon in the address bar, allow them, then reload the page. You can still join to listen and chat.';
+                return t('Camera and microphone are blocked. Click the lock or camera icon in the address bar, allow them, then reload the page. You can still join to listen and chat.');
             case 'NotFoundError':
             case 'OverconstrainedError':
-                return 'No camera or microphone was found. You can still join to listen and chat.';
+                return t('No camera or microphone was found. You can still join to listen and chat.');
             case 'NotReadableError':
             case 'AbortError':
-                return 'The camera or microphone is used by another app. Close that app and choose the device again, or join without it.';
+                return t('The camera or microphone is used by another app. Close that app and choose the device again, or join without it.');
             case 'NotSupportedError':
-                return 'This browser cannot use a camera or microphone here. You can still join to listen and chat.';
+                return t('This browser cannot use a camera or microphone here. You can still join to listen and chat.');
             default:
-                return err ? 'The camera or microphone could not be started. You can still join to listen and chat.' : '';
+                return err ? t('The camera or microphone could not be started. You can still join to listen and chat.') : '';
         }
     }
 

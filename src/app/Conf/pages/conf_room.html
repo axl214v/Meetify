@@ -1237,6 +1237,13 @@
         }
         body.in-lobby .room-container { display: none; }
         .lobby-logo img { height: 26px; width: auto; display: block; }
+        .lobby-lang { position: absolute; top: 16px; right: 16px; }
+        .lobby-lang button {
+            height: 32px; padding: 0 12px; border-radius: 10px; cursor: pointer; font-family: var(--font); font-size: 0.82rem; font-weight: 600;
+            background: transparent; color: var(--text-2); border: 1px solid var(--border-strong);
+        }
+        .lobby-lang button:hover { color: var(--text); background: var(--surface-3); }
+        .lobby-lang button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
         .lobby-card {
             width: 100%; max-width: 880px; display: grid; gap: 24px;
             grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: start;
@@ -1471,51 +1478,52 @@
             .dev-block { width: auto; }
         }
     </style>
-    <script src="/js/i18n-fallback.js"></script>
+    <script src="/js/i18n.js"></script>
 </head>
 <body class="in-lobby">
 
 <div class="net-banner" id="netBanner" role="status" aria-live="polite" hidden>
     <span id="netBannerText"></span>
-    <button type="button" id="netBannerReload" hidden>Reload</button>
+    <button data-i18n type="button" id="netBannerReload" hidden>Reload</button>
 </div>
 
 <!-- Lobby: check camera, microphone and speakers before connecting -->
 <div id="lobby">
     <span class="lobby-logo"><img src="/assets/logo.png" alt="Meetify"></span>
+    <span id="langSlot" class="lobby-lang"></span>
     <div class="lobby-card">
         <div>
             <div class="lobby-preview cam-off" id="lobbyPreview">
                 <video id="lobbyVideo" autoplay muted playsinline></video>
-                <div class="lobby-nocam" id="lobbyNoCam">Camera is off</div>
+                <div data-i18n class="lobby-nocam" id="lobbyNoCam">Camera is off</div>
                 <div class="lobby-toggles">
-                    <button type="button" class="lobby-toggle" id="lobbyMicBtn" title="Microphone" aria-label="Microphone" data-icon="mic"></button>
-                    <button type="button" class="lobby-toggle" id="lobbyCamBtn" title="Camera" aria-label="Camera" data-icon="cam"></button>
+                    <button data-i18n-attr="title,aria-label" type="button" class="lobby-toggle" id="lobbyMicBtn" title="Microphone" aria-label="Microphone" data-icon="mic"></button>
+                    <button data-i18n-attr="title,aria-label" type="button" class="lobby-toggle" id="lobbyCamBtn" title="Camera" aria-label="Camera" data-icon="cam"></button>
                 </div>
             </div>
         </div>
         <div class="lobby-side">
             <div>
-                <h1 class="lobby-title" id="lobbyTitle">Ready to join?</h1>
-                <p class="lobby-sub">Check your picture and sound. Nothing is sent until you join.</p>
+                <h1 data-i18n class="lobby-title" id="lobbyTitle">Ready to join?</h1>
+                <p data-i18n class="lobby-sub">Check your picture and sound. Nothing is sent until you join.</p>
             </div>
             <div class="lobby-field">
-                <label for="lobbyMic">Microphone</label>
+                <label data-i18n for="lobbyMic">Microphone</label>
                 <select class="lobby-select" id="lobbyMic"></select>
                 <div class="lobby-meter" aria-hidden="true"><div id="lobbyMeter"></div></div>
             </div>
             <div class="lobby-field">
-                <label for="lobbyCam">Camera</label>
+                <label data-i18n for="lobbyCam">Camera</label>
                 <select class="lobby-select" id="lobbyCam"></select>
             </div>
             <div class="lobby-field" id="lobbySpeakerField" hidden>
-                <label for="lobbySpeaker">Speakers</label>
+                <label data-i18n for="lobbySpeaker">Speakers</label>
                 <select class="lobby-select" id="lobbySpeaker"></select>
             </div>
             <p class="lobby-error" id="lobbyError" role="alert"></p>
             <div class="lobby-actions">
-                <button type="button" class="lobby-join" id="lobbyJoin" disabled>Join now</button>
-                <a class="lobby-back" id="lobbyBack" href="conf.html">Back</a>
+                <button data-i18n type="button" class="lobby-join" id="lobbyJoin" disabled>Join now</button>
+                <a data-i18n class="lobby-back" id="lobbyBack" href="conf.html">Back</a>
             </div>
         </div>
     </div>
@@ -1526,9 +1534,9 @@
     <span class="lobby-logo"><img src="/assets/logo.png" alt="Meetify"></span>
     <div class="wait-card">
         <div class="lobby-preview" id="waitPreview"><video id="waitVideo" autoplay muted playsinline></video></div>
-        <h1 class="lobby-title">Waiting for the host to let you in</h1>
-        <p class="lobby-sub" id="waitText">You will join as soon as you are admitted. Nothing is sent until then.</p>
-        <div class="lobby-actions"><button type="button" id="waitLeave">Leave</button></div>
+        <h1 data-i18n class="lobby-title">Waiting for the host to let you in</h1>
+        <p data-i18n class="lobby-sub" id="waitText">You will join as soon as you are admitted. Nothing is sent until then.</p>
+        <div class="lobby-actions"><button data-i18n type="button" id="waitLeave">Leave</button></div>
     </div>
 </div>
 
@@ -1539,14 +1547,14 @@
         <div class="room-header-left">
             <span class="room-logo"><img src="/assets/logo.png" alt="Meetify"></span>
             <div class="room-divider"></div>
-            <span class="room-title" id="conferenceName">Loading...</span>
+            <span data-i18n class="room-title" id="conferenceName">Loading...</span>
             <span class="room-id" id="roomId"></span>
-            <span class="lock-mark" id="lockMark" hidden title="This room is locked" aria-label="This room is locked"></span>
+            <span data-i18n-attr="title,aria-label" class="lock-mark" id="lockMark" hidden title="This room is locked" aria-label="This room is locked"></span>
         </div>
         <div class="room-header-right">
             <span class="rec-chip" id="recChip" role="status" hidden><i class="rec-dot" aria-hidden="true"></i><span id="recChipText">REC</span></span>
-            <button type="button" class="rbadge rbadge-accent" id="modeBadge" aria-haspopup="dialog" aria-controls="secPanel" title="Connection security">P2P</button>
-            <button type="button" class="rbadge rbadge-success" id="liveBadge" aria-haspopup="dialog" aria-controls="secPanel" title="Connection security">Live</button>
+            <button data-i18n-attr="title" type="button" class="rbadge rbadge-accent" id="modeBadge" aria-haspopup="dialog" aria-controls="secPanel" title="Connection security">P2P</button>
+            <button data-i18n-attr="title" data-i18n type="button" class="rbadge rbadge-success" id="liveBadge" aria-haspopup="dialog" aria-controls="secPanel" title="Connection security">Live</button>
             <div class="room-meta">
                 <div class="meta-chip">
                     <span class="dot"></span>
@@ -1572,14 +1580,14 @@
                 <div class="video-overlay">
                     <div class="overlay-left">
                         <div class="overlay-avatar-initials" id="localOverlayAvatar">?</div>
-                        <span class="participant-name">You</span>
-                        <span class="hand-badge" id="localHandBadge" hidden aria-label="Your hand is raised"></span>
+                        <span data-i18n class="participant-name">You</span>
+                        <span data-i18n-attr="aria-label" class="hand-badge" id="localHandBadge" hidden aria-label="Your hand is raised"></span>
                     </div>
                     <div class="overlay-right">
-                        <div class="net-bars" id="localNetBars" data-level="3" hidden aria-label="Your connection"><i></i><i></i><i></i><i></i></div>
+                        <div data-i18n-attr="aria-label" class="net-bars" id="localNetBars" data-level="3" hidden aria-label="Your connection"><i></i><i></i><i></i><i></i></div>
                         <div class="status-pill" id="localMicStatus" data-icon="mic"></div>
                         <div class="status-pill" id="localVideoStatus" data-icon="cam"></div>
-                        <button class="pin-btn" id="localPinBtn" title="Pin (spotlight)" aria-label="Pin" data-icon="pin"></button>
+                        <button data-i18n-attr="title,aria-label" class="pin-btn" id="localPinBtn" title="Pin (spotlight)" aria-label="Pin" data-icon="pin"></button>
                     </div>
                 </div>
             </div>
@@ -1590,7 +1598,7 @@
         <div class="filmstrip-section hidden" id="filmstripSection">
             <div class="filmstrip-header">
                 <span class="filmstrip-label" id="filmstripLabel">0 others</span>
-                <button class="filmstrip-toggle-btn" id="filmstripToggleBtn" onclick="toggleStrip()">Hide</button>
+                <button data-i18n class="filmstrip-toggle-btn" id="filmstripToggleBtn" onclick="toggleStrip()">Hide</button>
             </div>
             <div class="filmstrip" id="filmstrip"></div>
         </div>
@@ -1599,37 +1607,37 @@
     <!-- Controls -->
     <div class="controls-bar">
         <div class="ctrl-group">
-            <button class="control-btn mic" id="toggleMic" title="Microphone (M). Hold Space while muted to talk" aria-label="Toggle microphone" aria-keyshortcuts="M" data-icon="mic"></button>
+            <button data-i18n-attr="title,aria-label" class="control-btn mic" id="toggleMic" title="Microphone (M). Hold Space while muted to talk" aria-label="Toggle microphone" aria-keyshortcuts="M" data-icon="mic"></button>
             <div class="ctrl-with-menu">
-                <button class="control-btn video" id="toggleVideo" title="Camera (V)" aria-label="Toggle camera" aria-keyshortcuts="V" data-icon="cam"></button>
-                <button class="ctrl-sub-btn" id="videoMenuBtn" title="Camera options" aria-label="Camera options">&#8964;</button>
+                <button data-i18n-attr="title,aria-label" class="control-btn video" id="toggleVideo" title="Camera (V)" aria-label="Toggle camera" aria-keyshortcuts="V" data-icon="cam"></button>
+                <button data-i18n-attr="title,aria-label" class="ctrl-sub-btn" id="videoMenuBtn" title="Camera options" aria-label="Camera options">&#8964;</button>
                 <div class="ctrl-dropdown has-devices" id="videoMenu" role="menu">
                     <div class="dev-block" id="devBlock">
-                        <label for="devMic">Microphone</label>
+                        <label data-i18n for="devMic">Microphone</label>
                         <select id="devMic"></select>
-                        <label for="devCam">Camera</label>
+                        <label data-i18n for="devCam">Camera</label>
                         <select id="devCam"></select>
-                        <label for="devSpeaker" id="devSpeakerLabel" hidden>Speakers</label>
+                        <label data-i18n for="devSpeaker" id="devSpeakerLabel" hidden>Speakers</label>
                         <select id="devSpeaker" hidden></select>
                     </div>
                     <div class="dev-sep"></div>
-                    <button class="ctrl-dropdown-item" id="flipHBtn" role="menuitem">
+                    <button data-i18n-html class="ctrl-dropdown-item" id="flipHBtn" role="menuitem">
                         <span class="flip-icon">&#8596;</span>Mirror
                     </button>
-                    <button class="ctrl-dropdown-item" id="flipVBtn" role="menuitem">
+                    <button data-i18n-html class="ctrl-dropdown-item" id="flipVBtn" role="menuitem">
                         <span class="flip-icon">&#8597;</span>Flip vertical
                     </button>
-                    <button class="ctrl-dropdown-item" id="rotateBtn" role="menuitem">
+                    <button data-i18n-html class="ctrl-dropdown-item" id="rotateBtn" role="menuitem">
                         <span class="flip-icon">&#8635;</span>Rotate 90°
                     </button>
                 </div>
             </div>
-            <button class="control-btn screen" id="toggleScreen" title="Share screen (S)" aria-label="Share screen" aria-keyshortcuts="S" data-icon="screen"></button>
+            <button data-i18n-attr="title,aria-label" class="control-btn screen" id="toggleScreen" title="Share screen (S)" aria-label="Share screen" aria-keyshortcuts="S" data-icon="screen"></button>
             <div class="ctrl-with-menu">
-                <button class="control-btn react" id="reactBtn" title="Reactions and raise hand (R)" aria-label="Reactions and raise hand" aria-haspopup="menu" aria-expanded="false" aria-keyshortcuts="R"></button>
+                <button data-i18n-attr="title,aria-label" class="control-btn react" id="reactBtn" title="Reactions and raise hand (R)" aria-label="Reactions and raise hand" aria-haspopup="menu" aria-expanded="false" aria-keyshortcuts="R"></button>
                 <div class="ctrl-dropdown has-grid" id="reactMenu" role="menu">
-                    <button class="ctrl-dropdown-item" id="handBtn" role="menuitem" aria-keyshortcuts="H"><span class="flip-icon" id="handBtnIcon"></span><span id="handBtnText">Raise hand (H)</span></button>
-                    <button class="ctrl-dropdown-item" id="recBtn" role="menuitem" hidden><span class="rec-dot" aria-hidden="true"></span><span id="recBtnText">Record on this device</span></button>
+                    <button class="ctrl-dropdown-item" id="handBtn" role="menuitem" aria-keyshortcuts="H"><span class="flip-icon" id="handBtnIcon"></span><span data-i18n id="handBtnText">Raise hand (H)</span></button>
+                    <button class="ctrl-dropdown-item" id="recBtn" role="menuitem" hidden><span class="rec-dot" aria-hidden="true"></span><span data-i18n id="recBtnText">Record on this device</span></button>
                     <div class="react-grid" id="reactGrid"></div>
                 </div>
             </div>
@@ -1638,12 +1646,12 @@
         <div class="ctrl-sep"></div>
 
         <div class="ctrl-group">
-            <button class="control-btn invite" id="inviteBtn" title="Copy invite link" aria-label="Copy invite link" data-icon="link"></button>
-            <button class="control-btn participants" id="toggleParticipants" title="Participants (P)" aria-label="Participants" aria-keyshortcuts="P">
+            <button data-i18n-attr="title,aria-label" class="control-btn invite" id="inviteBtn" title="Copy invite link" aria-label="Copy invite link" data-icon="link"></button>
+            <button data-i18n-attr="title,aria-label" class="control-btn participants" id="toggleParticipants" title="Participants (P)" aria-label="Participants" aria-keyshortcuts="P">
                 <span data-icon="users"></span>
-                <span class="notification-badge" id="handCount" style="display:none;" title="Raised hands">0</span>
+                <span data-i18n-attr="title" class="notification-badge" id="handCount" style="display:none;" title="Raised hands">0</span>
             </button>
-            <button class="control-btn chat" id="toggleChat" title="Chat (C)" aria-label="Chat" aria-keyshortcuts="C">
+            <button data-i18n-attr="title,aria-label" class="control-btn chat" id="toggleChat" title="Chat (C)" aria-label="Chat" aria-keyshortcuts="C">
                 <span data-icon="chat"></span>
                 <span class="notification-badge" id="chatBadge" style="display:none;">0</span>
             </button>
@@ -1651,8 +1659,8 @@
 
         <div class="ctrl-sep"></div>
 
-        <button class="control-btn leave" id="leaveBtn" aria-label="Leave room">
-            <span data-icon="leave"></span><span>Leave</span>
+        <button data-i18n-attr="aria-label" class="control-btn leave" id="leaveBtn" aria-label="Leave room">
+            <span data-icon="leave"></span><span data-i18n>Leave</span>
         </button>
     </div>
 
@@ -1660,32 +1668,32 @@
     <div class="shortcuts-backdrop" id="shortcutsPanel" hidden>
         <div class="shortcuts-card" role="dialog" aria-modal="true" aria-labelledby="shortcutsTitle">
             <div class="shortcuts-head">
-                <h2 id="shortcutsTitle">Keyboard shortcuts</h2>
-                <button type="button" class="sec-close" id="shortcutsClose" aria-label="Close"></button>
+                <h2 data-i18n id="shortcutsTitle">Keyboard shortcuts</h2>
+                <button data-i18n-attr="aria-label" type="button" class="sec-close" id="shortcutsClose" aria-label="Close"></button>
             </div>
             <dl class="shortcuts-list">
-                <div><dt><kbd>M</kbd></dt><dd>Microphone on / off</dd></div>
-                <div><dt><kbd>Space</kbd></dt><dd>Hold while muted to talk</dd></div>
-                <div><dt><kbd>V</kbd></dt><dd>Camera on / off</dd></div>
-                <div><dt><kbd>S</kbd></dt><dd>Share screen</dd></div>
-                <div><dt><kbd>C</kbd></dt><dd>Chat</dd></div>
-                <div><dt><kbd>P</kbd></dt><dd>Participants</dd></div>
-                <div><dt><kbd>H</kbd></dt><dd>Raise or lower your hand</dd></div>
-                <div><dt><kbd>R</kbd></dt><dd>Reactions</dd></div>
-                <div><dt><kbd>?</kbd></dt><dd>This list</dd></div>
-                <div><dt><kbd>Esc</kbd></dt><dd>Close menus and this list</dd></div>
+                <div><dt><kbd>M</kbd></dt><dd data-i18n>Microphone on / off</dd></div>
+                <div><dt><kbd data-i18n>Space</kbd></dt><dd data-i18n>Hold while muted to talk</dd></div>
+                <div><dt><kbd>V</kbd></dt><dd data-i18n>Camera on / off</dd></div>
+                <div><dt><kbd>S</kbd></dt><dd data-i18n>Share screen</dd></div>
+                <div><dt><kbd>C</kbd></dt><dd data-i18n>Chat</dd></div>
+                <div><dt><kbd>P</kbd></dt><dd data-i18n>Participants</dd></div>
+                <div><dt><kbd>H</kbd></dt><dd data-i18n>Raise or lower your hand</dd></div>
+                <div><dt><kbd>R</kbd></dt><dd data-i18n>Reactions</dd></div>
+                <div><dt><kbd>?</kbd></dt><dd data-i18n>This list</dd></div>
+                <div><dt><kbd>Esc</kbd></dt><dd data-i18n>Close menus and this list</dd></div>
             </dl>
-            <p class="shortcuts-note">Keys are ignored while you type in the chat.</p>
+            <p data-i18n class="shortcuts-note">Keys are ignored while you type in the chat.</p>
         </div>
     </div>
 
     <!-- Connection security -->
     <section class="sec-panel" id="secPanel" role="dialog" aria-labelledby="secTitle" aria-live="polite">
         <div class="sec-head">
-            <h2 id="secTitle">Connection security</h2>
-            <button type="button" class="sec-close" id="secClose" aria-label="Close" data-icon="close"></button>
+            <h2 data-i18n id="secTitle">Connection security</h2>
+            <button data-i18n-attr="aria-label" type="button" class="sec-close" id="secClose" aria-label="Close" data-icon="close"></button>
         </div>
-        <div class="sec-state"><span class="sec-dot" id="secDot"></span><div><strong id="secHeadline">Checking…</strong><span id="secDetail"></span></div></div>
+        <div class="sec-state"><span class="sec-dot" id="secDot"></span><div><strong data-i18n id="secHeadline">Checking…</strong><span id="secDetail"></span></div></div>
         <div class="sec-rows" id="secRows"></div>
         <dl class="sec-facts" id="secFacts"></dl>
         <p class="sec-note" id="secNote"></p>
@@ -1694,12 +1702,12 @@
     <!-- Participants Sidebar -->
     <div class="sidebar" id="participantsSidebar">
         <div class="sidebar-header">
-            <h3>Participants</h3>
-            <button class="close-sidebar" onclick="closeSidebar('participants')" aria-label="Close" data-icon="close"></button>
+            <h3 data-i18n>Participants</h3>
+            <button data-i18n-attr="aria-label" class="close-sidebar" onclick="closeSidebar('participants')" aria-label="Close" data-icon="close"></button>
         </div>
         <div class="mod-controls" id="modControls" hidden>
-            <button type="button" class="mod-switch" id="lockSwitch" role="switch" aria-checked="false"><span>Lock room (no new people)</span><span class="track"></span></button>
-            <button type="button" class="mod-switch" id="waitingSwitch" role="switch" aria-checked="false" hidden><span>Ask before letting people in</span><span class="track"></span></button>
+            <button type="button" class="mod-switch" id="lockSwitch" role="switch" aria-checked="false"><span data-i18n>Lock room (no new people)</span><span class="track"></span></button>
+            <button type="button" class="mod-switch" id="waitingSwitch" role="switch" aria-checked="false" hidden><span data-i18n>Ask before letting people in</span><span class="track"></span></button>
         </div>
         <div class="waiting-block" id="waitingBlock" hidden></div>
         <div class="sidebar-content" id="participantsList">
@@ -1710,15 +1718,15 @@
     <!-- Chat Sidebar -->
     <div class="sidebar" id="chatSidebar">
         <div class="sidebar-header">
-            <h3>Chat</h3>
-            <button class="close-sidebar" onclick="closeSidebar('chat')" aria-label="Close" data-icon="close"></button>
+            <h3 data-i18n>Chat</h3>
+            <button data-i18n-attr="aria-label" class="close-sidebar" onclick="closeSidebar('chat')" aria-label="Close" data-icon="close"></button>
         </div>
         <div class="chat-messages" id="chatMessages">
             <!-- Messages appear here -->
         </div>
         <div class="chat-input-container">
-            <input type="text" id="chatInput" placeholder="Type a message...">
-            <button id="sendBtn">Send</button>
+            <input data-i18n-attr="placeholder" type="text" id="chatInput" placeholder="Type a message...">
+            <button data-i18n id="sendBtn">Send</button>
         </div>
     </div>
 

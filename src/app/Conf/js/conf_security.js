@@ -43,7 +43,7 @@
                 dtls: transport?.dtlsState || null,
                 cipher: transport?.dtlsCipher || null,
                 srtp: transport?.srtpCipher || null,
-                path: pair ? (relayed ? 'Relayed (TURN)' : 'Direct') : null
+                path: pair ? (relayed ? t('Relayed (TURN)') : t('Direct')) : null
             };
         } catch { return {}; }
     }
@@ -63,14 +63,14 @@
             const state = sfuSendTransport?.connectionState || 'new';
             ok = state === 'connected';
             const fp = sfuServerFingerprints?.find(f => /sha-256/i.test(f.algorithm))?.value?.replace(/:/g, '');
-            if (fp) rows.push({ title: 'Media server', sub: 'Certificate code, the same for everyone in the room', code: await securityCode(fp) });
+            if (fp) rows.push({ title: t('Media server'), sub: t('Certificate code, the same for everyone in the room'), code: await securityCode(fp) });
             const info = sfuSendTransport ? await transportInfo(sfuSendTransport) : {};
-            if (info.cipher) facts.push(['Key exchange', 'DTLS ' + info.cipher]);
-            if (info.srtp) facts.push(['Media cipher', info.srtp]);
-            if (info.path) facts.push(['Route', info.path]);
-            headline.textContent = ok ? 'Encrypted to the media server' : 'Connecting to the media server…';
-            detail.textContent = ok ? 'Audio and video are encrypted on the way to the server (DTLS-SRTP).' : 'Waiting for the secure channel.';
-            note.textContent = 'Group calls pass through our media server, which forwards your stream to the others. It is not recorded or stored, but it is not end-to-end encrypted. For that, use a Private (P2P) call. To verify the server, everyone can compare the code above.';
+            if (info.cipher) facts.push([t('Key exchange'), 'DTLS ' + info.cipher]);
+            if (info.srtp) facts.push([t('Media cipher'), info.srtp]);
+            if (info.path) facts.push([t('Route'), info.path]);
+            headline.textContent = ok ? t('Encrypted to the media server') : t('Connecting to the media server…');
+            detail.textContent = ok ? t('Audio and video are encrypted on the way to the server (DTLS-SRTP).') : t('Waiting for the secure channel.');
+            note.textContent = t('Group calls pass through our media server, which forwards your stream to the others. It is not recorded or stored, but it is not end-to-end encrypted. For that, use a Private (P2P) call. To verify the server, everyone can compare the code above.');
         } else {
             const ids = Object.keys(peers);
             waiting = ids.length === 0;
@@ -85,27 +85,27 @@
                 const theirs = fingerprintOf(pc.remoteDescription?.sdp);
                 rows.push({
                     title: peerName(id),
-                    sub: connected ? (info.path || 'Connected') : 'Connecting…',
+                    sub: connected ? (info.path || t('Connected')) : t('Connecting…'),
                     code: mine && theirs ? await securityCode(mine, theirs) : null
                 });
                 if (info.cipher && !facts.length) {
-                    facts.push(['Key exchange', 'DTLS ' + info.cipher]);
-                    if (info.srtp) facts.push(['Media cipher', info.srtp]);
+                    facts.push([t('Key exchange'), 'DTLS ' + info.cipher]);
+                    if (info.srtp) facts.push([t('Media cipher'), info.srtp]);
                 }
             }
-            headline.textContent = waiting ? 'Nothing to protect yet' : ok ? 'Encrypted end to end' : 'Securing the connection…';
+            headline.textContent = waiting ? t('Nothing to protect yet') : ok ? t('Encrypted end to end') : t('Securing the connection…');
             detail.textContent = waiting
-                ? 'Audio and video go straight between participants. Nobody else is here yet.'
-                : ok ? 'Audio and video go straight between participants and are encrypted (DTLS-SRTP). Our server never sees them.'
-                     : 'Some connections are still being established.';
-            note.textContent = 'To verify a person, read your code to each other. If both codes match, nobody tampered with the connection. Each pair has its own code.';
+                ? t('Audio and video go straight between participants. Nobody else is here yet.')
+                : ok ? t('Audio and video go straight between participants and are encrypted (DTLS-SRTP). Our server never sees them.')
+                     : t('Some connections are still being established.');
+            note.textContent = t('To verify a person, read your code to each other. If both codes match, nobody tampered with the connection. Each pair has its own code.');
         }
 
         dot.className = 'sec-dot' + (ok && !waiting ? '' : ' warn');
         rowsEl.innerHTML = rows.map((r, i) => `<div class="sec-row"><div><b>${esc(r.title)}</b><small>${esc(r.sub)}</small></div>${
-            r.code ? `<button type="button" class="sec-code" data-i="${i}" title="Copy code">${esc(r.code)}</button>` : ''}</div>`).join('');
+            r.code ? `<button type="button" class="sec-code" data-i="${i}" title="${t('Copy code')}">${esc(r.code)}</button>` : ''}</div>`).join('');
         rowsEl.querySelectorAll('.sec-code').forEach(b => b.addEventListener('click', async () => {
-            try { await navigator.clipboard.writeText(b.textContent); showNotification('Code copied', 'success'); } catch {}
+            try { await navigator.clipboard.writeText(b.textContent); showNotification(t('Code copied'), 'success'); } catch {}
         }));
         factsEl.innerHTML = facts.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
     }
@@ -136,7 +136,7 @@
         } else {
             busy = Object.values(peers).some(pc => pc.connectionState !== 'connected');
         }
-        liveBadge.textContent = busy ? 'Connecting' : 'Live';
+        liveBadge.textContent = busy ? t('Connecting') : t('Live');
         liveBadge.className = 'rbadge ' + (busy ? 'rbadge-warning' : 'rbadge-success');
     }
     setInterval(updateLive, 1500);

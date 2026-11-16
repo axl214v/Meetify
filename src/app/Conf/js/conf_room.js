@@ -62,7 +62,7 @@ const roomMembers = new Set();   // String(userId) of everybody else in the room
 const raisedHands = new Set();   // String(userId) of everybody whose hand is up (told by the server, never stored)
 let lastParticipants = [];     // last list shown in the participants panel (re-rendered when hands change)
 let pttActive = false;         // Space is held and the microphone is on only because of it
-const REACTION_LABELS = { 'thumbs-up': 'Thumbs up', clap: 'Clap', heart: 'Heart', laugh: 'Laugh', surprise: 'Surprise', question: 'Question' };
+const REACTION_LABELS = { 'thumbs-up': t('Thumbs up'), clap: t('Clap'), heart: t('Heart'), laugh: t('Laugh'), surprise: t('Surprise'), question: t('Question') };
 let redirecting = false;      // the page is being sent elsewhere (no access): do not open the lobby
 let mediaReady = false;       // the lobby stream has been applied once (a socket reconnect must not reset mute)
 let lobbyChoice = { audio: true, video: true };   // microphone / camera switches chosen in the lobby
@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     conferenceId = urlParams.get('id');
 
     if (!conferenceId) {
-        showNotification('No conference ID provided', 'error');
+        showNotification(t('No conference ID provided'), 'error');
         window.location.href = 'conf.html';
         return;
     }
@@ -164,7 +164,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!gRes.ok) {
                 const err = await gRes.json().catch(() => ({}));
                 clearGuestSession();
-                showNotification(err.message || 'Your guest session has expired.', 'error');
+                showNotification(err.message ? t(err.message) : t('Your guest session has expired.'), 'error');
                 setTimeout(() => { window.location.href = '/'; }, 1500);
                 return;
             }
@@ -198,7 +198,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     } catch (error) {
         console.error('Initialization error:', error);
-        showNotification('Failed to join conference. Check camera/microphone permissions.', 'error');
+        showNotification(t('Failed to join conference. Check camera/microphone permissions.'), 'error');
         window.location.href = 'conf.html';
     }
 });
@@ -210,7 +210,7 @@ async function loadConferenceDetails() {
         hostId         = c.host_id || null;
         conferenceMode = c.mode || 'p2p';
         inviteCode     = c.invite_code || null;
-        document.getElementById('modeBadge').textContent = conferenceMode === 'sfu' ? 'Group' : 'P2P';
+        document.getElementById('modeBadge').textContent = conferenceMode === 'sfu' ? t('Group') : 'P2P';
         document.getElementById('roomId').textContent = `#${c.id}`;
         document.getElementById('conferenceName').textContent = c.name;
         await loadParticipants();
@@ -226,8 +226,8 @@ async function loadConferenceDetails() {
             const err = await response.json();
             showNotification(
                 err.requiresPassword
-                    ? 'Password required — opening the join page.'
-                    : 'Access denied.',
+                    ? t('Password required — opening the join page.')
+                    : t('Access denied.'),
                 'error'
             );
             redirecting = true;
@@ -246,12 +246,12 @@ async function loadConferenceDetails() {
         inviteCode     = data.conference.invite_code || null;
         waitingRoomOn  = !!data.conference.waiting_room;
         allowRecording = !!data.conference.allow_recording;
-        document.getElementById('modeBadge').textContent = conferenceMode === 'sfu' ? 'Group' : 'P2P';
+        document.getElementById('modeBadge').textContent = conferenceMode === 'sfu' ? t('Group') : 'P2P';
         document.getElementById('roomId').textContent = `#${data.conference.id}`;
 
         // Прямой заход по URL без участия — редирект
         if (!data.conference.isParticipant && !data.conference.isHost) {
-            showNotification('Join this conference first.', 'info');
+            showNotification(t('Join this conference first.'), 'info');
             redirecting = true;
             setTimeout(() => window.location.href = `conf_join.html?id=${encodeURIComponent(conferenceId)}`, 800);
             return;
@@ -312,7 +312,7 @@ function runLobby() {
     let meter = { stop() {}, resume() {} };
     let run = 0;   // a newer start() makes an older one drop its stream
 
-    $('lobbyTitle').textContent = $('conferenceName').textContent || 'Ready to join?';
+    $('lobbyTitle').textContent = $('conferenceName').textContent || t('Ready to join?');
     $('lobbyBack').href = homeUrl();
     if (Devices.speakerSupported) $('lobbySpeakerField').hidden = false;
 
@@ -333,7 +333,7 @@ function runLobby() {
         micBtn.disabled = !hasMic;
         camBtn.disabled = !hasCam;
         $('lobbyPreview').classList.toggle('cam-off', !camOn || !hasCam);
-        $('lobbyNoCam').textContent = hasCam ? 'Camera is off' : 'No camera';
+        $('lobbyNoCam').textContent = hasCam ? t('Camera is off') : t('No camera');
     };
 
     const fillLists = async () => {
@@ -426,7 +426,7 @@ async function switchDevice(kind, deviceId) {
     try {
         track = await Devices.getTrack(kind, deviceId);
     } catch (err) {
-        showNotification(Devices.errorText(err) || 'Could not switch the device.', 'error');
+        showNotification(Devices.errorText(err) || t('Could not switch the device.'), 'error');
         refreshDeviceMenu();
         return;
     }
@@ -468,7 +468,7 @@ async function applySpeaker(id) {
     }
     if (failed && !speakerWarned) {
         speakerWarned = true;
-        showNotification('Could not switch the speakers. The system default is used.', 'error');
+        showNotification(t('Could not switch the speakers. The system default is used.'), 'error');
     }
 }
 
@@ -611,7 +611,7 @@ async function initSocket() {
 
     socket.on('user-screen-share-start', ({ userId, userName }) => {
         roomScreenShareState.add(userId);
-        showNotification(`${userName} started screen sharing`, 'info');
+        showNotification(t('{name} started screen sharing', { name: userName }), 'info');
 
         const container = document.getElementById(`video-${userId}`);
         if (container) container.classList.add('screen-sharing');
@@ -693,7 +693,7 @@ async function initSocket() {
         if (raised) raisedHands.add(key); else raisedHands.delete(key);
         if (raised && !had && !isMe(userId)) {
             const name = document.getElementById(`video-${userId}`)?.querySelector('.participant-name')?.textContent || 'Someone';
-            showNotification(`${name} raised a hand`, 'info', 3000);
+            showNotification(t('{name} raised a hand', { name }), 'info', 3000);
         }
         refreshHands();
     });
@@ -729,34 +729,34 @@ async function initSocket() {
         if (audio === false) setMicEnabled(false);
         if (video === false) setCameraEnabled(false);
         if (screen === false && isScreenSharing) stopScreenShare();
-        showNotification('Your media was muted by the host', 'warning');
+        showNotification(t('Your media was muted by the host'), 'warning');
     });
 
     // Chat ban/unban by host/co-host
     socket.on('chat-banned', ({ banned }) => {
         chat.setEnabled(!banned);
         showNotification(
-            banned ? 'You have been banned from chat' : 'Your chat access has been restored',
+            banned ? t('You have been banned from chat') : t('Your chat access has been restored'),
             banned ? 'warning' : 'info'
         );
     });
 
     // Kicked from conference
     socket.on('force-disconnect', ({ message }) => {
-        cleanupAndRedirect(message || 'You have been removed from the conference.');
+        cleanupAndRedirect(message ? t(message) : t('You have been removed from the conference.'));
     });
 
     // Rejected on re-join after kick, or P2P room full
     socket.on('join-rejected', ({ reason } = {}) => {
         const msg = reason === 'full'
-            ? 'This room is full.'
+            ? t('This room is full.')
             : reason === 'locked'
-            ? 'This room is locked. Ask the host to unlock it.'
+            ? t('This room is locked. Ask the host to unlock it.')
             : reason === 'denied'
-            ? 'The host did not let you in.'
+            ? t('The host did not let you in.')
             : reason === 'forbidden'
-                ? 'Join this conference first (password or invite required).'
-                : 'You have been kicked from this conference.';
+                ? t('Join this conference first (password or invite required).')
+                : t('You have been kicked from this conference.');
         cleanupAndRedirect(msg);
     });
 
@@ -778,7 +778,7 @@ async function initSocket() {
     socket.on('recording-stop-forced', () => {
         if (!Recorder.isRecording()) return;
         Recorder.stop('forced');
-        showNotification('Your recording was stopped by the host.', 'warning');
+        showNotification(t('Your recording was stopped by the host.'), 'warning');
     });
 
     // Another participant was kicked — update UI
@@ -792,7 +792,7 @@ async function initSocket() {
         if (raisedHands.delete(String(kickedUserId))) refreshHands();
         applyPinLayout();
         updateParticipantCount();
-        showNotification(`A participant was removed by ${kickerName}`, 'info');
+        showNotification(t('A participant was removed by {name}', { name: kickerName }), 'info');
         loadParticipants();
     });
 
@@ -849,7 +849,7 @@ async function applyRoomParticipants({ participants, roomState, iceServers, resu
         const joinVideo = lobbyChoice.video;
         if (participants.length > 5 && joinAudio) {
             joinAudio = false;
-            showNotification('Large room detected — microphone muted on join', 'info');
+            showNotification(t('Large room detected — microphone muted on join'), 'info');
         }
         await initLocalMedia({ audio: joinAudio, video: joinVideo });
         mediaReady = true;
@@ -1140,13 +1140,13 @@ function addScreenTile(userId, stream, userName = 'Unknown', { local = false } =
     left.className = 'overlay-left';
     const nameEl = document.createElement('span');
     nameEl.className = 'participant-name';
-    nameEl.textContent = local ? 'Your screen' : `${userName} · screen`;
+    nameEl.textContent = local ? t('Your screen') : t('{name} · screen', { name: userName });
     left.appendChild(nameEl);
     const right = document.createElement('div');
     right.className = 'overlay-right';
     const pinBtn = document.createElement('button');
     pinBtn.className = 'pin-btn';
-    pinBtn.title = 'Pin (spotlight)';
+    pinBtn.title = t('Pin (spotlight)');
     pinBtn.innerHTML = Icons.pin;
     pinBtn.addEventListener('click', (e) => { e.stopPropagation(); togglePin(key); });
     right.appendChild(pinBtn);
@@ -1211,7 +1211,7 @@ function addRemoteVideo(userId, stream, userName = 'Unknown') {
     const handEl = document.createElement('span');
     handEl.className = 'hand-badge';
     handEl.hidden = true;
-    handEl.setAttribute('aria-label', 'Hand raised');
+    handEl.setAttribute('aria-label', t('Hand raised'));
     handEl.innerHTML = Icons.handSmall;
     overlayLeft.appendChild(handEl);
 
@@ -1225,7 +1225,7 @@ function addRemoteVideo(userId, stream, userName = 'Unknown') {
     videoPill.innerHTML = Icons.cam;
     const pinBtn = document.createElement('button');
     pinBtn.className = 'pin-btn';
-    pinBtn.title = 'Pin (spotlight)';
+    pinBtn.title = t('Pin (spotlight)');
     pinBtn.innerHTML = Icons.pin;
     pinBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -1288,7 +1288,7 @@ function applyPinLayout() {
         // Reset strip-collapsed so it opens fresh next time
         filmstripSection.classList.remove('strip-collapsed');
         const toggleBtn = document.getElementById('filmstripToggleBtn');
-        if (toggleBtn) toggleBtn.textContent = 'Hide';
+        if (toggleBtn) toggleBtn.textContent = t('Hide');
     } else {
         allContainers.forEach(c => {
             const uid = c.dataset.userId;
@@ -1309,7 +1309,7 @@ function applyPinLayout() {
         c.classList.toggle('pinned', isPinned);
         const btn = c.querySelector('.pin-btn');
         if (btn) {
-            btn.title = isPinned ? 'Unpin' : 'Pin (spotlight)';
+            btn.title = isPinned ? t('Unpin') : t('Pin (spotlight)');
             btn.innerHTML = isPinned ? Icons.pinOn : Icons.pin;
         }
     });
@@ -1318,14 +1318,14 @@ function applyPinLayout() {
 function updateFilmstripLabel() {
     const count = document.querySelectorAll('#filmstrip .video-container').length;
     const label = document.getElementById('filmstripLabel');
-    if (label) label.textContent = `${count} other${count !== 1 ? 's' : ''}`;
+    if (label) label.textContent = tn(count, '{n} other', '{n} others');
 }
 
 function toggleStrip() {
     const section = document.getElementById('filmstripSection');
     const btn = document.getElementById('filmstripToggleBtn');
     const collapsed = section.classList.toggle('strip-collapsed');
-    btn.textContent = collapsed ? 'Show' : 'Hide';
+    btn.textContent = collapsed ? t('Show') : t('Hide');
 }
 
 // Invite link points at the join page; it never carries the room password.
@@ -1333,7 +1333,7 @@ async function copyInviteLink() {
     const link = buildInviteLink({ id: conferenceId, invite_code: inviteCode });
     try {
         await navigator.clipboard.writeText(link);
-        showNotification('Invite link copied', 'success');
+        showNotification(t('Invite link copied'), 'success');
     } catch {
         window.prompt('Copy the invite link:', link);
     }
@@ -1470,7 +1470,7 @@ async function toggleScreenShare() {
         } catch (error) {
             console.error('Screen share error:', error);
             if (isScreenSharing) await stopScreenShare();
-            else showNotification('Failed to share screen', 'error');
+            else showNotification(t('Failed to share screen'), 'error');
         }
     } else {
         await stopScreenShare();
@@ -1578,12 +1578,12 @@ function renderRecording(refreshList = true) {
     const names = Array.from(recordingUsers.values());
     chip.hidden = names.length === 0;
     document.getElementById('recChipText').textContent =
-        names.length === 1 ? `REC · ${names[0]}` : `REC · ${names.length} people`;
-    chip.title = names.length ? `Recording on their own device: ${names.join(', ')}` : '';
+        names.length === 1 ? t('REC · {name}', { name: names[0] }) : tn(names.length, 'REC · {n} person', 'REC · {n} people');
+    chip.title = names.length ? t('Recording on their own device: {names}', { names: names.join(', ') }) : '';
     const btn = document.getElementById('recBtn');
     btn.hidden = !(mayRecord() || Recorder.isRecording());
     document.getElementById('recBtnText').textContent =
-        Recorder.isRecording() ? `Stop recording (${clock(Recorder.elapsed())})` : 'Record on this device';
+        Recorder.isRecording() ? t('Stop recording ({time})', { time: clock(Recorder.elapsed()) }) : t('Record on this device');
     if (refreshList && lastParticipants.length) renderParticipants(lastParticipants);
 }
 
@@ -1592,9 +1592,9 @@ function onUserRecording(userId, userName, recording) {
     const mine = id === String(currentUser?.id);
     if (recording) {
         recordingUsers.set(id, userName);
-        if (!mine) showNotification(`${userName} started recording on their device`, 'warning');
+        if (!mine) showNotification(t('{name} started recording on their device', { name: userName }), 'warning');
     } else if (recordingUsers.delete(id) && !mine) {
-        showNotification(`${userName} stopped recording`, 'info');
+        showNotification(t('{name} stopped recording', { name: userName }), 'info');
     }
     if (mine && recStartCheck) { clearTimeout(recStartCheck); recStartCheck = null; }
     renderRecording();
@@ -1617,12 +1617,12 @@ function onRecorderStop(reason, saved) {
     socket?.emit('recording-stop');
     renderRecording();
     if (reason === 'refused') return;
-    showNotification(saved ? 'Recording saved on your device.' : 'The recording could not be saved completely.', saved ? 'info' : 'error');
+    showNotification(saved ? t('Recording saved on your device.') : t('The recording could not be saved completely.'), saved ? 'info' : 'error');
 }
 
 async function startRecording() {
     if (!mayRecord() || Recorder.isRecording()) return;
-    const ok = await showConfirm('Everyone in the room will see that you are recording. The file is saved on your device and is never sent to Meetify.', 'Record', 'primary');
+    const ok = await showConfirm(t('Everyone in the room will see that you are recording. The file is saved on your device and is never sent to Meetify.'), t('Record'), 'primary');
     if (!ok) return;
     let started;
     try {
@@ -1630,11 +1630,11 @@ async function startRecording() {
             getSources: recorderSources,
             label: `room${conferenceId}`,
             onStop: onRecorderStop,
-            onMemoryWarning: () => showNotification('This long recording is kept in memory. Stop and save it soon.', 'warning')
+            onMemoryWarning: () => showNotification(t('This long recording is kept in memory. Stop and save it soon.'), 'warning')
         });
     } catch (err) {
         console.warn('Recording failed to start:', err);
-        showNotification('Recording is not available in this browser.', 'error');
+        showNotification(t('Recording is not available in this browser.'), 'error');
         return;
     }
     if (!started) return;   // the file dialog was cancelled
@@ -1644,11 +1644,11 @@ async function startRecording() {
         recStartCheck = null;
         if (Recorder.isRecording() && !recordingUsers.has(String(currentUser?.id))) {
             Recorder.stop('refused', { discard: true });
-            showNotification('You are not allowed to record in this room.', 'error');
+            showNotification(t('You are not allowed to record in this room.'), 'error');
         }
     }, 3000);
     recTimer = setInterval(() => renderRecording(false), 1000);
-    showNotification('Recording. The file is saved on your device.', 'info');
+    showNotification(t('Recording. The file is saved on your device.'), 'info');
     renderRecording();
 }
 
@@ -1668,8 +1668,8 @@ function showWaitRoom(moderatorPresent) {
     const video = document.getElementById('waitVideo');
     if (video && localStream && video.srcObject !== localStream) video.srcObject = localStream;
     document.getElementById('waitText').textContent = moderatorPresent
-        ? 'You will join as soon as you are admitted. Nothing is sent until then.'
-        : 'Nobody who can let you in is here yet. You will join as soon as the host arrives.';
+        ? t('You will join as soon as you are admitted. Nothing is sent until then.')
+        : t('Nobody who can let you in is here yet. You will join as soon as the host arrives.');
     document.body.classList.add('waiting');
 }
 
@@ -1694,7 +1694,7 @@ function setWaiting(list, notify) {
     for (const w of waitingPeople) {
         if (notifiedWaiting.has(String(w.userId))) continue;
         notifiedWaiting.add(String(w.userId));
-        if (notify) showNotification(`${w.userName} is waiting to join`, 'info');
+        if (notify) showNotification(t('{name} is waiting to join', { name: w.userName }), 'info');
     }
     renderWaiting();
 }
@@ -1708,9 +1708,9 @@ function renderWaiting() {
         const head = document.createElement('div');
         head.className = 'waiting-head';
         const title = document.createElement('span');
-        title.textContent = `Waiting (${waitingPeople.length})`;
+        title.textContent = t('Waiting ({n})', { n: waitingPeople.length });
         head.appendChild(title);
-        if (waitingPeople.length > 1) head.appendChild(waitButton('Admit all', 'admit-all', '', true));
+        if (waitingPeople.length > 1) head.appendChild(waitButton(t('Admit all'), 'admit-all', '', true));
         block.appendChild(head);
         for (const w of waitingPeople) {
             const row = document.createElement('div');
@@ -1718,7 +1718,7 @@ function renderWaiting() {
             const name = document.createElement('span');
             name.className = 'wname';
             name.textContent = w.userName;
-            row.append(name, waitButton('Admit', 'admit', w.userId, true), waitButton('Deny', 'deny', w.userId, false));
+            row.append(name, waitButton(t('Admit'), 'admit', w.userId, true), waitButton(t('Deny'), 'deny', w.userId, false));
             block.appendChild(row);
         }
     }
@@ -1755,7 +1755,7 @@ async function setWaitingRoomSetting(on) {
         });
         if (!res.ok) throw new Error('failed');
     } catch {
-        showNotification('Could not change the waiting room setting.', 'error');
+        showNotification(t('Could not change the waiting room setting.'), 'error');
     }
 }
 
@@ -1784,7 +1784,7 @@ function renderParticipants(participants) {
     const participantsList = document.getElementById('participantsList');
 
     if (participants.length === 0) {
-        participantsList.innerHTML = '<p style="color:var(--room-muted);text-align:center;padding:2rem;font-size:0.88rem;">No participants yet</p>';
+        participantsList.innerHTML = '<p style="color:var(--room-muted);text-align:center;padding:2rem;font-size:0.88rem;">' + t('No participants yet') + '</p>';
         return;
     }
 
@@ -1795,7 +1795,7 @@ function renderParticipants(participants) {
     participantsList.innerHTML = participants.map(p => {
         const uid = p.user_id || p.userId;
         const isHandUp = raisedHands.has(String(uid));
-        const name = p.username || p.userName || 'Unknown';
+        const name = p.username || p.userName || t('Unknown');
         const initials = getInitials(name);
         const isParticipantHost = !!(p.is_host || p.isHost);
         const isCoHost = coHosts.has(uid);
@@ -1805,10 +1805,10 @@ function renderParticipants(participants) {
         const canManageCoHost = isHost && !isSelf && !isParticipantHost && !p.guest;
 
         const badges = [
-            isParticipantHost ? `<span class="pbadge" title="Host">${Icons.crown}</span>` : '',
-            isCoHost && !isParticipantHost ? `<span class="pbadge" title="Co-host">${Icons.shield}</span>` : '',
-            isChatBanned ? '<span class="pbadge pbadge-text" title="Muted in chat">chat off</span>' : '',
-            isHandUp ? `<span class="pbadge" title="Hand raised">${Icons.handSmall}</span>` : ''
+            isParticipantHost ? `<span class="pbadge" title="${t('Host')}">${Icons.crown}</span>` : '',
+            isCoHost && !isParticipantHost ? `<span class="pbadge" title="${t('Co-host')}">${Icons.shield}</span>` : '',
+            isChatBanned ? `<span class="pbadge pbadge-text" title="${t('Muted in chat')}">${t('chat off')}</span>` : '',
+            isHandUp ? `<span class="pbadge" title="${t('Hand raised')}">${Icons.handSmall}</span>` : ''
         ].filter(Boolean).join('');
 
         const avatarHtml = p.avatar_url
@@ -1819,16 +1819,16 @@ function renderParticipants(participants) {
         const idAttr = escapeHtml(String(uid));
         const actionMenu = canActOn ? `
             <div class="mod-menu-wrap">
-                <button class="mod-menu-btn" data-mod="menu" data-uid="${idAttr}" title="Moderation options" aria-label="Moderation options">${Icons.more}</button>
+                <button class="mod-menu-btn" data-mod="menu" data-uid="${idAttr}" title="${t('Moderation options')}" aria-label="${t('Moderation options')}">${Icons.more}</button>
                 <div class="mod-menu" id="mod-menu-${idAttr}">
-                    ${isHandUp ? `<button data-lower-hand="${idAttr}">Lower hand</button>` : ''}
-                    ${recordingUsers.has(String(uid)) ? `<button data-mod="stop-rec" data-uid="${idAttr}">Stop their recording</button>` : ''}
-                    <button data-mod="audio" data-uid="${idAttr}">Mute mic</button>
-                    <button data-mod="video" data-uid="${idAttr}">Turn off camera</button>
-                    <button data-mod="screen" data-uid="${idAttr}">Stop screen share</button>
-                    <button data-mod="${isChatBanned ? 'chat-unban' : 'chat-ban'}" data-uid="${idAttr}">${isChatBanned ? 'Unban chat' : 'Ban from chat'}</button>
-                    ${canManageCoHost ? `<button data-mod="${isCoHost ? 'demote' : 'promote'}" data-uid="${idAttr}">${isCoHost ? 'Remove co-host' : 'Make co-host'}</button>` : ''}
-                    <button class="danger" data-mod="kick" data-uid="${idAttr}" data-name="${escapeHtml(name)}">Remove from room</button>
+                    ${isHandUp ? `<button data-lower-hand="${idAttr}">${t('Lower hand')}</button>` : ''}
+                    ${recordingUsers.has(String(uid)) ? `<button data-mod="stop-rec" data-uid="${idAttr}">${t('Stop their recording')}</button>` : ''}
+                    <button data-mod="audio" data-uid="${idAttr}">${t('Mute mic')}</button>
+                    <button data-mod="video" data-uid="${idAttr}">${t('Turn off camera')}</button>
+                    <button data-mod="screen" data-uid="${idAttr}">${t('Stop screen share')}</button>
+                    <button data-mod="${isChatBanned ? 'chat-unban' : 'chat-ban'}" data-uid="${idAttr}">${isChatBanned ? t('Unban chat') : t('Ban from chat')}</button>
+                    ${canManageCoHost ? `<button data-mod="${isCoHost ? 'demote' : 'promote'}" data-uid="${idAttr}">${isCoHost ? t('Remove co-host') : t('Make co-host')}</button>` : ''}
+                    <button class="danger" data-mod="kick" data-uid="${idAttr}" data-name="${escapeHtml(name)}">${t('Remove from room')}</button>
                 </div>
             </div>
         ` : '';
@@ -1838,7 +1838,7 @@ function renderParticipants(participants) {
                 <div class="participant-avatar">${avatarHtml}</div>
                 <div class="participant-info">
                     <strong>${escapeHtml(name)} ${badges}</strong>
-                    <small>Joined ${formatJoinTime(p.joined_at || p.joinedAt)}</small>
+                    <small>${t('Joined {time}', { time: formatJoinTime(p.joined_at || p.joinedAt) })}</small>
                 </div>
                 ${actionMenu}
             </div>
@@ -1847,15 +1847,13 @@ function renderParticipants(participants) {
 }
 
 function formatJoinTime(timestamp) {
-    if (!timestamp) return 'recently';
+    if (!timestamp) return t('recently');
     const date = new Date(timestamp);
     const diffMins = Math.floor((Date.now() - date) / 60000);
-    if (diffMins < 1) return 'just now';
-    if (diffMins === 1) return '1 minute ago';
-    if (diffMins < 60) return `${diffMins} minutes ago`;
+    if (diffMins < 1) return t('just now');
+    if (diffMins < 60) return tn(diffMins, '1 minute ago', '{n} minutes ago');
     const diffHours = Math.floor(diffMins / 60);
-    if (diffHours === 1) return '1 hour ago';
-    return `${diffHours} hours ago`;
+    return tn(diffHours, '1 hour ago', '{n} hours ago');
 }
 
 function updateParticipantCount() {
@@ -1863,7 +1861,7 @@ function updateParticipantCount() {
     const count = roomMembers.size + 1;
     document.getElementById('participantCount').textContent = count;
     const label = document.getElementById('participantLabel');
-    if (label) label.textContent = count === 1 ? 'participant' : 'participants';
+    if (label) label.textContent = tn(count, 'participant', 'participants');
 }
 
 function sendMessage() {
@@ -2054,7 +2052,7 @@ function hostChatBan(targetUserId, banned) {
 
 async function hostKick(targetUserId, targetName) {
     closeAllModMenus();
-    const confirmed = await showConfirm(`Kick ${targetName} from the conference?`, 'Kick', 'danger');
+    const confirmed = await showConfirm(t('Kick {name} from the conference?', { name: targetName }), t('Kick'), 'danger');
     if (!confirmed) return;
     socket?.emit('host:kick', { conferenceId, targetUserId });
 }
@@ -2070,7 +2068,7 @@ function hostDemoteCoHost(targetUserId) {
 }
 
 async function leaveConference() {
-    const confirmed = await showConfirm('Leave this conference?', 'Leave', 'danger');
+    const confirmed = await showConfirm(t('Leave this conference?'), t('Leave'), 'danger');
     if (!confirmed) return;
 
     await Recorder.stop('leave');   // the file is written before the tracks go
@@ -2152,7 +2150,7 @@ function refreshHands() {
     });
     const mine = raisedHands.has(String(currentUser?.id));
     const text = document.getElementById('handBtnText');
-    if (text) text.textContent = mine ? 'Lower hand (H)' : 'Raise hand (H)';
+    if (text) text.textContent = mine ? t('Lower hand (H)') : t('Raise hand (H)');
     document.getElementById('reactBtn')?.classList.toggle('active', mine);
 
     const count = document.getElementById('handCount');
@@ -2160,7 +2158,7 @@ function refreshHands() {
         const panelOpen = document.getElementById('participantsSidebar')?.classList.contains('open');
         const n = raisedHands.size + waitingPeople.length;
         count.textContent = String(n);
-        count.title = waitingPeople.length ? 'Raised hands and people waiting' : 'Raised hands';
+        count.title = waitingPeople.length ? t('Raised hands and people waiting') : t('Raised hands');
         count.style.display = n > 0 && !panelOpen ? 'flex' : 'none';
     }
     if (lastParticipants.length) renderParticipants(lastParticipants);
@@ -2350,9 +2348,9 @@ function updateNetBanner() {
     const el = document.getElementById('netBanner');
     if (!el) return;
     let text = '';
-    if (resilience.offline) text = 'You are offline. The call comes back when the network does.';
-    else if (resilience.serverDown) text = 'Connection to the server lost. Reconnecting…';
-    else if (resilience.sfuDown) text = 'Reconnecting to the group call…';
+    if (resilience.offline) text = t('You are offline. The call comes back when the network does.');
+    else if (resilience.serverDown) text = t('Connection to the server lost. Reconnecting…');
+    else if (resilience.sfuDown) text = t('Reconnecting to the group call…');
 
     if (text && !resilience.stuckTimer && !resilience.stuck) {
         // still down after a minute: offer a reload
@@ -2439,7 +2437,7 @@ function waitForMediasoup(timeout = 8000) {
 async function initSfu() {
     await waitForMediasoup();
     if (!window.MediasoupDevice) {
-        showNotification('mediasoup-client failed to load — Group call unavailable', 'error');
+        showNotification(t('mediasoup-client failed to load — Group call unavailable'), 'error');
         return;
     }
 
@@ -2705,21 +2703,21 @@ function _showQualityNotification(prev, next) {
     const improved = TIER_RANK[next] > TIER_RANK[prev];
     if (improved) {
         const msg = next === 'excellent'
-            ? 'Excellent connection — HD 1080p enabled'
-            : 'Connection stable — quality restored';
+            ? t('Excellent connection — HD 1080p enabled')
+            : t('Connection stable — quality restored');
         showNotification(msg, 'success', 3000);
     } else {
         const msgs = {
-            poor:     'Poor connection — quality reduced for stability',
-            degraded: 'Slow connection detected — quality reduced',
-            good:     'Connection slowed — HD mode paused',
+            poor:     t('Poor connection — quality reduced for stability'),
+            degraded: t('Slow connection detected — quality reduced'),
+            good:     t('Connection slowed — HD mode paused'),
         };
-        showNotification(msgs[next] || 'Quality reduced', 'warning', 6000);
+        showNotification(msgs[next] || t('Quality reduced'), 'warning', 6000);
     }
 }
 
 const NET_LEVEL = { poor: 1, degraded: 2, good: 3, excellent: 4 };
-const NET_TEXT = { poor: 'Your connection: poor', degraded: 'Your connection: slow', good: 'Your connection: good', excellent: 'Your connection: excellent' };
+const NET_TEXT = { poor: t('Your connection: poor'), degraded: t('Your connection: slow'), good: t('Your connection: good'), excellent: t('Your connection: excellent') };
 /** Four bars on your own tile: when something looks bad, you can see whether it is your network. */
 function setNetBars(tier) {
     const el = document.getElementById('localNetBars');

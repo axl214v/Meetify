@@ -13,9 +13,11 @@ const L = require('./i18n-lib');
 const APP = path.resolve(__dirname, '..', 'src', 'app');
 // Files translated so far. Round 2 pages are added here as they are done; the admin panel is never listed.
 const SCOPE = {
-    html: ['index.html', 'auth/Auth.html', 'auth/Reg.html', 'auth/resetpass.html', 'auth/resetpass-confirm.html', 'auth/verify-email.html', 'Conf/pages/conf_join.html'],
-    js: ['js/index.js', 'js/auth.js', 'js/reg.js', 'js/resetpass.js', 'js/resetpass-confirm.js', 'js/verify-email.js', 'js/cookie-banner.js', 'Conf/js/conf_join.js', 'js/notifications.js', 'Conf/js/conf_utils.js']
+    html: ['index.html', 'auth/Auth.html', 'auth/Reg.html', 'auth/resetpass.html', 'auth/resetpass-confirm.html', 'auth/verify-email.html', 'Conf/pages/conf_join.html', 'Conf/pages/conf_room.html'],
+    js: ['js/index.js', 'js/auth.js', 'js/reg.js', 'js/resetpass.js', 'js/resetpass-confirm.js', 'js/verify-email.js', 'js/cookie-banner.js', 'Conf/js/conf_join.js', 'js/notifications.js', 'Conf/js/conf_utils.js', 'Conf/js/conf_room.js', 'Conf/js/conf_devices.js', 'Conf/js/conf_security.js', 'Conf/components/chat.js']
 };
+// Texts that are the same in both languages on purpose (brand words, the REC mark)
+const SAME_OK = new Set(['REC · {name}']);
 const FORBIDDEN = [/открыт\S* исходн/i, /open[- ]?source/i, /self-?host/i, /свой сервер/i, /на своём сервере/i, /эмодзи|emoji/i];
 
 function read(rel) { return fs.readFileSync(path.join(APP, rel), 'utf8'); }
@@ -60,7 +62,7 @@ function check() {
             if (e.html && L.tagsOf(v) !== L.tagsOf(key)) problems.push(`HTML tags differ: "${key.slice(0, 70)}"`);
             if (!e.html && /<\/?[a-z]/i.test(v) && !/<\/?[a-z]/i.test(key)) problems.push(`unexpected HTML in the Russian text of "${key.slice(0, 70)}"`);
         }
-        if (!Array.isArray(val) && val === key) problems.push(`Russian text equals the English one: "${key.slice(0, 70)}"`);
+        if (!Array.isArray(val) && val === key && !SAME_OK.has(key)) problems.push(`Russian text equals the English one: "${key.slice(0, 70)}"`);
     }
     for (const [key, val] of Object.entries(dict)) {
         if (!used.has(key)) problems.push(`unused in ru.json: "${key.slice(0, 90)}"`);

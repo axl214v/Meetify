@@ -291,9 +291,9 @@ class Chat {
     this.sendButton.disabled = !enabled;
     
     if (!enabled) {
-      this.inputElement.placeholder = 'Chat is disabled';
+      this.inputElement.placeholder = t('Chat is disabled');
     } else {
-      this.inputElement.placeholder = 'Type a message...';
+      this.inputElement.placeholder = t('Type a message...');
     }
   }
 
