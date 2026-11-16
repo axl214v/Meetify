@@ -20,6 +20,7 @@
 
     window.Icons = {
         lock:      svg('<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>', 16),
+        pip:       svg('<rect x="3" y="5" width="18" height="14" rx="2"/><rect x="12" y="11" width="7" height="5" rx="1" fill="currentColor"/>', 18),
         hand:      svg(HAND),
         handSmall: svg(HAND, 14),
         reaction:  (name, size = 18) => svg(REACTION_BODIES[name] || '', size),

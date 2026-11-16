@@ -136,6 +136,10 @@ If an animation starts to feel like decoration, cut it. The owner will say.
 - Animated mockups are `aria-hidden`; their meaning is repeated in text.
 - The glass header keeps text contrast >= 4.5:1 over any content that scrolls under it.
 
+## Install and mobile
+
+The site is installable (manifest, icons, `theme-color`) but has **no service worker**: the app never caches anything, so a release is live at once and `/verify/` stays honest. Anything that would need a service worker (offline mode, push) is a separate decision. The "Install app" button lives with the page's main actions, never in the narrow top bar.
+
 ## Languages (i18n)
 
 English and Russian. The English text itself is the key: pages and scripts keep their English, `src/app/i18n/ru.json` maps it to Russian, and `js/i18n.js` swaps it in (nothing is requested from any other site).

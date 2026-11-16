@@ -1,0 +1,16 @@
+{
+  "name": "Meetify",
+  "short_name": "Meetify",
+  "description": "Private video rooms in your browser.",
+  "start_url": "/Conf/pages/conf.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#06080d",
+  "theme_color": "#06080d",
+  "lang": "en",
+  "icons": [
+    { "src": "/assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -9,8 +9,13 @@
     const DEFAULT_THEME = 'dark';
 
     // Apply theme immediately to avoid flash
+    // The browser bar and the installed app's title bar follow the theme
+    var THEME_COLOR = { dark: '#06080d', light: '#f3f6fb' };
+
     function applyTheme(theme) {
         document.documentElement.setAttribute('data-theme', theme);
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', THEME_COLOR[theme] || THEME_COLOR.dark);
     }
 
     // Get saved theme or default

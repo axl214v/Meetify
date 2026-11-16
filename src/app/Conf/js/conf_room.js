@@ -410,6 +410,7 @@ async function refreshDeviceMenu() {
         $('devSpeaker').hidden = false;
         Devices.fillSelect($('devSpeaker'), list.speakers, choice.speakerId);
     }
+    $('devSwitchCam').hidden = list.cams.length < 2;   // phones: front and back; never on a laptop with one camera
 }
 
 /** The sender of a peer connection that carries our camera / microphone (never the screen share). */
@@ -474,6 +475,17 @@ async function applySpeaker(id) {
 
 function setupDevicesMenu() {
     const $ = (id) => document.getElementById(id);
+    // One tap from the front to the back camera (and round again)
+    $('devSwitchCam').addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const list = await Devices.listDevices();
+        if (list.cams.length < 2) return;
+        const current = Devices.trackDeviceId(localStream, 'video');
+        const i = list.cams.findIndex(c => c.id === current);
+        const next = list.cams[(i + 1) % list.cams.length];
+        await switchDevice('video', next.id);
+        refreshDeviceMenu();
+    });
     // clicks inside the block must not close the menu
     $('devBlock').addEventListener('click', (e) => e.stopPropagation());
     $('devMic').addEventListener('change', () => switchDevice('audio', $('devMic').value));
@@ -842,6 +854,8 @@ async function applyRoomParticipants({ participants, roomState, iceServers, resu
     // A re-join after the others were told we left (an outage longer than the server's grace period):
     // they closed their side, so a connection that is not working right now is dead, not recovering.
     const droppedByOthers = mediaReady && resumed === false;
+
+    KeepAwake.start();   // the call has started: the screen stays on (asked again after a hidden tab)
 
     // Only the first time: after a reconnect the person's current mute state stays
     if (!mediaReady) {
@@ -1361,6 +1375,7 @@ function setupEventListeners() {
     setupReactions();
     setupWaitingRoom();
     setupRecording();
+    setupPip();
     setupShortcuts();
 
     const videoMenuBtn = document.getElementById('videoMenuBtn');
@@ -1660,6 +1675,50 @@ function setupRecording() {
         else startRecording();
     });
     renderRecording();
+}
+
+// ---- Picture-in-picture --------------------------------------------------------
+// The picture of one person in a small floating window, so the call stays visible while another tab or app is
+// in front. The click on the menu item is the user gesture the browser asks for.
+
+const pipSupported = () => !!document.pictureInPictureEnabled && typeof HTMLVideoElement.prototype.requestPictureInPicture === 'function';
+
+/** The pinned person, else the one who is talking, else the first with a live picture. Never yourself. */
+function pickPipVideo() {
+    const tiles = Array.from(document.querySelectorAll('#videoGrid .video-container, #filmstrip .video-container'))
+        .filter(t => t.id !== 'localVideoContainer' && !t.classList.contains('screen-tile'));
+    const live = (t) => { const v = t.querySelector('video'); return v && v.readyState >= 2 && v.videoWidth > 0 && !t.classList.contains('cam-off') ? v : null; };
+    for (const pick of [t => t.classList.contains('pinned'), t => t.classList.contains('speaking'), () => true]) {
+        const hit = tiles.filter(pick).map(live).find(Boolean);
+        if (hit) return hit;
+    }
+    return null;
+}
+
+function renderPip() {
+    const btn = document.getElementById('pipBtn');
+    btn.hidden = !pipSupported();
+    document.getElementById('pipBtnIcon').innerHTML = Icons.pip;
+    document.getElementById('pipBtnText').textContent = document.pictureInPictureElement ? t('Close picture-in-picture') : t('Picture-in-picture');
+}
+
+async function togglePip() {
+    try {
+        if (document.pictureInPictureElement) { await document.exitPictureInPicture(); return; }
+        const video = pickPipVideo();
+        if (!video) { showNotification(t('Nobody to show yet'), 'info'); return; }
+        await video.requestPictureInPicture();
+    } catch (err) {
+        console.warn('Picture-in-picture failed:', err);
+    }
+    renderPip();
+}
+
+function setupPip() {
+    document.getElementById('pipBtn').addEventListener('click', (e) => { e.stopPropagation(); closeReactMenu(); togglePip(); });
+    document.addEventListener('enterpictureinpicture', renderPip, true);
+    document.addEventListener('leavepictureinpicture', renderPip, true);
+    renderPip();
 }
 
 // ---- Lock and waiting room -------------------------------------------------
@@ -2123,6 +2182,7 @@ async function rejoinAfterReload() {
 let reloading = false;   // the Reload button of the network banner: the person is not leaving
 function onPageGone() {
     if (leaving) return;
+    KeepAwake.stop();
     Recorder.stop('leave');
     leaving = true;   // closing the page: no reconnect attempts while it goes away
     if (joinedConference && conferenceId && !guestSession && !reloading) {
@@ -2394,6 +2454,8 @@ function startNetworkWatch() {
 
 /** Stop every retry, timer and listener: the person is leaving (or was removed). */
 function teardownResilience() {
+    KeepAwake.stop();
+    if (document.pictureInPictureElement) document.exitPictureInPicture().catch(() => {});
     leaving = true;
     window.removeEventListener('offline', onBrowserOffline);
     window.removeEventListener('online', onBrowserOnline);

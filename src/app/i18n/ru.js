@@ -483,5 +483,10 @@ window.__RU = {
  "Code copied": "Код скопирован",
  "Connecting": "Подключение",
  "Chat is disabled": "Чат отключён",
- "Show": "Показать"
+ "Show": "Показать",
+ "Install app": "Установить приложение",
+ "Picture-in-picture": "Картинка в картинке",
+ "Close picture-in-picture": "Закрыть картинку в картинке",
+ "Nobody to show yet": "Пока некого показывать",
+ "Switch camera": "Сменить камеру"
 };

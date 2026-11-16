@@ -14,7 +14,7 @@ const APP = path.resolve(__dirname, '..', 'src', 'app');
 // Files translated so far. Round 2 pages are added here as they are done; the admin panel is never listed.
 const SCOPE = {
     html: ['index.html', 'auth/Auth.html', 'auth/Reg.html', 'auth/resetpass.html', 'auth/resetpass-confirm.html', 'auth/verify-email.html', 'Conf/pages/conf_join.html', 'Conf/pages/conf_room.html'],
-    js: ['js/index.js', 'js/auth.js', 'js/reg.js', 'js/resetpass.js', 'js/resetpass-confirm.js', 'js/verify-email.js', 'js/cookie-banner.js', 'Conf/js/conf_join.js', 'js/notifications.js', 'Conf/js/conf_utils.js', 'Conf/js/conf_room.js', 'Conf/js/conf_devices.js', 'Conf/js/conf_security.js', 'Conf/components/chat.js']
+    js: ['js/index.js', 'js/auth.js', 'js/reg.js', 'js/resetpass.js', 'js/resetpass-confirm.js', 'js/verify-email.js', 'js/cookie-banner.js', 'Conf/js/conf_join.js', 'js/notifications.js', 'Conf/js/conf_utils.js', 'js/install.js', 'Conf/js/conf_room.js', 'Conf/js/conf_devices.js', 'Conf/js/conf_security.js', 'Conf/components/chat.js']
 };
 // Texts that are the same in both languages on purpose (brand words, the REC mark)
 const SAME_OK = new Set(['REC · {name}']);

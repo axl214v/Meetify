@@ -9,6 +9,10 @@
     <link rel="stylesheet" href="/assets/fonts/fonts.css">
     <link rel="stylesheet" href="/styles/tokens.css">
     <link rel="icon" href="/assets/logo-mark.png">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#06080d">
+    <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
     <style>
         /* ============================================ */
         /* Variables                                    */
@@ -1356,7 +1360,8 @@
         .rec-chip #recChipText { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         @keyframes rec-pulse { 50% { opacity: 0.35; } }
         @media (prefers-reduced-motion: reduce) { .rec-chip .rec-dot { animation: none; } }
-        #recBtn[hidden] { display: none; }
+        #recBtn[hidden], #pipBtn[hidden], #devSwitchCam[hidden] { display: none; }
+        #pipBtn .pip-icon { display: inline-flex; margin: 0 6px 0 2px; }
         #recBtn .rec-dot { margin: 0 4px; }
         @media (max-width: 520px) { .rec-chip { padding: 3px 8px; } .rec-chip #recChipText { max-width: 22vw; } }
 
@@ -1621,6 +1626,7 @@
                         <select id="devSpeaker" hidden></select>
                     </div>
                     <div class="dev-sep"></div>
+                    <button class="ctrl-dropdown-item" id="devSwitchCam" role="menuitem" hidden><span class="flip-icon">&#8635;</span><span data-i18n>Switch camera</span></button>
                     <button data-i18n-html class="ctrl-dropdown-item" id="flipHBtn" role="menuitem">
                         <span class="flip-icon">&#8596;</span>Mirror
                     </button>
@@ -1638,6 +1644,7 @@
                 <div class="ctrl-dropdown has-grid" id="reactMenu" role="menu">
                     <button class="ctrl-dropdown-item" id="handBtn" role="menuitem" aria-keyshortcuts="H"><span class="flip-icon" id="handBtnIcon"></span><span data-i18n id="handBtnText">Raise hand (H)</span></button>
                     <button class="ctrl-dropdown-item" id="recBtn" role="menuitem" hidden><span class="rec-dot" aria-hidden="true"></span><span data-i18n id="recBtnText">Record on this device</span></button>
+                    <button class="ctrl-dropdown-item" id="pipBtn" role="menuitem" hidden><span class="pip-icon" id="pipBtnIcon"></span><span id="pipBtnText">Picture-in-picture</span></button>
                     <div class="react-grid" id="reactGrid"></div>
                 </div>
             </div>
@@ -1749,6 +1756,7 @@
 <script src="/Conf/js/icons.js"></script>
 <script src="/Conf/js/conf_speaking.js"></script>
 <script src="/Conf/js/conf_recorder.js"></script>
+<script src="/Conf/js/conf_wake.js"></script>
 <script src="/Conf/js/conf_devices.js"></script>
 <script src="/Conf/js/conf_room.js"></script>
 <script src="/Conf/js/conf_security.js"></script>
