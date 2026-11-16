@@ -834,13 +834,13 @@ async function applyRoomParticipants({ participants, roomState, iceServers, resu
     console.log('room-participants received:', JSON.stringify(participants), 'roomState:', roomState);
 
     hideWaitRoom();
-    if (roomState) {
+    if (roomState?.coHosts) coHosts = new Set(roomState.coHosts);
+    if (roomState) {            // after the roles: the controls and the record item depend on them
         waitingRoomOn = !!roomState.waitingRoom;
         allowRecording = !!roomState.allowRecording;
         setLocked(roomState.locked);
         setRecordingFromState(roomState.recording);
     }
-    if (roomState?.coHosts) coHosts = new Set(roomState.coHosts);
     if (roomState?.chatBanned) chatBanned = new Set(roomState.chatBanned);
     if (roomState?.raisedHands) {
         raisedHands.clear();
@@ -1622,8 +1622,22 @@ function setRecordingFromState(list) {
     for (const r of Array.isArray(list) ? list : []) recordingUsers.set(String(r.userId), r.userName);
     const me = String(currentUser?.id);
     if (recordingUsers.has(me) && !Recorder.isRecording()) socket?.emit('recording-stop');
-    else if (!recordingUsers.has(me) && Recorder.isRecording()) socket?.emit('recording-start');
+    else if (!recordingUsers.has(me) && Recorder.isRecording()) announceRecording();
     renderRecording();
+}
+// Tell the room, and make sure the room really shows the mark: no mark, no recording. The server may refuse
+// (the host switched it off a moment ago, or the role is gone after a rejoin).
+// A fresh recording that is refused is thrown away; one that ran with the mark before keeps what it has.
+function announceRecording(fresh = false) {
+    socket?.emit('recording-start');
+    if (recStartCheck) clearTimeout(recStartCheck);
+    recStartCheck = setTimeout(() => {
+        recStartCheck = null;
+        if (Recorder.isRecording() && !recordingUsers.has(String(currentUser?.id))) {
+            Recorder.stop('refused', { discard: fresh });
+            if (fresh) showNotification(t('You are not allowed to record in this room.'), 'error');
+        }
+    }, 3000);
 }
 
 function onRecorderStop(reason, saved) {
@@ -1631,7 +1645,10 @@ function onRecorderStop(reason, saved) {
     if (recStartCheck) { clearTimeout(recStartCheck); recStartCheck = null; }
     socket?.emit('recording-stop');
     renderRecording();
-    if (reason === 'refused') return;
+    if (reason === 'refused') {
+        if (!Recorder.lastEmpty()) showNotification(t('Recording stopped: you may no longer record in this room. What was recorded is saved.'), 'warning', 6000);
+        return;
+    }
     showNotification(saved ? t('Recording saved on your device.') : t('The recording could not be saved completely.'), saved ? 'info' : 'error');
 }
 
@@ -1653,17 +1670,9 @@ async function startRecording() {
         return;
     }
     if (!started) return;   // the file dialog was cancelled
-    socket?.emit('recording-start');
-    // The server may refuse (the host switched it off a moment ago): then nothing stays recording
-    recStartCheck = setTimeout(() => {
-        recStartCheck = null;
-        if (Recorder.isRecording() && !recordingUsers.has(String(currentUser?.id))) {
-            Recorder.stop('refused', { discard: true });
-            showNotification(t('You are not allowed to record in this room.'), 'error');
-        }
-    }, 3000);
+    announceRecording(true);
     recTimer = setInterval(() => renderRecording(false), 1000);
-    showNotification(t('Recording. The file is saved on your device.'), 'info');
+    showNotification(t('Recording. Stop it before you close this tab, or the file is lost.'), 'info', 6000);
     renderRecording();
 }
 
@@ -1846,6 +1855,9 @@ function renderParticipants(participants) {
         participantsList.innerHTML = '<p style="color:var(--room-muted);text-align:center;padding:2rem;font-size:0.88rem;">' + t('No participants yet') + '</p>';
         return;
     }
+
+    // only people who are in the call: a member who waits at the door or is still in the lobby is not listed
+    if (joinedConference) participants = participants.filter(p => isMe(p.user_id || p.userId) || roomMembers.has(String(p.user_id || p.userId)));
 
     // raised hands first (the order of everybody else stays)
     const handUp = (p) => raisedHands.has(String(p.user_id || p.userId));
@@ -2047,7 +2059,8 @@ function cleanupSfu() {
 }
 
 function cleanupAndRedirect(reason) {
-    Recorder.stop('leave');
+    // a recording is written before the page goes (at most 5 s)
+    const saved = Promise.race([Recorder.stop('leave'), new Promise(r => setTimeout(r, 5000))]);
     teardownResilience();
     if (roomTimer) clearInterval(roomTimer);
     if (localStream) localStream.getTracks().forEach(t => t.stop());
@@ -2058,7 +2071,7 @@ function cleanupAndRedirect(reason) {
     stopQualityMonitor();
     if (socket) socket.disconnect();
     alert(reason);
-    window.location.href = homeUrl();
+    saved.then(() => { window.location.href = homeUrl(); });
 }
 
 // ============================================================
@@ -2191,7 +2204,12 @@ function onPageGone() {
     }
     if (socket) socket.disconnect();
 }
-window.addEventListener('beforeunload', onPageGone);
+window.addEventListener('beforeunload', (e) => {
+    // A recording that is not stopped is lost with the tab: the browser asks first, and nothing is torn down
+    // until the page really goes (pagehide below).
+    if (!leaving && Recorder.isRecording()) { e.preventDefault(); e.returnValue = ''; return; }
+    onPageGone();
+});
 // phones do not always fire beforeunload; a page kept in the back/forward cache is not gone
 window.addEventListener('pagehide', (e) => { if (!e.persisted) onPageGone(); });
 

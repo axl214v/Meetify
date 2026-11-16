@@ -54,6 +54,7 @@
     }
 
     let st = null;   // the one running recording
+    let lastEmpty = true;   // the recording that ended last wrote nothing
 
     const trackIdsOf = (stream) => stream.getAudioTracks().map(t => t.id).sort().join(',');
 
@@ -159,12 +160,13 @@
         const ctx = canvas.getContext('2d', { alpha: false });
         const Ctx = window.AudioContext || window.webkitAudioContext;
         const audioCtx = new Ctx();
+        if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});   // the file dialog may have used up the click
         const dest = audioCtx.createMediaStreamDestination();
 
         st = {
             getSources: opts.getSources, onStop: opts.onStop, onMemoryWarning: opts.onMemoryWarning,
             mime, name, writable, queue: Promise.resolve(), chunks: [], failed: null, stopping: null,
-            canvas, ctx, audioCtx, dest, nodes: new Map(), startedAt: Date.now(), warned: false, timers: []
+            canvas, ctx, audioCtx, dest, nodes: new Map(), startedAt: Date.now(), warned: false, timers: [], bytes: 0
         };
 
         syncAudio();
@@ -183,8 +185,12 @@
         st.mr = mr;
         mr.ondataavailable = (e) => {
             if (!e.data || !e.data.size) return;
-            if (st.writable) st.queue = st.queue.then(() => st.writable.write(e.data)).catch(err => { st.failed = err; });
-            else st.chunks.push(e.data);
+            const cur = st;
+            if (!cur) return;
+            // a write that fails (disk full, file removed) ends the recording: better a short file than a silent loss
+            if (cur.writable) cur.queue = cur.queue.then(() => cur.writable.write(e.data)).catch(err => { if (!cur.failed) { cur.failed = err; if (st === cur) stop('error'); } });
+            else cur.chunks.push(e.data);
+            cur.bytes += e.data.size;
         };
         mr.onerror = () => { stop('error'); };
         mr.onstop = () => { finish(); };
@@ -228,6 +234,7 @@
             setTimeout(() => URL.revokeObjectURL(url), 60_000);
         }
         st = null;
+        lastEmpty = cur.bytes === 0 || !!cur.discard;
         if (cur.onStop) cur.onStop(cur.stopReason || 'stop', saved && !cur.failed);
         if (cur.stopping) cur.stopping();
     }
@@ -254,6 +261,7 @@
         isRecording: () => !!st,
         elapsed: () => (st ? Date.now() - st.startedAt : 0),
         usesDisk: () => !!(st && st.writable),
+        lastEmpty: () => lastEmpty,
         _layout: layout
     };
     if (typeof window !== 'undefined') window.Recorder = api;
