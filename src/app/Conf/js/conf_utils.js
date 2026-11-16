@@ -10,11 +10,11 @@ function formatDate(dateString) {
     const now = new Date();
     
     // Check if invalid date
-    if (isNaN(date.getTime())) return 'Invalid date';
+    if (isNaN(date.getTime())) return t('Invalid date');
     
     // If today, show time only
     if (date.toDateString() === now.toDateString()) {
-        return date.toLocaleTimeString('en-US', { 
+        return date.toLocaleTimeString(I18n.locale, { 
             hour: '2-digit', 
             minute: '2-digit' 
         });
@@ -22,7 +22,7 @@ function formatDate(dateString) {
     
     // If this year, show month and day
     if (date.getFullYear() === now.getFullYear()) {
-        return date.toLocaleDateString('en-US', { 
+        return date.toLocaleDateString(I18n.locale, { 
             month: 'short', 
             day: 'numeric', 
             hour: '2-digit', 
@@ -31,7 +31,7 @@ function formatDate(dateString) {
     }
     
     // Otherwise, show full date
-    return date.toLocaleDateString('en-US', { 
+    return date.toLocaleDateString(I18n.locale, { 
         year: 'numeric', 
         month: 'short', 
         day: 'numeric',
@@ -46,7 +46,7 @@ function formatDate(dateString) {
  * @returns {string} Relative time string
  */
 function formatRelativeTime(timestamp) {
-    if (!timestamp) return 'recently';
+    if (!timestamp) return t('recently');
     
     const date = new Date(timestamp);
     const now = new Date();
@@ -56,14 +56,11 @@ function formatRelativeTime(timestamp) {
     const diffHours = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHours / 24);
     
-    if (diffSecs < 10) return 'just now';
-    if (diffSecs < 60) return `${diffSecs} seconds ago`;
-    if (diffMins === 1) return '1 minute ago';
-    if (diffMins < 60) return `${diffMins} minutes ago`;
-    if (diffHours === 1) return '1 hour ago';
-    if (diffHours < 24) return `${diffHours} hours ago`;
-    if (diffDays === 1) return '1 day ago';
-    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffSecs < 10) return t('just now');
+    if (diffSecs < 60) return tn(diffSecs, '1 second ago', '{n} seconds ago');
+    if (diffMins < 60) return tn(diffMins, '1 minute ago', '{n} minutes ago');
+    if (diffHours < 24) return tn(diffHours, '1 hour ago', '{n} hours ago');
+    if (diffDays < 7) return tn(diffDays, '1 day ago', '{n} days ago');
     
     return formatDate(timestamp);
 }
@@ -307,7 +304,7 @@ function showNotification(message, type = 'info', duration = 3500) {
  * @param {string} confirmLabel - label for confirm button (default 'Confirm')
  * @param {string} type - 'danger' | 'default'
  */
-function showConfirm(message, confirmLabel = 'Confirm', type = 'danger') {
+function showConfirm(message, confirmLabel = t('Confirm'), type = 'danger') {
     return new Promise((resolve) => {
         ensureUiStyles();
         document.querySelectorAll('.mf-backdrop').forEach(el => el.remove());
@@ -316,12 +313,14 @@ function showConfirm(message, confirmLabel = 'Confirm', type = 'danger') {
         overlay.className = 'mf-backdrop';
         overlay.innerHTML = `
             <div class="mf-dialog" role="alertdialog" aria-modal="true">
-                <p style="color: var(--text, #eef2fa); font-size: 16px; margin-bottom: 20px;">${message}</p>
+                <p id="confirmMsg" style="color: var(--text, #eef2fa); font-size: 16px; margin-bottom: 20px;"></p>
                 <div class="mf-actions">
-                    <button class="mf-btn" id="confirmCancel" type="button">Cancel</button>
-                    <button class="mf-btn ${type === 'danger' ? 'danger' : 'primary'}" id="confirmOk" type="button">${confirmLabel}</button>
+                    <button class="mf-btn" id="confirmCancel" type="button">${t('Cancel')}</button>
+                    <button class="mf-btn ${type === 'danger' ? 'danger' : 'primary'}" id="confirmOk" type="button"></button>
                 </div>
             </div>`;
+        overlay.querySelector('#confirmMsg').textContent = message;   // text, never markup: names may be in it
+        overlay.querySelector('#confirmOk').textContent = confirmLabel;
         document.body.appendChild(overlay);
 
         const done = (v) => { overlay.remove(); resolve(v); };

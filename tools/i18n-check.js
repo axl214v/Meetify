@@ -13,8 +13,8 @@ const L = require('./i18n-lib');
 const APP = path.resolve(__dirname, '..', 'src', 'app');
 // Files translated so far. Round 2 pages are added here as they are done; the admin panel is never listed.
 const SCOPE = {
-    html: ['index.html', 'auth/Auth.html', 'auth/Reg.html', 'auth/resetpass.html', 'auth/resetpass-confirm.html', 'auth/verify-email.html'],
-    js: ['js/index.js', 'js/auth.js', 'js/reg.js', 'js/resetpass.js', 'js/resetpass-confirm.js', 'js/verify-email.js', 'js/cookie-banner.js']
+    html: ['index.html', 'auth/Auth.html', 'auth/Reg.html', 'auth/resetpass.html', 'auth/resetpass-confirm.html', 'auth/verify-email.html', 'Conf/pages/conf_join.html'],
+    js: ['js/index.js', 'js/auth.js', 'js/reg.js', 'js/resetpass.js', 'js/resetpass-confirm.js', 'js/verify-email.js', 'js/cookie-banner.js', 'Conf/js/conf_join.js', 'js/notifications.js', 'Conf/js/conf_utils.js']
 };
 const FORBIDDEN = [/открыт\S* исходн/i, /open[- ]?source/i, /self-?host/i, /свой сервер/i, /на своём сервере/i, /эмодзи|emoji/i];
 

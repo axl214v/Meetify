@@ -3,10 +3,10 @@
     const API = window.location.origin;
 
     const CAT = {
-        info:        { label: 'Info',        color: '#60a5fa', bg: 'rgba(96,165,250,0.12)'  },
-        update:      { label: 'Update',      color: '#34d399', bg: 'rgba(52,211,153,0.12)'  },
-        maintenance: { label: 'Maintenance', color: '#fbbf24', bg: 'rgba(251,191,36,0.12)'  },
-        warning:     { label: 'Warning',     color: '#f87171', bg: 'rgba(248,113,113,0.12)' }
+        info:        { label: t('Info'),        color: '#60a5fa', bg: 'rgba(96,165,250,0.12)'  },
+        update:      { label: t('Update'),      color: '#34d399', bg: 'rgba(52,211,153,0.12)'  },
+        maintenance: { label: t('Maintenance'), color: '#fbbf24', bg: 'rgba(251,191,36,0.12)'  },
+        warning:     { label: t('Warning'),     color: '#f87171', bg: 'rgba(248,113,113,0.12)' }
     };
 
     // ── Styles ─────────────────────────────────────────────────────────────
@@ -413,7 +413,7 @@
                     <span id="nb-modal-cat"></span>
                     <div id="nb-modal-title"></div>
                 </div>
-                <button id="nb-modal-close" aria-label="Close">✕</button>
+                <button id="nb-modal-close" aria-label="${t('Close')}">✕</button>
             </div>
             <div id="nb-modal-body">
                 <div id="nb-modal-divider"></div>
@@ -425,18 +425,18 @@
     panel.innerHTML = `
         <div id="nb-accent"></div>
         <div id="nb-hd">
-            <span id="nb-hd-title">Notifications</span>
+            <span id="nb-hd-title">${t('Notifications')}</span>
             <span id="nb-hd-meta">—</span>
         </div>
         <div id="nb-list">
             <div id="nb-empty">
                 <div id="nb-empty-ring">${BELL_SVG(18)}</div>
-                <div id="nb-empty-title">No notifications yet</div>
-                <div id="nb-empty-sub">You're all caught up</div>
+                <div id="nb-empty-title">${t('No notifications yet')}</div>
+                <div id="nb-empty-sub">${t("You're all caught up")}</div>
             </div>
         </div>`;
 
-    btn.setAttribute('aria-label', 'Notifications');
+    btn.setAttribute('aria-label', t('Notifications'));
     btn.innerHTML = `${BELL_SVG(17, 'nb-icon')}<span id="nb-dot"></span>`;
 
     wrap.append(panel, btn);
@@ -461,15 +461,15 @@
         if (!notifications.length) {
             listEl.innerHTML = `<div id="nb-empty">
                 <div id="nb-empty-ring">${BELL_SVG(18)}</div>
-                <div id="nb-empty-title">No notifications yet</div>
-                <div id="nb-empty-sub">You're all caught up</div>
+                <div id="nb-empty-title">${t('No notifications yet')}</div>
+                <div id="nb-empty-sub">${t("You're all caught up")}</div>
             </div>`;
             metaEl.textContent = '—';
             return;
         }
         const last   = getLastSeen();
         const unread = notifications.filter(n => n.id > last).length;
-        metaEl.textContent = unread > 0 ? `${unread} new` : `${notifications.length} total`;
+        metaEl.textContent = unread > 0 ? t('{n} new', { n: unread }) : t('{n} total', { n: notifications.length });
 
         listEl.innerHTML = notifications.map(n => {
             const cat   = CAT[n.category] || CAT.info;
@@ -525,7 +525,7 @@
         document.getElementById('nb-modal-title').textContent = notif.title || '';
         document.getElementById('nb-modal-msg').textContent   = notif.message || '';
         document.getElementById('nb-modal-time').textContent  = notif.created_at
-            ? new Date(notif.created_at).toLocaleString() : '';
+            ? new Date(notif.created_at).toLocaleString(I18n.locale) : '';
         overlay.classList.add('open');
     }
 
@@ -566,7 +566,7 @@
                 <div class="nb-toast-title">${esc(notif.title)}</div>
                 <div class="nb-toast-msg">${esc(notif.message)}</div>
             </div>
-            <div class="nb-toast-x" role="button" aria-label="Dismiss">✕</div>
+            <div class="nb-toast-x" role="button" aria-label="${t('Dismiss')}">✕</div>
             <div class="nb-toast-bar" style="background:${cat.color};"></div>`;
         const dismiss = () => {
             el.classList.add('nb-tout');
@@ -612,11 +612,11 @@
     function ago(ts) {
         if (!ts) return '';
         const m = Math.floor((Date.now() - new Date(ts).getTime()) / 60000);
-        if (m < 1)  return 'now';
-        if (m < 60) return `${m}m ago`;
+        if (m < 1)  return t('now');
+        if (m < 60) return t('{n}m ago', { n: m });
         const h = Math.floor(m / 60);
-        if (h < 24) return `${h}h ago`;
-        return `${Math.floor(h / 24)}d ago`;
+        if (h < 24) return t('{n}h ago', { n: h });
+        return t('{n}d ago', { n: Math.floor(h / 24) });
     }
 
     // ── Boot ───────────────────────────────────────────────────────────────

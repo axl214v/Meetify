@@ -48,11 +48,11 @@ async function checkByCode(code) {
         }
         if (response.status === 404) {
             inviteCode = null;
-            showError('This invite link is not valid. Ask the host for a new one, or enter the room ID.');
+            showError(t('This invite link is not valid. Ask the host for a new one, or enter the room ID.'));
             return;
         }
         if (response.status === 429) {
-            showError('Too many wrong invite links. Try again in 15 minutes.');
+            showError(t('Too many wrong invite links. Try again in 15 minutes.'));
             return;
         }
         if (!response.ok) throw new Error('Failed to fetch conference details');
@@ -67,7 +67,7 @@ async function checkByCode(code) {
         document.getElementById('checkBtn').style.display = 'none';   // nothing left to look up
     } catch (error) {
         console.error('Check invite error:', error);
-        showError('Network error. Please try again.');
+        showError(t('Network error. Please try again.'));
     }
 }
 
@@ -78,7 +78,7 @@ let guestRoom = null;
 async function offerGuestJoin(code) {
     try {
         const response = await fetch(`${API_BASE}/api/guest/room/${encodeURIComponent(code)}`);
-        if (response.status === 429) { showError('Too many wrong invite links. Try again in 15 minutes.'); return true; }
+        if (response.status === 429) { showError(t('Too many wrong invite links. Try again in 15 minutes.')); return true; }
         if (!response.ok) return false;
         const data = await response.json();
         if (!data.allowGuests) return false;
@@ -104,7 +104,7 @@ async function offerGuestJoin(code) {
         document.querySelector('.topbar-nav')?.style.setProperty('display', 'none');
         document.querySelector('.recent')?.style.setProperty('display', 'none');
         document.getElementById('cancelLink').href = '/';
-        document.getElementById('joinSubtitle').textContent = 'You were invited to this room.';
+        document.getElementById('joinSubtitle').textContent = t('You were invited to this room.');
         document.getElementById('guestName').focus();
         return true;
     } catch (error) {
@@ -118,13 +118,13 @@ document.getElementById('guestJoinBtn')?.addEventListener('click', async functio
     const name = document.getElementById('guestName').value.trim();
     const passwordInput = document.getElementById('password');
     if (!name) {
-        showError('Enter a name so others know who you are.');
+        showError(t('Enter a name so others know who you are.'));
         document.getElementById('guestName').classList.add('error');
         return;
     }
     btn.disabled = true;
     const label = btn.textContent;
-    btn.textContent = 'Joining...';
+    btn.textContent = t('Joining...');
     try {
         const response = await fetch(`${API_BASE}/api/guest/join`, {
             method: 'POST',
@@ -138,7 +138,7 @@ document.getElementById('guestJoinBtn')?.addEventListener('click', async functio
                     token: data.token, conferenceId: data.conferenceId, userId: data.guest.userId, name: data.guest.name
                 }));
             } catch {
-                showError('Your browser blocks session storage, so a guest cannot join. Allow it or sign in.');
+                showError(t('Your browser blocks session storage, so a guest cannot join. Allow it or sign in.'));
                 return;
             }
             window.location.href = `/Conf/pages/conf_room.html?id=${data.conferenceId}`;
@@ -147,10 +147,10 @@ document.getElementById('guestJoinBtn')?.addEventListener('click', async functio
         if (data.requiresPassword || response.status === 403 && /password/i.test(data.message || '')) {
             passwordInput?.classList.add('error');
         }
-        showError(data.message || 'Could not join this room.');
+        showError(data.message ? t(data.message) : t('Could not join this room.'));
     } catch (error) {
         console.error('Guest join error:', error);
-        showError('Network error. Please try again.');
+        showError(t('Network error. Please try again.'));
     } finally {
         btn.disabled = false;
         btn.textContent = label;
@@ -182,13 +182,13 @@ async function checkConference() {
     
     // Validation
     if (!conferenceId) {
-        showError('Please enter a conference ID');
+        showError(t('Please enter a conference ID'));
         conferenceIdInput.classList.add('error');
         return;
     }
     
     if (isNaN(conferenceId) || parseInt(conferenceId) <= 0) {
-        showError('Invalid conference ID format');
+        showError(t('Invalid conference ID format'));
         conferenceIdInput.classList.add('error');
         return;
     }
@@ -197,7 +197,7 @@ async function checkConference() {
     checkBtn.disabled = true;
     checkBtn.classList.add('loading');
     const originalText = checkBtn.textContent;
-    checkBtn.textContent = 'Checking...';
+    checkBtn.textContent = t('Checking...');
     
     try {
         const response = await fetch(`${API_BASE}/api/conferences/${conferenceId}`, {
@@ -211,7 +211,7 @@ async function checkConference() {
         }
 
         if (response.status === 404) {
-            showError('Conference not found. Please check the ID.');
+            showError(t('Conference not found. Please check the ID.'));
             conferenceIdInput.classList.add('error');
             return;
         }
@@ -226,16 +226,16 @@ async function checkConference() {
             displayConferencePreview(err.conference);
             passwordField.style.display = 'flex';
             joinBtn.style.display = 'inline-flex';
-            showError('This conference is password protected. Enter the password to join.');
+            showError(t('This conference is password protected. Enter the password to join.'));
             return;
             } 
 
             if (err.isPrivate) {
-                showError('This conference is private and invite-only.');
+                showError(t('This conference is private and invite-only.'));
             return;
             }
 
-            showError('Access denied.');
+            showError(t('Access denied.'));
             return;
         }
         
@@ -260,7 +260,7 @@ async function checkConference() {
         
     } catch (error) {
         console.error('Check conference error:', error);
-        showError('Network error. Please try again.');
+        showError(t('Network error. Please try again.'));
     } finally {
         checkBtn.disabled = false;
         checkBtn.classList.remove('loading');
@@ -278,19 +278,19 @@ function displayConferencePreview(conference) {
 
     previewName.textContent = conference.name || '—';
     previewHost.textContent = conference.isPrivate
-        ? 'Private'
-        : (conference.host_username || conference.host_email || 'Unknown');
+        ? t('Private')
+        : (conference.host_username || conference.host_email || t('Unknown'));
 
     if (conference.isPrivate) {
         previewParticipants.textContent = '—';
-        previewStatus.textContent = 'Private';
+        previewStatus.textContent = t('Private');
         previewStatus.className = 'badge';
     } else {
         const participantCount = conference.participantCount || conference.participant_count || 0;
         const maxParticipants  = conference.max_participants;
         previewParticipants.textContent = `${maxParticipants ? `${participantCount}/${maxParticipants}` : participantCount}`;
         const status = getConferenceStatus(conference);
-        previewStatus.textContent = status;
+        previewStatus.textContent = t(status);
         previewStatus.className   = `badge ${ {Ongoing:'badge-success',Scheduled:'badge-accent',Active:'badge-success'}[status] || '' }`;
     }
 
@@ -322,7 +322,7 @@ document.getElementById('joinBtn')?.addEventListener('click', async function(e) 
     e.preventDefault();
     
     if (!currentConference) {
-        showError('Please check the conference first');
+        showError(t('Please check the conference first'));
         return;
     }
     
@@ -332,7 +332,7 @@ document.getElementById('joinBtn')?.addEventListener('click', async function(e) 
     
     // Validate password if required
     if (currentConference.hasPassword && !password) {
-        showError('Please enter the conference password');
+        showError(t('Please enter the conference password'));
         passwordInput.classList.add('error');
         return;
     }
@@ -341,7 +341,7 @@ document.getElementById('joinBtn')?.addEventListener('click', async function(e) 
     joinBtn.disabled = true;
     joinBtn.classList.add('loading');
     const originalText = joinBtn.textContent;
-    joinBtn.textContent = 'Joining...';
+    joinBtn.textContent = t('Joining...');
     
     try {
         const response = await fetch(`${API_BASE}/api/conferences/${currentConference.id}/join`, {
@@ -358,9 +358,9 @@ document.getElementById('joinBtn')?.addEventListener('click', async function(e) 
         if (response.status === 200) {
             // Success
             if (data.alreadyJoined) {
-                showSuccess('You are already a participant in this conference!');
+                showSuccess(t('You are already a participant in this conference!'));
             } else {
-                showSuccess('Successfully joined the conference!');
+                showSuccess(t('Successfully joined the conference!'));
             }
             
             // Save to recent conferences
@@ -373,26 +373,26 @@ document.getElementById('joinBtn')?.addEventListener('click', async function(e) 
             
         } else if (response.status === 403) {
             if (data.requiresVerification) {
-                showError('Email verification required. Please verify your email to join private conferences. Go to your profile to resend the verification link.');
+                showError(t('Email verification required. Please verify your email to join private conferences. Go to your profile to resend the verification link.'));
             } else if (data.message.includes('password')) {
-                showError('Incorrect password. Please try again.');
+                showError(t('Incorrect password. Please try again.'));
                 passwordInput?.classList.add('error');
             } else if (data.message.includes('started')) {
-                showError('Conference has not started yet.');
+                showError(t('Conference has not started yet.'));
             } else if (data.message.includes('ended')) {
-                showError('Conference has already ended.');
+                showError(t('Conference has already ended.'));
             } else {
-                showError(data.message || 'Unable to join conference');
+                showError(data.message ? t(data.message) : t('Unable to join conference'));
             }
         } else if (response.status === 400) {
-            showError(data.message || 'Conference is full or unavailable');
+            showError(data.message ? t(data.message) : t('Conference is full or unavailable'));
         } else {
-            showError('Failed to join conference');
+            showError(t('Failed to join conference'));
         }
         
     } catch (error) {
         console.error('Join conference error:', error);
-        showError('Network error. Please try again.');
+        showError(t('Network error. Please try again.'));
     } finally {
         joinBtn.disabled = false;
         joinBtn.classList.remove('loading');
@@ -462,11 +462,11 @@ async function loadRecentConferences() {
         const recent = JSON.parse(localStorage.getItem('recentConferences') || '[]');
         
         if (recent.length === 0) {
-            recentList.innerHTML = '<p class="muted">No recent conferences</p>';
+            recentList.innerHTML = '<p class="muted">' + t('No recent conferences') + '</p>';
             return;
         }
         
-        recentList.innerHTML = '<p class="muted">Loading...</p>';
+        recentList.innerHTML = '<p class="muted">' + t('Loading...') + '</p>';
         
         // Fetch details for each recent conference
         const conferencePromises = recent.map(id => 
@@ -481,7 +481,7 @@ async function loadRecentConferences() {
         const conferences = results.filter(r => r && r.conference).map(r => r.conference);
         
         if (conferences.length === 0) {
-            recentList.innerHTML = '<p class="muted">No recent conferences available</p>';
+            recentList.innerHTML = '<p class="muted">' + t('No recent conferences available') + '</p>';
             return;
         }
         
@@ -492,13 +492,13 @@ async function loadRecentConferences() {
                     <strong>${escapeHtml(conf.name)}</strong>
                     <small>${escapeHtml(conf.host_username || conf.host_email)}</small>
                 </div>
-                <button class="btn btn-sm" type="button">Join</button>
+                <button class="btn btn-sm" type="button">${t('Join')}</button>
             </div>
         `).join('');
         
     } catch (error) {
         console.error('Load recent conferences error:', error);
-        recentList.innerHTML = '<p class="muted">Error loading recent conferences</p>';
+        recentList.innerHTML = '<p class="muted">' + t('Error loading recent conferences') + '</p>';
     }
 }
 

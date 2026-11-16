@@ -23,5 +23,9 @@
   "Too many incorrect password attempts. Try again in 15 minutes.",
   "Too many join requests",
   "Switch to light theme",
-  "Switch to dark theme"
+  "Switch to dark theme",
+  "Ended",
+  "Scheduled",
+  "Ongoing",
+  "Active"
 ]
