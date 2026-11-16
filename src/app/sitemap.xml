@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-    <url><loc>https://meetify.cc/</loc></url>
+<urlset xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url><loc>https://meetify.cc/</loc><xhtml:link rel="alternate" hreflang="en" href="https://meetify.cc/"/><xhtml:link rel="alternate" hreflang="ru" href="https://meetify.cc/ru/"/></url>
+    <url><loc>https://meetify.cc/ru/</loc><xhtml:link rel="alternate" hreflang="en" href="https://meetify.cc/"/><xhtml:link rel="alternate" hreflang="ru" href="https://meetify.cc/ru/"/></url>
     <url><loc>https://meetify.cc/auth/Auth.html</loc></url>
     <url><loc>https://meetify.cc/auth/Reg.html</loc></url>
     <url><loc>https://meetify.cc/donate/donate.html</loc></url>

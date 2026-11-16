@@ -8,9 +8,9 @@ function formatUptime(seconds) {
     const d = Math.floor(seconds / 86400);
     const h = Math.floor((seconds % 86400) / 3600);
     const m = Math.floor((seconds % 3600) / 60);
-    if (d > 0) return `${d}d ${h}h`;
-    if (h > 0) return `${h}h ${m}m`;
-    return m > 0 ? `${m}m` : 'under a minute';
+    if (d > 0) return t('{d}d {h}h', { d, h });
+    if (h > 0) return t('{h}h {m}m', { h, m });
+    return m > 0 ? t('{m}m', { m }) : t('under a minute');
 }
 
 async function loadServerStatus() {
@@ -21,10 +21,10 @@ async function loadServerStatus() {
         if (!res.ok) throw new Error(res.status);
         const data = await res.json();
         dot.classList.add('online');
-        text.textContent = `Server online, up ${formatUptime(Math.floor(data.uptime))}`;
+        text.textContent = t('Server online, up {time}', { time: formatUptime(Math.floor(data.uptime)) });
     } catch {
         dot.classList.add('offline');
-        text.textContent = 'Server unavailable';
+        text.textContent = t('Server unavailable');
     }
 }
 
@@ -49,10 +49,10 @@ function showUserNav(user) {
 function showGuestNav() {
     // Guests cannot create or join rooms: the two hero actions become account actions
     const cta = document.getElementById('heroCta');
-    cta.textContent = 'Create account';
+    cta.textContent = t('Create account');
     cta.href = '/auth/Reg.html';
     const second = document.getElementById('heroSecondary');
-    second.textContent = 'Sign in';
+    second.textContent = t('Sign in');
     second.href = '/auth/Auth.html';
     document.getElementById('navGuest').classList.remove('hidden');
     document.getElementById('navUser').classList.add('hidden');
