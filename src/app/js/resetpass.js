@@ -27,7 +27,7 @@ document.getElementById('submitBtn')?.addEventListener('click', async function (
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email || !emailRegex.test(email)) {
-        showMsg('Please enter a valid email address.');
+        showMsg(t('Please enter a valid email address.'));
         emailInput.classList.add('error');
         return;
     }
@@ -35,7 +35,7 @@ document.getElementById('submitBtn')?.addEventListener('click', async function (
     btn.disabled = true;
     btn.classList.add('loading');
     const originalText = btn.textContent;
-    btn.textContent = 'Sending...';
+    btn.textContent = t('Sending...');
 
     try {
         const response = await fetch(`${API_BASE}/api/auth/forgot-password`, {
@@ -53,12 +53,12 @@ document.getElementById('submitBtn')?.addEventListener('click', async function (
             document.getElementById('successBlock').style.display = 'block';
             document.getElementById('sentToEmail').textContent = email;
         } else {
-            showMsg(data.message || 'Failed to send reset link. Please try again.');
+            showMsg(data.message ? t(data.message) : t('Failed to send reset link. Please try again.'));
         }
 
     } catch (err) {
         console.error('Forgot password error:', err);
-        showMsg('Network error. Please check your connection.');
+        showMsg(t('Network error. Please check your connection.'));
     } finally {
         btn.disabled = false;
         btn.classList.remove('loading');

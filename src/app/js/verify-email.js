@@ -9,7 +9,7 @@ async function verify() {
     const token = new URLSearchParams(window.location.search).get('token');
 
     if (!token) {
-        document.getElementById('errorText').textContent = 'No verification token provided.';
+        document.getElementById('errorText').textContent = t('No verification token provided.');
         document.getElementById('resendForm').style.display = 'block';
         show('stateError');
         return;
@@ -30,12 +30,12 @@ async function verify() {
         }
 
         document.getElementById('errorText').textContent =
-            data.message || 'The link is invalid or has expired.';
+            data.message ? t(data.message) : t('The link is invalid or has expired.');
         document.getElementById('resendForm').style.display = 'block';
         show('stateError');
 
     } catch (e) {
-        document.getElementById('errorText').textContent = 'Network error. Please try again.';
+        document.getElementById('errorText').textContent = t('Network error. Please try again.');
         document.getElementById('resendForm').style.display = 'block';
         show('stateError');
     }
@@ -46,14 +46,14 @@ document.getElementById('resendBtn').addEventListener('click', async () => {
     const msgEl = document.getElementById('resendMessage');
 
     if (!email) {
-        msgEl.textContent = 'Please enter your email.';
+        msgEl.textContent = t('Please enter your email.');
         msgEl.className = 'auth-message error';
         return;
     }
 
     const btn = document.getElementById('resendBtn');
     btn.disabled = true;
-    btn.textContent = 'Sending...';
+    btn.textContent = t('Sending...');
 
     try {
         const res  = await fetch(`${API}/api/auth/resend-verification`, {
@@ -64,18 +64,18 @@ document.getElementById('resendBtn').addEventListener('click', async () => {
         const data = await res.json();
 
         if (res.ok) {
-            msgEl.textContent = 'Verification email sent! Check your inbox.';
+            msgEl.textContent = t('Verification email sent! Check your inbox.');
             msgEl.className = 'auth-message success';
         } else {
-            msgEl.textContent = data.message || 'Failed to send email.';
+            msgEl.textContent = data.message ? t(data.message) : t('Failed to send email.');
             msgEl.className = 'auth-message error';
         }
     } catch (e) {
-        msgEl.textContent = 'Network error. Please try again.';
+        msgEl.textContent = t('Network error. Please try again.');
         msgEl.className = 'auth-message error';
     } finally {
         btn.disabled = false;
-        btn.textContent = 'Resend Verification Email';
+        btn.textContent = t('Resend verification email');
     }
 });
 

@@ -35,18 +35,15 @@
     const banner = document.createElement('div');
     banner.id = 'cookie-banner';
     banner.setAttribute('role', 'region');
-    banner.setAttribute('aria-label', 'Cookie notice');
+    banner.setAttribute('aria-label', t('Cookie notice'));
 
     const text = document.createElement('span');
-    text.innerHTML = `
-        Meetify sets one session cookie, <code>token</code>, to keep you signed in.
-        No tracking, no ads. <a href="/legal/privacy.html" target="_blank" rel="noopener">Privacy policy</a>
-    `;
+    text.innerHTML = t('Meetify sets one session cookie, <code>token</code>, to keep you signed in. No tracking, no ads. <a href="/legal/privacy.html" target="_blank" rel="noopener">Privacy policy</a>');
 
     const btn = document.createElement('button');
     btn.id = 'cookie-ok';
     btn.type = 'button';
-    btn.textContent = 'Got it';
+    btn.textContent = t('Got it');
     btn.addEventListener('click', () => {
         try { localStorage.setItem('cookie_accepted', '1'); } catch { /* ignore */ }
         banner.remove();

@@ -64,7 +64,7 @@ document.getElementById('submit')?.addEventListener('click', async function (e) 
 
     // Validation
     if (!name || !email || !password) {
-        showMsg('Please fill in all required fields.');
+        showMsg(t('Please fill in all required fields.'));
         if (!name)     nameInput.classList.add('error');
         if (!email)    emailInput.classList.add('error');
         if (!password) passwordInput.classList.add('error');
@@ -72,31 +72,31 @@ document.getElementById('submit')?.addEventListener('click', async function (e) 
     }
 
     if (!ageConsent) {
-        showMsg('You must be at least 16 years old to register.');
+        showMsg(t('You must be at least 16 years old to register.'));
         document.getElementById('ageConsent')?.closest('.consent')?.classList.add('consent-error');
         return;
     }
 
     if (!consent) {
-        showMsg('Please agree to the Terms of Service and Privacy Policy.');
+        showMsg(t('Please agree to the Terms of Service and Privacy Policy.'));
         document.getElementById('consent')?.closest('.consent')?.classList.add('consent-error');
         return;
     }
 
     if (!validateName(name)) {
-        showMsg('Name must be at least 2 characters and contain only letters.');
+        showMsg(t('Name must be at least 2 characters and contain only letters.'));
         nameInput.classList.add('error');
         return;
     }
 
     if (!validateEmail(email)) {
-        showMsg('Please enter a valid email address.');
+        showMsg(t('Please enter a valid email address.'));
         emailInput.classList.add('error');
         return;
     }
 
     if (!validatePassword(password)) {
-        showMsg('Password must be at least 8 characters and contain letters and numbers.');
+        showMsg(t('Password must be at least 8 characters and contain letters and numbers.'));
         passwordInput.classList.add('error');
         return;
     }
@@ -105,7 +105,7 @@ document.getElementById('submit')?.addEventListener('click', async function (e) 
     submitButton.disabled = true;
     submitButton.classList.add('loading');
     const originalText = submitButton.textContent;
-    submitButton.textContent = 'Creating account...';
+    submitButton.textContent = t('Creating account...');
 
     try {
         const response = await fetch(`${API_BASE}/api/auth/register`, {
@@ -121,7 +121,7 @@ document.getElementById('submit')?.addEventListener('click', async function (e) 
             nameInput.classList.add('success');
             emailInput.classList.add('success');
             passwordInput.classList.add('success');
-            showMsg('Account created! Redirecting to login...', 'success');
+            showMsg(t('Account created! Redirecting to login...'), 'success');
 
             setTimeout(() => {
                 window.location.href = '/auth/Auth.html' + window.location.search;
@@ -129,11 +129,11 @@ document.getElementById('submit')?.addEventListener('click', async function (e) 
 
         } else {
             // Handle specific errors
-            let errorMessage = result.message || 'Server error. Please try again.';
+            let errorMessage = result.message ? t(result.message) : t('Server error. Please try again.');
 
             if (errorMessage.toLowerCase().includes('email') ||
                 errorMessage.toLowerCase().includes('exists')) {
-                errorMessage = 'This email is already registered.';
+                errorMessage = t('This email is already registered.');
                 emailInput.classList.add('error');
             }
 
@@ -142,7 +142,7 @@ document.getElementById('submit')?.addEventListener('click', async function (e) 
 
     } catch (err) {
         console.error('Registration request failed:', err);
-        showMsg('Network error. Please check your connection.');
+        showMsg(t('Network error. Please check your connection.'));
     } finally {
         submitButton.disabled = false;
         submitButton.classList.remove('loading');
@@ -158,7 +158,10 @@ document.getElementById('authb')?.addEventListener('click', () => {
     window.location.href = '/auth/Auth.html' + window.location.search;
 });
 // Keep ?next= when switching between sign-in and sign-up
-document.querySelectorAll('a[href="/auth/Auth.html"]').forEach(a => { a.href += window.location.search; });
+// after the translation layer has had its turn at the page (it rewrites link texts that contain links)
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('a[href="/auth/Auth.html"]').forEach(a => { a.href += window.location.search; });
+});
 
 document.getElementById('password')?.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') document.getElementById('submit')?.click();
@@ -183,12 +186,12 @@ document.getElementById('password')?.addEventListener('input', function () {
     if (/[^A-Za-z0-9]/.test(password))   score++;
 
     const levels = [
-        { label: 'Too short',    color: 'var(--danger)' },
-        { label: 'Weak',         color: 'var(--danger)' },
-        { label: 'Fair',         color: 'var(--warning)' },
-        { label: 'Good',         color: 'var(--success)' },
-        { label: 'Strong',       color: 'var(--success)' },
-        { label: 'Very strong',  color: 'var(--accent-text)' }
+        { label: t('Too short'),    color: 'var(--danger)' },
+        { label: t('Weak'),         color: 'var(--danger)' },
+        { label: t('Fair'),         color: 'var(--warning)' },
+        { label: t('Good'),         color: 'var(--success)' },
+        { label: t('Strong'),       color: 'var(--success)' },
+        { label: t('Very strong'),  color: 'var(--accent-text)' }
     ];
 
     const level = levels[Math.min(score, 5)];

@@ -62,12 +62,12 @@ document.getElementById('newPassword')?.addEventListener('input', function () {
     if (/[^A-Za-z0-9]/.test(password))   score++;
 
     const levels = [
-        { label: 'Too short',    color: 'var(--danger)' },
-        { label: 'Weak',         color: 'var(--danger)' },
-        { label: 'Fair',         color: 'var(--warning)' },
-        { label: 'Good',         color: 'var(--success)' },
-        { label: 'Strong',       color: 'var(--success)' },
-        { label: 'Very strong',  color: 'var(--accent-text)' },
+        { label: t('Too short'),    color: 'var(--danger)' },
+        { label: t('Weak'),         color: 'var(--danger)' },
+        { label: t('Fair'),         color: 'var(--warning)' },
+        { label: t('Good'),         color: 'var(--success)' },
+        { label: t('Strong'),       color: 'var(--success)' },
+        { label: t('Very strong'),  color: 'var(--accent-text)' },
     ];
 
     const level = levels[Math.min(score, 5)];
@@ -88,13 +88,13 @@ document.getElementById('submitBtn')?.addEventListener('click', async function (
     document.getElementById('confirmPassword').classList.remove('error', 'success');
 
     if (!newPassword || newPassword.length < 8) {
-        showMsg('Password must be at least 8 characters.');
+        showMsg(t('Password must be at least 8 characters.'));
         document.getElementById('newPassword').classList.add('error');
         return;
     }
 
     if (newPassword !== confirmPassword) {
-        showMsg('Passwords do not match.');
+        showMsg(t('Passwords do not match.'));
         document.getElementById('confirmPassword').classList.add('error');
         return;
     }
@@ -102,7 +102,7 @@ document.getElementById('submitBtn')?.addEventListener('click', async function (
     btn.disabled = true;
     btn.classList.add('loading');
     const originalText = btn.textContent;
-    btn.textContent = 'Saving...';
+    btn.textContent = t('Saving...');
 
     try {
         const res = await fetch(`${API_BASE}/api/auth/reset-password/confirm`, {
@@ -116,17 +116,17 @@ document.getElementById('submitBtn')?.addEventListener('click', async function (
         if (res.ok) {
             document.getElementById('newPassword').classList.add('success');
             document.getElementById('confirmPassword').classList.add('success');
-            showMsg('Password changed successfully! Redirecting to sign in...', 'success');
+            showMsg(t('Password changed successfully! Redirecting to sign in...'), 'success');
 
             setTimeout(() => {
                 window.location.href = '/auth/Auth.html';
             }, 2000);
         } else {
-            showMsg(data.message || 'Failed to reset password. The link may have expired.');
+            showMsg(data.message ? t(data.message) : t('Failed to reset password. The link may have expired.'));
         }
 
     } catch {
-        showMsg('Network error. Please try again.');
+        showMsg(t('Network error. Please try again.'));
     } finally {
         btn.disabled = false;
         btn.classList.remove('loading');

@@ -68,7 +68,7 @@ document.getElementById('submit')?.addEventListener('click', async function (e) 
 
     // Validation
     if (!email || !password) {
-        showMsg('Please fill in all required fields.');
+        showMsg(t('Please fill in all required fields.'));
         if (!email)    emailInput.classList.add('error');
         if (!password) passwordInput.classList.add('error');
         return;
@@ -76,7 +76,7 @@ document.getElementById('submit')?.addEventListener('click', async function (e) 
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-        showMsg('Please enter a valid email address.');
+        showMsg(t('Please enter a valid email address.'));
         emailInput.classList.add('error');
         return;
     }
@@ -85,7 +85,7 @@ document.getElementById('submit')?.addEventListener('click', async function (e) 
     submitButton.disabled = true;
     submitButton.classList.add('loading');
     const originalText = submitButton.textContent;
-    submitButton.textContent = 'Signing in...';
+    submitButton.textContent = t('Signing in...');
 
     try {
         const response = await fetch(`${API_BASE}/api/auth/login`, {
@@ -98,22 +98,22 @@ document.getElementById('submit')?.addEventListener('click', async function (e) 
         if (response.status === 200) {
             emailInput.classList.add('success');
             passwordInput.classList.add('success');
-            showMsg('Success! Redirecting...', 'success');
+            showMsg(t('Success! Redirecting...'), 'success');
 
             setTimeout(() => {
                 window.location.href = getNextUrl();
             }, 400);
 
         } else if (response.status === 401) {
-            showMsg('Invalid email or password.');
+            showMsg(t('Invalid email or password.'));
             passwordInput.classList.add('error');
         } else {
-            showMsg('Server error. Please try again later.');
+            showMsg(t('Server error. Please try again later.'));
         }
 
     } catch (err) {
         console.error('Login request failed:', err);
-        showMsg('Network error. Please check your connection.');
+        showMsg(t('Network error. Please check your connection.'));
     } finally {
         submitButton.disabled = false;
         submitButton.classList.remove('loading');
@@ -137,4 +137,7 @@ document.getElementById('password')?.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') document.getElementById('submit')?.click();
 });
 // Keep ?next= when switching between sign-in and sign-up
-document.querySelectorAll('a[href="/auth/Reg.html"]').forEach(a => { a.href += window.location.search; });
+// after the translation layer has had its turn at the page (it rewrites link texts that contain links)
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('a[href="/auth/Reg.html"]').forEach(a => { a.href += window.location.search; });
+});

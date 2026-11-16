@@ -112,7 +112,8 @@
             if (key) setText(el, key);
         });
         scope.querySelectorAll('[data-i18n-html]').forEach(function (el) {
-            if (!el.hasAttribute('data-i18n-key')) el.setAttribute('data-i18n-key', norm(el.innerHTML));
+            // the browser writes links as absolute URLs once a script has touched them: compare as written
+            if (!el.hasAttribute('data-i18n-key')) el.setAttribute('data-i18n-key', norm(el.innerHTML.split('="' + location.origin).join('="')));
             var key = el.getAttribute('data-i18n-key');
             var d = dict();
             var hit = d && (d[key]);
