@@ -117,6 +117,9 @@ let isHost = false;
 let hostId = null;
 let coHosts = new Set();
 let roomLocked = false, waitingRoomOn = false;   // told by the server (the setting itself is stored, the lock is not)
+let allowRecording = false;                      // host setting: members may record
+const recordingUsers = new Map();                // String(userId) -> name of everybody who records right now (told by the server)
+let recTimer = null, recStartCheck = null;
 let waitingPeople = [];                          // people at the door, only filled for the host and co-hosts
 const notifiedWaiting = new Set();               // one notice per person
 let chatBanned = new Set();
@@ -242,6 +245,7 @@ async function loadConferenceDetails() {
         conferenceMode = data.conference.mode || 'p2p';
         inviteCode     = data.conference.invite_code || null;
         waitingRoomOn  = !!data.conference.waiting_room;
+        allowRecording = !!data.conference.allow_recording;
         document.getElementById('modeBadge').textContent = conferenceMode === 'sfu' ? 'Group' : 'P2P';
         document.getElementById('roomId').textContent = `#${data.conference.id}`;
 
@@ -584,6 +588,7 @@ async function initSocket() {
     socket.on('user-disconnected', ({ userId }) => {
         console.log('User disconnected:', userId);
         recreateTries[userId] = 99;   // they left: a failed connection must not be re-created
+        if (recordingUsers.delete(String(userId))) renderRecording();
         if (peers[userId]) {
             clearPeerTimers(peers[userId]);
             peers[userId].close();
@@ -761,10 +766,19 @@ async function initSocket() {
     socket.on('waiting-list', ({ waiting } = {}) => setWaiting(waiting));
     socket.on('waiting-update', ({ waiting } = {}) => setWaiting(waiting, true));
     socket.on('room-lock', ({ locked } = {}) => setLocked(locked));
-    socket.on('room-settings', ({ waitingRoom } = {}) => {
-        waitingRoomOn = !!waitingRoom;
-        if (!waitingRoomOn) setWaiting([]);
-        updateModControls();
+    socket.on('room-settings', ({ waitingRoom, allowRecording: rec } = {}) => {
+        if (waitingRoom !== undefined) {
+            waitingRoomOn = !!waitingRoom;
+            if (!waitingRoomOn) setWaiting([]);
+            updateModControls();
+        }
+        if (rec !== undefined) { allowRecording = !!rec; renderRecording(); }
+    });
+    socket.on('user-recording', ({ userId, userName, recording } = {}) => onUserRecording(userId, userName, recording));
+    socket.on('recording-stop-forced', () => {
+        if (!Recorder.isRecording()) return;
+        Recorder.stop('forced');
+        showNotification('Your recording was stopped by the host.', 'warning');
     });
 
     // Another participant was kicked — update UI
@@ -774,6 +788,7 @@ async function initSocket() {
         removeScreenTile(kickedUserId);
         pinnedTiles.delete(String(kickedUserId));
         roomMembers.delete(String(kickedUserId));
+        if (recordingUsers.delete(String(kickedUserId))) renderRecording();
         if (raisedHands.delete(String(kickedUserId))) refreshHands();
         applyPinLayout();
         updateParticipantCount();
@@ -785,7 +800,7 @@ async function initSocket() {
     socket.on('user-role-change', ({ userId: changedId, isCoHost }) => {
         if (isCoHost) coHosts.add(changedId);
         else coHosts.delete(changedId);
-        if (String(changedId) === String(currentUser?.id)) { if (!isModerator()) setWaiting([]); updateModControls(); }
+        if (String(changedId) === String(currentUser?.id)) { if (!isModerator()) setWaiting([]); updateModControls(); renderRecording(); }
         loadParticipants();
     });
 
@@ -807,7 +822,12 @@ async function applyRoomParticipants({ participants, roomState, iceServers, resu
     console.log('room-participants received:', JSON.stringify(participants), 'roomState:', roomState);
 
     hideWaitRoom();
-    if (roomState) { waitingRoomOn = !!roomState.waitingRoom; setLocked(roomState.locked); }
+    if (roomState) {
+        waitingRoomOn = !!roomState.waitingRoom;
+        allowRecording = !!roomState.allowRecording;
+        setLocked(roomState.locked);
+        setRecordingFromState(roomState.recording);
+    }
     if (roomState?.coHosts) coHosts = new Set(roomState.coHosts);
     if (roomState?.chatBanned) chatBanned = new Set(roomState.chatBanned);
     if (roomState?.raisedHands) {
@@ -1340,6 +1360,7 @@ function setupEventListeners() {
     setupDevicesMenu();
     setupReactions();
     setupWaitingRoom();
+    setupRecording();
     setupShortcuts();
 
     const videoMenuBtn = document.getElementById('videoMenuBtn');
@@ -1523,6 +1544,124 @@ async function loadParticipants() {
     }
 }
 
+// ---- Local recording ---------------------------------------------------------
+// The file is made and saved in this browser (conf_recorder.js). The server only keeps the "REC" mark so that
+// everybody in the room can see who records.
+
+const mayRecord = () => !guestSession && Recorder.supported() && (isModerator() || allowRecording);
+
+function recorderSources() {
+    const videos = [];
+    const seen = new Set();
+    document.querySelectorAll('#videoGrid .video-container, #filmstrip .video-container').forEach(tile => {
+        const el = tile.querySelector('video');
+        if (!el || seen.has(tile)) return;
+        seen.add(tile);
+        const own = tile.id === 'localVideoContainer';
+        videos.push({
+            el,
+            name: own ? (currentUser?.username || 'You') : (tile.querySelector('.participant-name')?.textContent || 'Participant'),
+            screen: tile.classList.contains('screen-tile'),
+            camOff: tile.classList.contains('cam-off')
+        });
+    });
+    return { videos, audioStreams: [localStream, ...Object.values(remoteStreams)].filter(Boolean) };
+}
+
+const clock = (ms) => {
+    const s = Math.floor(ms / 1000), p = (n) => String(n).padStart(2, '0');
+    return `${p(Math.floor(s / 60))}:${p(s % 60)}`;
+};
+
+function renderRecording(refreshList = true) {
+    const chip = document.getElementById('recChip');
+    const names = Array.from(recordingUsers.values());
+    chip.hidden = names.length === 0;
+    document.getElementById('recChipText').textContent =
+        names.length === 1 ? `REC · ${names[0]}` : `REC · ${names.length} people`;
+    chip.title = names.length ? `Recording on their own device: ${names.join(', ')}` : '';
+    const btn = document.getElementById('recBtn');
+    btn.hidden = !(mayRecord() || Recorder.isRecording());
+    document.getElementById('recBtnText').textContent =
+        Recorder.isRecording() ? `Stop recording (${clock(Recorder.elapsed())})` : 'Record on this device';
+    if (refreshList && lastParticipants.length) renderParticipants(lastParticipants);
+}
+
+function onUserRecording(userId, userName, recording) {
+    const id = String(userId);
+    const mine = id === String(currentUser?.id);
+    if (recording) {
+        recordingUsers.set(id, userName);
+        if (!mine) showNotification(`${userName} started recording on their device`, 'warning');
+    } else if (recordingUsers.delete(id) && !mine) {
+        showNotification(`${userName} stopped recording`, 'info');
+    }
+    if (mine && recStartCheck) { clearTimeout(recStartCheck); recStartCheck = null; }
+    renderRecording();
+}
+
+// After a (re)join the server's list is the truth. Our own recording, if any, is put right: a reload lost it
+// (mark removed), a restarted backend forgot it (mark sent again).
+function setRecordingFromState(list) {
+    recordingUsers.clear();
+    for (const r of Array.isArray(list) ? list : []) recordingUsers.set(String(r.userId), r.userName);
+    const me = String(currentUser?.id);
+    if (recordingUsers.has(me) && !Recorder.isRecording()) socket?.emit('recording-stop');
+    else if (!recordingUsers.has(me) && Recorder.isRecording()) socket?.emit('recording-start');
+    renderRecording();
+}
+
+function onRecorderStop(reason, saved) {
+    clearInterval(recTimer); recTimer = null;
+    if (recStartCheck) { clearTimeout(recStartCheck); recStartCheck = null; }
+    socket?.emit('recording-stop');
+    renderRecording();
+    if (reason === 'refused') return;
+    showNotification(saved ? 'Recording saved on your device.' : 'The recording could not be saved completely.', saved ? 'info' : 'error');
+}
+
+async function startRecording() {
+    if (!mayRecord() || Recorder.isRecording()) return;
+    const ok = await showConfirm('Everyone in the room will see that you are recording. The file is saved on your device and is never sent to Meetify.', 'Record', 'primary');
+    if (!ok) return;
+    let started;
+    try {
+        started = await Recorder.start({
+            getSources: recorderSources,
+            label: `room${conferenceId}`,
+            onStop: onRecorderStop,
+            onMemoryWarning: () => showNotification('This long recording is kept in memory. Stop and save it soon.', 'warning')
+        });
+    } catch (err) {
+        console.warn('Recording failed to start:', err);
+        showNotification('Recording is not available in this browser.', 'error');
+        return;
+    }
+    if (!started) return;   // the file dialog was cancelled
+    socket?.emit('recording-start');
+    // The server may refuse (the host switched it off a moment ago): then nothing stays recording
+    recStartCheck = setTimeout(() => {
+        recStartCheck = null;
+        if (Recorder.isRecording() && !recordingUsers.has(String(currentUser?.id))) {
+            Recorder.stop('refused', { discard: true });
+            showNotification('You are not allowed to record in this room.', 'error');
+        }
+    }, 3000);
+    recTimer = setInterval(() => renderRecording(false), 1000);
+    showNotification('Recording. The file is saved on your device.', 'info');
+    renderRecording();
+}
+
+function setupRecording() {
+    document.getElementById('recBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeReactMenu();
+        if (Recorder.isRecording()) Recorder.stop('stop');
+        else startRecording();
+    });
+    renderRecording();
+}
+
 // ---- Lock and waiting room -------------------------------------------------
 
 function showWaitRoom(moderatorPresent) {
@@ -1683,6 +1822,7 @@ function renderParticipants(participants) {
                 <button class="mod-menu-btn" data-mod="menu" data-uid="${idAttr}" title="Moderation options" aria-label="Moderation options">${Icons.more}</button>
                 <div class="mod-menu" id="mod-menu-${idAttr}">
                     ${isHandUp ? `<button data-lower-hand="${idAttr}">Lower hand</button>` : ''}
+                    ${recordingUsers.has(String(uid)) ? `<button data-mod="stop-rec" data-uid="${idAttr}">Stop their recording</button>` : ''}
                     <button data-mod="audio" data-uid="${idAttr}">Mute mic</button>
                     <button data-mod="video" data-uid="${idAttr}">Turn off camera</button>
                     <button data-mod="screen" data-uid="${idAttr}">Stop screen share</button>
@@ -1850,6 +1990,7 @@ function cleanupSfu() {
 }
 
 function cleanupAndRedirect(reason) {
+    Recorder.stop('leave');
     teardownResilience();
     if (roomTimer) clearInterval(roomTimer);
     if (localStream) localStream.getTracks().forEach(t => t.stop());
@@ -1932,6 +2073,7 @@ async function leaveConference() {
     const confirmed = await showConfirm('Leave this conference?', 'Leave', 'danger');
     if (!confirmed) return;
 
+    await Recorder.stop('leave');   // the file is written before the tracks go
     teardownResilience();
     if (roomTimer) clearInterval(roomTimer);
     if (localStream) localStream.getTracks().forEach(track => track.stop());
@@ -1983,6 +2125,7 @@ async function rejoinAfterReload() {
 let reloading = false;   // the Reload button of the network banner: the person is not leaving
 function onPageGone() {
     if (leaving) return;
+    Recorder.stop('leave');
     leaving = true;   // closing the page: no reconnect attempts while it goes away
     if (joinedConference && conferenceId && !guestSession && !reloading) {
         rememberForReload();
@@ -2106,6 +2249,7 @@ function setupReactions() {
             case 'chat-unban': hostChatBan(uid, false); break;
             case 'promote': hostPromoteCoHost(uid); break;
             case 'demote': hostDemoteCoHost(uid); break;
+            case 'stop-rec': closeAllModMenus(); socket?.emit('host:stop-recording', { targetUserId: uid }); break;
             case 'kick': hostKick(uid, btn.dataset.name || 'this person'); break;
         }
     });

@@ -341,6 +341,7 @@ async function editConference(conferenceId) {
         document.getElementById('editIsPublic').checked = !!conf.is_public;
         document.getElementById('editAllowGuests').checked = !!conf.allow_guests;
         document.getElementById('editWaitingRoom').checked = !!conf.waiting_room;
+        document.getElementById('editAllowRecording').checked = !!conf.allow_recording;
         document.getElementById('editStartTime').value = toDatetimeLocal(conf.start_time);
         document.getElementById('editEndTime').value = toDatetimeLocal(conf.end_time);
         document.getElementById('editChangePassword').checked = false;
@@ -389,6 +390,7 @@ document.addEventListener('DOMContentLoaded', () => {
             isPublic: document.getElementById('editIsPublic').checked,
             allowGuests: document.getElementById('editAllowGuests').checked,
             waitingRoom: document.getElementById('editWaitingRoom').checked,
+            allowRecording: document.getElementById('editAllowRecording').checked,
             startTime: document.getElementById('editStartTime').value || null,
             endTime: document.getElementById('editEndTime').value || null,
         };

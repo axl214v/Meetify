@@ -31,6 +31,10 @@ We may occasionally email registered users about the service itself (updates, ma
 
 ---
 
+## Recording
+
+Meetify never records calls. A participant (the host and co-hosts, and other participants if the host allows it) can record on their own device: the file is made in their browser and saved on their computer, and it is never sent to Meetify. Everybody in the room sees a REC mark with the recorder's name while a recording runs. We cannot prevent someone from recording their screen with another program; we only make our own recording feature visible.
+
 ## Where data is stored
 
 All data is stored on a server located in **Switzerland**. Switzerland operates under the Federal Act on Data Protection (nFADP), which provides protections equivalent to or exceeding the EU GDPR.

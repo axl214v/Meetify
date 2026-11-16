@@ -1337,6 +1337,23 @@
         .wait-btn:hover { filter: brightness(1.1); }
 
         /* ============================================ */
+        /* Local recording mark                         */
+        /* ============================================ */
+        .rec-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--danger); flex-shrink: 0; }
+        .rec-chip {
+            display: inline-flex; align-items: center; gap: 6px; max-width: 46vw; padding: 3px 10px; border-radius: 999px;
+            font-size: 0.78rem; font-weight: 700; letter-spacing: 0.02em; color: #fff; background: var(--danger);
+        }
+        .rec-chip[hidden] { display: none; }
+        .rec-chip .rec-dot { background: #fff; animation: rec-pulse 1.4s ease-in-out infinite; }
+        .rec-chip #recChipText { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        @keyframes rec-pulse { 50% { opacity: 0.35; } }
+        @media (prefers-reduced-motion: reduce) { .rec-chip .rec-dot { animation: none; } }
+        #recBtn[hidden] { display: none; }
+        #recBtn .rec-dot { margin: 0 4px; }
+        @media (max-width: 520px) { .rec-chip { padding: 3px 8px; } .rec-chip #recChipText { max-width: 22vw; } }
+
+        /* ============================================ */
         /* Hands, reactions, shortcuts                  */
         /* ============================================ */
         .hand-badge {
@@ -1526,6 +1543,7 @@
             <span class="lock-mark" id="lockMark" hidden title="This room is locked" aria-label="This room is locked"></span>
         </div>
         <div class="room-header-right">
+            <span class="rec-chip" id="recChip" role="status" hidden><i class="rec-dot" aria-hidden="true"></i><span id="recChipText">REC</span></span>
             <button type="button" class="rbadge rbadge-accent" id="modeBadge" aria-haspopup="dialog" aria-controls="secPanel" title="Connection security">P2P</button>
             <button type="button" class="rbadge rbadge-success" id="liveBadge" aria-haspopup="dialog" aria-controls="secPanel" title="Connection security">Live</button>
             <div class="room-meta">
@@ -1610,6 +1628,7 @@
                 <button class="control-btn react" id="reactBtn" title="Reactions and raise hand (R)" aria-label="Reactions and raise hand" aria-haspopup="menu" aria-expanded="false" aria-keyshortcuts="R"></button>
                 <div class="ctrl-dropdown has-grid" id="reactMenu" role="menu">
                     <button class="ctrl-dropdown-item" id="handBtn" role="menuitem" aria-keyshortcuts="H"><span class="flip-icon" id="handBtnIcon"></span><span id="handBtnText">Raise hand (H)</span></button>
+                    <button class="ctrl-dropdown-item" id="recBtn" role="menuitem" hidden><span class="rec-dot" aria-hidden="true"></span><span id="recBtnText">Record on this device</span></button>
                     <div class="react-grid" id="reactGrid"></div>
                 </div>
             </div>
@@ -1720,6 +1739,7 @@
 </script>
 <script src="/Conf/js/icons.js"></script>
 <script src="/Conf/js/conf_speaking.js"></script>
+<script src="/Conf/js/conf_recorder.js"></script>
 <script src="/Conf/js/conf_devices.js"></script>
 <script src="/Conf/js/conf_room.js"></script>
 <script src="/Conf/js/conf_security.js"></script>
