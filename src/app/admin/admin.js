@@ -595,13 +595,15 @@ function apiFetch(url, opts = {}) {
 }
 
 function escHtml(str) {
-    const d = document.createElement('div');
-    d.textContent = String(str ?? '');
-    return d.innerHTML;
+    // quotes too: the result is also used inside attribute values
+    return String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+// For a value inside a quoted JS string inside an inline handler attribute: every character that could
+// end the string or the attribute is written as a JS escape, so nothing HTML-special is left.
 function escAttr(str) {
-    return String(str ?? '').replace(/'/g, "\\'");
+    return String(str ?? '').replace(/[\\'"<>&`\u0000-\u001f\u2028\u2029]/g,
+        c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'));
 }
 
 function fmt(n) {

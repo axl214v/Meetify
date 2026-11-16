@@ -6,9 +6,8 @@ const STATUS_BADGE = { open: 'badge-accent', in_progress: 'badge-warning', close
 const CAT_LABEL    = { technical: 'Technical', account: 'Account', general: 'General', other: 'Other' };
 
 function esc(str) {
-    const d = document.createElement('div');
-    d.textContent = String(str ?? '');
-    return d.innerHTML;
+    // quotes too: the result is also used inside attribute values
+    return String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
 function timeAgo(ts) {

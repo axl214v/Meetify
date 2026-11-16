@@ -3,9 +3,8 @@ const ticketId = new URLSearchParams(location.search).get('id');
 let currentUser = null;
 
 function esc(str) {
-    const d = document.createElement('div');
-    d.textContent = String(str ?? '');
-    return d.innerHTML;
+    // quotes too: the result is also used inside attribute values
+    return String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
 function fmtDate(ts) {

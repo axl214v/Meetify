@@ -93,9 +93,8 @@ function formatDuration(seconds) {
 function escapeHtml(text) {
     if (!text) return '';
     
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+    // quotes too: the result is also used inside attribute values
+    return String(text ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
 /**

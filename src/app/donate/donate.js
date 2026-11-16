@@ -2,9 +2,8 @@ const yearEl = document.getElementById('sp-year');
 if (yearEl) yearEl.textContent = new Date().getFullYear();
 
 function esc(str) {
-    const d = document.createElement('div');
-    d.textContent = String(str ?? '');
-    return d.innerHTML;
+    // quotes too: the result is also used inside attribute values
+    return String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
 function urlHost(url) {

@@ -58,6 +58,7 @@ let resyncQueued = null;      // a newer answer that arrived meanwhile
 const resilience = { offline: false, serverDown: false, sfuDown: false, stuck: false, stuckTimer: null, listening: false };
 const resilienceTimers = new Set();   // retry timers (SFU rebuild, peer re-create): all cleared when leaving
 const recreateTries = {};             // userId -> how many times we re-created a lost peer (99 = they left)
+const roomMembers = new Set();   // String(userId) of everybody else in the room, as told by the server
 const raisedHands = new Set();   // String(userId) of everybody whose hand is up (told by the server, never stored)
 let lastParticipants = [];     // last list shown in the participants panel (re-rendered when hands change)
 let pttActive = false;         // Space is held and the microphone is on only because of it
@@ -210,6 +211,7 @@ async function loadConferenceDetails() {
         return;
     }
     try {
+        await rejoinAfterReload();
         const response = await fetch(`${API_BASE}/api/conferences/${conferenceId}`, {
             credentials: 'include'
         });
@@ -559,7 +561,15 @@ async function initSocket() {
         // The newcomer sends the offer; the peer connection is created once, when it arrives.
         // (Creating it here too made the offer handler close it and open a second one with a new TURN relay.)
         console.log('User connected:', userId, userName);
-        loadParticipants();   // guests are not in the database: the list comes from the live room
+        roomMembers.add(String(userId));
+        updateParticipantCount();
+        loadParticipants();
+        // We made an offer while this person's connection was down (the server kept their place), so it
+        // never arrived. They are back: send it again. Their own offer loses the collision as usual.
+        const pc = peers[userId];
+        if (pc && pc._isInitiator && pc.signalingState === 'have-local-offer' && !pc.remoteDescription && pc.localDescription) {
+            socket.emit('offer', { to: userId, offer: pc.localDescription });
+        }   // guests are not in the database: the list comes from the live room
     });
 
     // Peer left the conference, clean up local RTCPeerConnection and UI
@@ -574,6 +584,9 @@ async function initSocket() {
         delete camStreams[userId];
         delete screenSenders[userId];
         roomScreenShareState.delete(userId);
+        roomMembers.delete(String(userId));
+        // the server forgets the hand of someone who left and sends no user-hand for it
+        if (raisedHands.delete(String(userId))) refreshHands();
         const videoContainer = document.getElementById(`video-${userId}`);
         if (videoContainer) videoContainer.remove();
         pinnedTiles.delete(String(userId));
@@ -736,6 +749,8 @@ async function initSocket() {
         if (el) el.remove();
         removeScreenTile(kickedUserId);
         pinnedTiles.delete(String(kickedUserId));
+        roomMembers.delete(String(kickedUserId));
+        if (raisedHands.delete(String(kickedUserId))) refreshHands();
         applyPinLayout();
         updateParticipantCount();
         showNotification(`A participant was removed by ${kickerName}`, 'info');
@@ -762,7 +777,7 @@ async function initSocket() {
  * backend restart) it is a resync: connections that are still healthy are kept, only missing ones are
  * created, and the Group session is rebuilt only when it is really dead.
  */
-async function applyRoomParticipants({ participants, roomState, iceServers }) {
+async function applyRoomParticipants({ participants, roomState, iceServers, resumed }) {
     if (iceServers && iceServers.length > 0) rtcConfig = { iceServers };
     console.log('room-participants received:', JSON.stringify(participants), 'roomState:', roomState);
 
@@ -773,6 +788,13 @@ async function applyRoomParticipants({ participants, roomState, iceServers }) {
         roomState.raisedHands.forEach(id => raisedHands.add(String(id)));
         refreshHands();
     }
+
+    roomMembers.clear();
+    participants.forEach(p => { if (!isMe(p.userId)) roomMembers.add(String(p.userId)); });
+
+    // A re-join after the others were told we left (an outage longer than the server's grace period):
+    // they closed their side, so a connection that is not working right now is dead, not recovering.
+    const droppedByOthers = mediaReady && resumed === false;
 
     // Only the first time: after a reconnect the person's current mute state stays
     if (!mediaReady) {
@@ -787,6 +809,8 @@ async function applyRoomParticipants({ participants, roomState, iceServers }) {
     }
     // Tell the others the real state (the server forgot it if we were dropped, and assumes "on" for a newcomer)
     socket.emit('media-state-change', { conferenceId, audio: isAudioEnabled, video: isVideoEnabled });
+    // same for the screen: the server may hold the flag of an older window, or have lost ours
+    socket.emit(isScreenSharing ? 'screen-share-start' : 'screen-share-stop', { conferenceId });
 
     if (conferenceMode === 'sfu') {
         if (!sfuRebuilding) {
@@ -801,7 +825,8 @@ async function applyRoomParticipants({ participants, roomState, iceServers }) {
         for (const p of participants) {
             if (p.userId === currentUser.id) continue;
             const pc = peers[p.userId];
-            const alive = pc && pc.signalingState !== 'closed' && pc.connectionState !== 'failed' && pc.connectionState !== 'closed';
+            const alive = pc && pc.signalingState !== 'closed' && pc.connectionState !== 'failed' && pc.connectionState !== 'closed'
+                && !(droppedByOthers && pc.connectionState !== 'connected');
             if (!alive) {
                 await createPeerConnection(p.userId, true, p.userName);
             } else if (pc._isInitiator && pc.signalingState === 'have-local-offer' && pc.localDescription) {
@@ -897,6 +922,14 @@ async function createPeerConnection(userId, isInitiator, userName = 'Unknown') {
         const offer = await peerConnection.createOffer();
         await peerConnection.setLocalDescription(offer);
         socket.emit('offer', { to: userId, offer });
+        // An offer that is never answered (the person left without us being told) leaves the connection
+        // in "new" for ever: give up after a while, removePeer() tries again a couple of times.
+        peerConnection._setupTimer = setTimeout(() => {
+            peerConnection._setupTimer = null;
+            if (!leaving && peers[userId] === peerConnection && peerConnection.connectionState !== 'connected') {
+                removePeer(userId, peerConnection);
+            }
+        }, PEER_SETUP_MS);
     }
 
     return peerConnection;
@@ -906,6 +939,7 @@ async function createPeerConnection(userId, isInitiator, userName = 'Unknown') {
 // Peer connection states: a blip heals, a dead connection is restarted, then removed and re-created
 // ============================================================
 const PEER_GRACE_MS = 8000;      // 'disconnected' often heals by itself
+const PEER_SETUP_MS = 20000;     // our first offer: no working connection after this long, remove the peer
 const PEER_RESTART_MS = 12000;   // after an ICE restart: give it this long, then remove the peer
 
 const sdpFingerprint = (sdp) => (/a=fingerprint:\S+ (\S+)/.exec(sdp || '') || [])[1] || null;
@@ -920,7 +954,8 @@ function clearPeerTimers(pc) {
     if (!pc) return;
     clearTimeout(pc._graceTimer);
     clearTimeout(pc._restartTimer);
-    pc._graceTimer = pc._restartTimer = null;
+    clearTimeout(pc._setupTimer);
+    pc._graceTimer = pc._restartTimer = pc._setupTimer = null;
 }
 
 function setTileReconnecting(userId, on) {
@@ -1101,7 +1136,7 @@ function addRemoteVideo(userId, stream, userName = 'Unknown') {
 
     const video = document.createElement('video');
     video.autoplay = true;
-    video.playsinline = true;
+    video.playsInline = true;
     video.srcObject = stream;
     Devices.setSpeaker(video, Devices.loadChoice().speakerId);
 
@@ -1493,19 +1528,21 @@ function renderParticipants(participants) {
 
         const avatarHtml = p.avatar_url
             ? `<img class="participant-avatar-img" src="${escapeHtml(p.avatar_url)}" alt="${escapeHtml(name)}">`
-            : `<div class="participant-avatar-initials" style="background:${stringToColor(name)}">${initials}</div>`;
+            : `<div class="participant-avatar-initials" style="background:${stringToColor(name)}">${escapeHtml(initials)}</div>`;
 
+        // No inline handlers: names and ids travel in data attributes, one listener on the list acts on them
+        const idAttr = escapeHtml(String(uid));
         const actionMenu = canActOn ? `
             <div class="mod-menu-wrap">
-                <button class="mod-menu-btn" onclick="toggleModMenu(this, '${uid}')" title="Moderation options" aria-label="Moderation options">${Icons.more}</button>
-                <div class="mod-menu" id="mod-menu-${uid}">
-                    ${isHandUp ? `<button data-lower-hand="${escapeHtml(String(uid))}">Lower hand</button>` : ''}
-                    <button onclick="hostForceMute('${uid}', 'audio')">Mute mic</button>
-                    <button onclick="hostForceMute('${uid}', 'video')">Turn off camera</button>
-                    <button onclick="hostForceMute('${uid}', 'screen')">Stop screen share</button>
-                    <button onclick="hostChatBan('${uid}', ${!isChatBanned})">${isChatBanned ? 'Unban chat' : 'Ban from chat'}</button>
-                    ${canManageCoHost ? `<button onclick="${isCoHost ? 'hostDemoteCoHost' : 'hostPromoteCoHost'}('${uid}')">${isCoHost ? 'Remove co-host' : 'Make co-host'}</button>` : ''}
-                    <button class="danger" onclick="hostKick('${uid}', '${escapeHtml(name).replace(/'/g, "\\'")}')">Remove from room</button>
+                <button class="mod-menu-btn" data-mod="menu" data-uid="${idAttr}" title="Moderation options" aria-label="Moderation options">${Icons.more}</button>
+                <div class="mod-menu" id="mod-menu-${idAttr}">
+                    ${isHandUp ? `<button data-lower-hand="${idAttr}">Lower hand</button>` : ''}
+                    <button data-mod="audio" data-uid="${idAttr}">Mute mic</button>
+                    <button data-mod="video" data-uid="${idAttr}">Turn off camera</button>
+                    <button data-mod="screen" data-uid="${idAttr}">Stop screen share</button>
+                    <button data-mod="${isChatBanned ? 'chat-unban' : 'chat-ban'}" data-uid="${idAttr}">${isChatBanned ? 'Unban chat' : 'Ban from chat'}</button>
+                    ${canManageCoHost ? `<button data-mod="${isCoHost ? 'demote' : 'promote'}" data-uid="${idAttr}">${isCoHost ? 'Remove co-host' : 'Make co-host'}</button>` : ''}
+                    <button class="danger" data-mod="kick" data-uid="${idAttr}" data-name="${escapeHtml(name)}">Remove from room</button>
                 </div>
             </div>
         ` : '';
@@ -1536,7 +1573,8 @@ function formatJoinTime(timestamp) {
 }
 
 function updateParticipantCount() {
-    const count = Object.keys(peers).length + 1;
+    // the server's list, not the peer connections: a Group call has none, and a guest without devices has no tile
+    const count = roomMembers.size + 1;
     document.getElementById('participantCount').textContent = count;
     const label = document.getElementById('participantLabel');
     if (label) label.textContent = count === 1 ? 'participant' : 'participants';
@@ -1775,13 +1813,40 @@ async function leaveConference() {
     window.location.href = homeUrl();
 }
 
-window.addEventListener('beforeunload', () => {
+// A reload of the room page must not lock a member out. Closing the page tells the server "I left" (below),
+// and an unlisted room lets nobody back in without the invite code. The code the page already holds is kept
+// for this tab for one minute, so the reloaded page can join again. Never the password: a room with a
+// password asks for it again, as before.
+const REJOIN_KEY = 'meetify-rejoin';
+function rememberForReload() {
+    if (guestSession || !inviteCode) return;
+    try { sessionStorage.setItem(REJOIN_KEY, JSON.stringify({ id: String(conferenceId), code: inviteCode, t: Date.now() })); } catch { /* private window */ }
+}
+async function rejoinAfterReload() {
+    let saved = null;
+    try { saved = JSON.parse(sessionStorage.getItem(REJOIN_KEY) || 'null'); sessionStorage.removeItem(REJOIN_KEY); } catch { /* ignore */ }
+    if (!saved || saved.id !== String(conferenceId) || Date.now() - saved.t > 60000) return;
+    await new Promise(r => setTimeout(r, 400));   // let the "I left" of the old page arrive first
+    await fetch(`${API_BASE}/api/conferences/${encodeURIComponent(conferenceId)}/join`, {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: saved.code })
+    }).catch(() => {});
+}
+
+let reloading = false;   // the Reload button of the network banner: the person is not leaving
+function onPageGone() {
+    if (leaving) return;
     leaving = true;   // closing the page: no reconnect attempts while it goes away
-    if (joinedConference && conferenceId && !guestSession) {
+    if (joinedConference && conferenceId && !guestSession && !reloading) {
+        rememberForReload();
         navigator.sendBeacon(`${API_BASE}/api/conferences/${conferenceId}/leave`);
     }
     if (socket) socket.disconnect();
-});
+}
+window.addEventListener('beforeunload', onPageGone);
+// phones do not always fire beforeunload; a page kept in the back/forward cache is not gone
+window.addEventListener('pagehide', (e) => { if (!e.persisted) onPageGone(); });
 
 // ============================================================
 // Raised hands, reactions, keyboard shortcuts
@@ -1877,10 +1942,24 @@ function setupReactions() {
 
     // a moderator lowers somebody's hand from the participants list (no inline handler)
     $('participantsList').addEventListener('click', (e) => {
-        const btn = e.target.closest('[data-lower-hand]');
+        const lower = e.target.closest('[data-lower-hand]');
+        if (lower) {
+            closeAllModMenus();
+            socket?.emit('hand-lower', { targetUserId: lower.dataset.lowerHand });
+            return;
+        }
+        const btn = e.target.closest('[data-mod]');
         if (!btn) return;
-        closeAllModMenus();
-        socket?.emit('hand-lower', { targetUserId: btn.dataset.lowerHand });
+        const uid = btn.dataset.uid;
+        switch (btn.dataset.mod) {
+            case 'menu': toggleModMenu(btn, uid); break;
+            case 'audio': case 'video': case 'screen': hostForceMute(uid, btn.dataset.mod); break;
+            case 'chat-ban': hostChatBan(uid, true); break;
+            case 'chat-unban': hostChatBan(uid, false); break;
+            case 'promote': hostPromoteCoHost(uid); break;
+            case 'demote': hostDemoteCoHost(uid); break;
+            case 'kick': hostKick(uid, btn.dataset.name || 'this person'); break;
+        }
     });
 }
 
@@ -1930,6 +2009,8 @@ function setupShortcuts() {
             document.getElementById('videoMenu')?.classList.remove('open');
             return;
         }
+        // Space held for push-to-talk repeats: it must not scroll the page or reach anything else
+        if (e.repeat && pttActive && (e.key === ' ' || e.key === 'Spacebar')) { e.preventDefault(); return; }
         if (e.ctrlKey || e.metaKey || e.altKey || e.repeat || typing(e.target) || dialogOpen()) return;
 
         const panelOpen = !document.getElementById('shortcutsPanel').hidden;
@@ -2007,6 +2088,8 @@ function onBrowserOnline() {
     // The signaling connection may be dead without the browser knowing: close it so it reconnects
     // now instead of after the ping timeout (the server keeps our place during its grace period)
     if (socket?.connected) { try { socket.io.engine.close(); } catch { /* already closing */ } }
+    // already known to be down: do not wait for the next retry (they are up to 5 s apart)
+    else if (socket) { try { socket.disconnect(); socket.connect(); } catch { /* next retry will do */ } }
     if (conferenceMode === 'sfu' && sfuSendTransport && !sfuHealthy()) rebuildSfu();
 }
 
@@ -2015,7 +2098,7 @@ function startNetworkWatch() {
     resilience.listening = true;
     window.addEventListener('offline', onBrowserOffline);
     window.addEventListener('online', onBrowserOnline);
-    document.getElementById('netBannerReload')?.addEventListener('click', () => window.location.reload());
+    document.getElementById('netBannerReload')?.addEventListener('click', () => { reloading = true; window.location.reload(); });
     if (!navigator.onLine) onBrowserOffline();
 }
 
@@ -2391,12 +2474,6 @@ function stopQualityMonitor() {
 
 window.closeSidebar = closeSidebar;
 window.sendMessage = sendMessage;
-window.toggleModMenu = toggleModMenu;
-window.hostForceMute = hostForceMute;
-window.hostChatBan = hostChatBan;
-window.hostKick = hostKick;
-window.hostPromoteCoHost = hostPromoteCoHost;
-window.hostDemoteCoHost = hostDemoteCoHost;
 window.togglePin = togglePin;
 window.toggleStrip = toggleStrip;
 
