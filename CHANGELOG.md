@@ -11,26 +11,56 @@ containers as `APP_VERSION` by `make up`.
 
 ## [Unreleased]
 
+## [2.2.0-beta] — 2026-11-18
+
+"Get in fast": short links, guests, a lobby, a waiting room, and a page that lets anyone check the code they get.
+
 ### Added
+- **Verify what you get.** A new page, `/verify/`, downloads every file of the site in your browser,
+  computes its SHA-256 and compares it with the list published with the release. The list's own hash
+  is in the release notes, and `tools/verify-live.js` does the same check from a terminal.
 - **Short invite links.** Every room has a random code; the link looks like `/r/abc-defg-hij`
   and works for unlisted rooms too. "Copy link" in the room and in the list now copies it.
   Old `conf_join.html?id=N` links keep working.
-- **Guest join.** A host can let guests into a room (checkbox on the create and edit forms, off by
-  default). A guest opens the invite link, types a name and is in the call, with no account and no
-  email. Guests are shown as "(guest)" everywhere, cannot moderate or become co-hosts, count towards
-  the room limit, and can be muted or removed by the host. Nothing about a guest is saved in the database.
-- **Start a call now.** One click on the conference list creates an unlisted peer-to-peer room
-  and opens it. "Create room" stays for names, passwords, schedules and Group mode.
+- **Guest join.** A host can let guests into a room (off by default, a switch on the create and edit
+  forms). A guest opens the invite link, types a name and is in the call, with no account and no email.
+  Guests are shown as "(guest)", cannot moderate, count towards the room limit, and nothing about
+  them is saved.
+- **Start a call now.** One click on the conference list creates an unlisted peer-to-peer room and opens it.
+- **Lobby before you join.** Camera preview, microphone level, camera, microphone and speaker choice,
+  and "join muted". Nothing is sent until you press "Join now". Devices can also be switched during the call.
+- **Waiting room and room lock.** With the waiting room on, people wait outside until the host or a
+  co-host lets them in (one by one or all at once) or turns them away. The room can be locked once
+  everyone is in.
+- **Local recording.** The host and co-hosts (and members, if the host allows it) can record the call in
+  their own browser. The file is saved on their device, never by us, and everybody in the call sees the
+  REC mark while it runs.
+- **Room interaction.** The person speaking is highlighted, hands can be raised, six reactions,
+  keyboard shortcuts (press `?`), and hold Space to talk while muted.
+- **Russian.** The landing, sign-in pages, join page and the whole room are available in Russian, with a
+  language switch. More pages follow.
+- **Install on your phone.** Meetify can be installed as an app; the screen stays on during a call,
+  picture-in-picture, and a front/back camera switch. There is no service worker, so nothing can go stale.
+
+### Changed
+- **Calls survive a short network drop.** If your connection drops, your place is kept for a few seconds
+  and you come back without the others seeing you leave. A page reload brings you back into the room.
 
 ### Security
-- Unlisted rooms are now really invite-only: joining needs the invite code (or the room
-  password, as before). Before, the room page was hidden but a guessed room number could join.
-- The room list no longer shows other people's unlisted rooms when asked for `isPublic=false`.
-- The room details response no longer contains the bcrypt hash of the room password.
-- Invite codes are kept out of the web server and backend logs.
+- Unlisted rooms are now really invite-only: joining needs the invite code (or the room password).
+- The room list no longer shows other people's unlisted rooms, and room details no longer contain the
+  room password's hash.
+- Invite codes are kept out of the logs, including the error log.
+- Passwords need at least 8 characters everywhere, including password change and reset.
+- Names are cleaned before they are shown, every HTML helper escapes quotes, and the room and the admin
+  panel no longer build click handlers from names.
+- A security policy is sent in report-only mode, plus a permissions policy; admin pages have their
+  security headers back. A `security.txt` tells researchers how to reach us.
 
 ### Fixed
 - Joining a room through a link no longer depends on the current page address.
+- A reload no longer locks a member out of an unlisted room.
+- Two people joining at nearly the same moment now connect to each other.
 
 ## [2.1.0-beta] — 2026-11-09
 
